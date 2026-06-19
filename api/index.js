@@ -263,23 +263,23 @@ export default async function handler(req, res) {
     const leaderNetworkMatch = getDynamicId(route, "admin/leaders/:id/network");
     const userMatch = getDynamicId(route, "admin/users/:id");
 
-    if (route === "auth/register") return authRegister(req, res);
-    if (route === "auth/login") return authLogin(req, res);
-    if (route === "auth/me") return authMe(req, res);
-    if (route === "upload/profile-photo") return uploadProfilePhoto(req, res);
-    if (route === "leaders/me/network") return leaderNetwork(req, res);
-    if (route === "leaders/me/referral-link") return leaderReferralLink(req, res);
-    if (route === "leaders/me/metrics") return leaderMetrics(req, res);
-    if (route === "admin/leaders") return adminLeaders(req, res);
-    if (route === "admin/users") return adminUsers(req, res);
-    if (route === "admin/network") return adminNetwork(req, res);
-    if (route === "admin/metrics") return adminMetrics(req, res);
-    if (leaderNetworkMatch) return adminLeaderNetwork(req, res, leaderNetworkMatch.id);
-    if (userMatch) return adminUserById(req, res, userMatch.id);
-    if (route === "map/leaders") return mapResponse(req, res, "LIDER");
-    if (route === "map/users") return mapResponse(req, res);
-    if (route === "map/network") return mapResponse(req, res);
-    if (route === "map/geojson") return mapResponse(req, res, null, true);
+    if (route === "auth/register") return await authRegister(req, res);
+    if (route === "auth/login") return await authLogin(req, res);
+    if (route === "auth/me") return await authMe(req, res);
+    if (route === "upload/profile-photo") return await uploadProfilePhoto(req, res);
+    if (route === "leaders/me/network") return await leaderNetwork(req, res);
+    if (route === "leaders/me/referral-link") return await leaderReferralLink(req, res);
+    if (route === "leaders/me/metrics") return await leaderMetrics(req, res);
+    if (route === "admin/leaders") return await adminLeaders(req, res);
+    if (route === "admin/users") return await adminUsers(req, res);
+    if (route === "admin/network") return await adminNetwork(req, res);
+    if (route === "admin/metrics") return await adminMetrics(req, res);
+    if (leaderNetworkMatch) return await adminLeaderNetwork(req, res, leaderNetworkMatch.id);
+    if (userMatch) return await adminUserById(req, res, userMatch.id);
+    if (route === "map/leaders") return await mapResponse(req, res, "LIDER");
+    if (route === "map/users") return await mapResponse(req, res);
+    if (route === "map/network") return await mapResponse(req, res);
+    if (route === "map/geojson") return await mapResponse(req, res, null, true);
 
     return sendJson(res, 404, { ok: false, error: "Rota nao encontrada." });
   } catch (error) {
