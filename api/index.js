@@ -1,14 +1,4 @@
-import { getConfig } from "../lib/config.js";
-import { query } from "../lib/db.js";
 import { ApiError, getQuery, handleError, methodNotAllowed, readJsonOrForm, sanitizeUser, sendJson } from "../lib/http.js";
-import { parseMultipart } from "../lib/multipart.js";
-import { getMapSummary, listMapPoints, toGeoJson } from "../lib/map-service.js";
-import { buildTree } from "../lib/referrals.js";
-import { requireAuth, ROLES, signToken, verifyPassword } from "../lib/security.js";
-import { storeProfilePhoto } from "../lib/storage.js";
-import { listUsers, getAdminMetrics } from "../lib/admin-service.js";
-import { createUser, ensureLeaderProfile, getLeaderNetwork, getUserByEmail } from "../lib/user-service.js";
-import { requireString, validateEmail } from "../lib/validation.js";
 
 export const config = { api: { bodyParser: false } };
 
@@ -39,6 +29,10 @@ function getDynamicId(route, pattern) {
 
 async function authRegister(req, res) {
   if (req.method !== "POST") return methodNotAllowed(res, ["POST"]);
+  const { parseMultipart } = await import("../lib/multipart.js");
+  const { storeProfilePhoto } = await import("../lib/storage.js");
+  const { createUser } = await import("../lib/user-service.js");
+  const { signToken } = await import("../lib/security.js");
 
   const contentType = req.headers["content-type"] || "";
   let input;
@@ -60,6 +54,9 @@ async function authRegister(req, res) {
 
 async function authLogin(req, res) {
   if (req.method !== "POST") return methodNotAllowed(res, ["POST"]);
+  const { signToken, verifyPassword } = await import("../lib/security.js");
+  const { getUserByEmail } = await import("../lib/user-service.js");
+  const { requireString, validateEmail } = await import("../lib/validation.js");
 
   const body = await readJsonOrForm(req);
   const email = validateEmail(body.email);
@@ -74,12 +71,15 @@ async function authLogin(req, res) {
 
 async function authMe(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { requireAuth } = await import("../lib/security.js");
   const user = await requireAuth(req);
   return sendJson(res, 200, { ok: true, user });
 }
 
 async function uploadProfilePhoto(req, res) {
   if (req.method !== "POST") return methodNotAllowed(res, ["POST"]);
+  const { parseMultipart } = await import("../lib/multipart.js");
+  const { storeProfilePhoto } = await import("../lib/storage.js");
   const { files } = await parseMultipart(req);
   const file = files.photo || files.foto || files.profilePhoto;
   const upload = await storeProfilePhoto(file);
@@ -88,6 +88,8 @@ async function uploadProfilePhoto(req, res) {
 
 async function leaderNetwork(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { requireAuth, ROLES } = await import("../lib/security.js");
+  const { getLeaderNetwork } = await import("../lib/user-service.js");
   const user = await requireAuth(req, [ROLES.LIDER]);
   const q = getQuery(req);
   const result = await getLeaderNetwork(user.id, {
@@ -107,6 +109,10 @@ async function leaderNetwork(req, res) {
 
 async function leaderReferralLink(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { getConfig } = await import("../lib/config.js");
+  const { query } = await import("../lib/db.js");
+  const { requireAuth, ROLES } = await import("../lib/security.js");
+  const { ensureLeaderProfile } = await import("../lib/user-service.js");
   const user = await requireAuth(req, [ROLES.LIDER]);
   const profile = await ensureLeaderProfile({ query }, user.id, getConfig().appUrl);
   return sendJson(res, 200, { ok: true, referralCode: profile.referral_code, referralUrl: profile.referral_url });
@@ -114,6 +120,8 @@ async function leaderReferralLink(req, res) {
 
 async function leaderMetrics(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { query } = await import("../lib/db.js");
+  const { requireAuth, ROLES } = await import("../lib/security.js");
   const user = await requireAuth(req, [ROLES.LIDER]);
   const totals = await query(
     `with recursive subtree as (
@@ -152,6 +160,8 @@ async function leaderMetrics(req, res) {
 
 async function adminLeaders(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { listUsers } = await import("../lib/admin-service.js");
+  const { requireAuth, ROLES } = await import("../lib/security.js");
   await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
   const result = await listUsers({ ...getQuery(req), role: "LIDER" });
   return sendJson(res, 200, { ok: true, ...result });
@@ -159,6 +169,8 @@ async function adminLeaders(req, res) {
 
 async function adminUsers(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { listUsers } = await import("../lib/admin-service.js");
+  const { requireAuth, ROLES } = await import("../lib/security.js");
   await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
   const result = await listUsers(getQuery(req));
   return sendJson(res, 200, { ok: true, ...result });
@@ -166,6 +178,9 @@ async function adminUsers(req, res) {
 
 async function adminNetwork(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { query } = await import("../lib/db.js");
+  const { buildTree } = await import("../lib/referrals.js");
+  const { requireAuth, ROLES } = await import("../lib/security.js");
   await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
   const q = getQuery(req);
   const result = await query(
@@ -183,6 +198,8 @@ async function adminNetwork(req, res) {
 
 async function adminLeaderNetwork(req, res, id) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { requireAuth, ROLES } = await import("../lib/security.js");
+  const { getLeaderNetwork } = await import("../lib/user-service.js");
   await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
   const q = getQuery(req);
   const result = await getLeaderNetwork(id, {
@@ -202,6 +219,8 @@ async function adminLeaderNetwork(req, res, id) {
 
 async function adminUserById(req, res, id) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { query } = await import("../lib/db.js");
+  const { requireAuth, ROLES } = await import("../lib/security.js");
   await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
   const result = await query(
     `select u.id, u.name, u.email, u.phone, u.role, u.photo_url, u.active, u.consent_accepted, u.consent_accepted_at, u.created_at, u.updated_at,
@@ -219,6 +238,8 @@ async function adminUserById(req, res, id) {
 
 async function adminMetrics(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { getAdminMetrics } = await import("../lib/admin-service.js");
+  const { requireAuth, ROLES } = await import("../lib/security.js");
   await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
   const metrics = await getAdminMetrics();
   return sendJson(res, 200, { ok: true, metrics });
@@ -226,6 +247,8 @@ async function adminMetrics(req, res) {
 
 async function mapResponse(req, res, forcedRole, geojson = false) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { getMapSummary, listMapPoints, toGeoJson } = await import("../lib/map-service.js");
+  const { requireAuth, ROLES } = await import("../lib/security.js");
   const user = await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE, ROLES.LIDER]);
   const q = forcedRole ? { ...getQuery(req), role: forcedRole } : getQuery(req);
   const items = await listMapPoints(user, q);
@@ -253,7 +276,7 @@ export default async function handler(req, res) {
     if (route === "admin/metrics") return adminMetrics(req, res);
     if (leaderNetworkMatch) return adminLeaderNetwork(req, res, leaderNetworkMatch.id);
     if (userMatch) return adminUserById(req, res, userMatch.id);
-    if (route === "map/leaders") return mapResponse(req, res, ROLES.LIDER);
+    if (route === "map/leaders") return mapResponse(req, res, "LIDER");
     if (route === "map/users") return mapResponse(req, res);
     if (route === "map/network") return mapResponse(req, res);
     if (route === "map/geojson") return mapResponse(req, res, null, true);
