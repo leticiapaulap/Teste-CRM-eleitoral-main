@@ -1,0 +1,17 @@
+{
+  "name": "siv-proxy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "db:migrate": "psql \"$DATABASE_URL\" -f db/migrations/001_init.sql",
+    "admin:create": "node scripts/create-admin.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "formidable": "^3.5.1",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {}
+}

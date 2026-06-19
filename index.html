@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SIV — Cadastro</title>
+  <meta name="description" content="SIV - Sistema de Inteligência Valdelino. Cadastro voluntário." />
+  <link rel="icon" href="img/LOGO-SIV.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="script.js" defer></script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+
+<body>
+  <main class="wrap">
+    <!-- BLOCO MARCA / APRESENTAÇÃO -->
+    <section class="brand" aria-label="Apresentação do SIV">
+      <div class="topline"></div>
+
+      <div class="badge">
+        <span class="dot"></span>
+        <span>SIV — Sistema de Cadastro Voluntário</span>
+      </div>
+
+      <h1 class="title">Cadastro voluntário<br/></h1>
+
+      <p class="subtitle">
+        Preencha seus dados para entrar na rede SIV.
+        Seus dados são tratados conforme a LGPD e você pode solicitar exclusão a qualquer momento.
+      </p>
+
+      <div class="pillrow">
+        <div class="pill">✅ Consentimento <strong>LGPD</strong></div>
+        <div class="pill">✅ Contato por <strong>WhatsApp</strong></div>
+        <div class="pill">✅ Rede por <strong>indicação</strong></div>
+      </div>
+      
+      <p class="smallnote smallnote-onbrand">
+        Dica para a equipe: use um link com referência, por exemplo:
+        <strong>ref=AG001</strong> ou <strong>ref=SIV000123</strong>.
+      </p>
+
+      <a class="loginButton" href="/login.html">Login</a>
+      
+      <div class="footerlinks">
+        <a href="#" id="linkPrivacidade" onclick="return false;">Política de Privacidade</a>
+        <a href="#" id="linkExclusao" onclick="return false;">Solicitar exclusão</a>
+      </div>
+
+    </section>
+
+    <!-- FORMULÁRIO -->
+    <section class="card" aria-label="Formulário de cadastro">
+      <div id="formArea">
+        <h2 class="formtitle">Entrar no SIV</h2>
+        <p class="formhint">
+          Campos mínimos para contato sem perguntas sobre voto.
+        </p>
+
+        <!-- Honeypot anti-bot invisível -->
+        <div class="hp">
+          <label for="website">Website</label>
+          <input id="website" name="website" autocomplete="off" />
+        </div>
+
+        <form id="formSIV">
+          <label for="nome">Nome completo</label>
+          <input id="nome" name="nome" placeholder="Ex.: Maria de Souza" autocomplete="name" required />
+
+          <div class="row">
+            <div>
+              <label for="whatsapp">WhatsApp</label>
+              <input id="whatsapp" name="whatsapp" placeholder="Ex.: (61) 9xxxx-xxxx" autocomplete="tel" required />
+            </div>
+            <div>
+              <label for="bairro">Bairro</label>
+              <input id="bairro" name="bairro" placeholder="Ex.: Setor Tradicional" required />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="ra">RA (Região Administrativa)</label>
+              <select id="ra" name="ra" required>
+                <option value="" selected disabled>Selecione a RA</option>
+                <option>Água Quente</option>
+                <option>Águas Claras</option>
+                <option>Arapoanga</option>
+                <option>Arniqueira</option>
+                <option>Brazlândia</option>
+                <option>Candangolândia</option>
+                <option>Ceilândia</option>
+                <option>Cruzeiro</option>
+                <option>Estrutural (SCIA)</option>
+                <option>Fercal</option>
+                <option>Gama</option>
+                <option>Guará</option>
+                <option>Itapoã</option>
+                <option>Jardim Botânico</option>
+                <option>Lago Norte</option>
+                <option>Lago Sul</option>
+                <option>Núcleo Bandeirante</option>
+                <option>Paranoá</option>
+                <option>Park Way</option>
+                <option>Planaltina</option>
+                <option>Plano Piloto</option>
+                <option>Recanto das Emas</option>
+                <option>Riacho Fundo</option>
+                <option>Riacho Fundo II</option>
+                <option>Samambaia</option>
+                <option>Santa Maria</option>
+                <option>São Sebastião</option>
+                <option>SIA</option>
+                <option>Sobradinho</option>
+                <option>Sobradinho II</option>
+                <option>Sol Nascente e Pôr do Sol</option>
+                <option>Sudoeste/Octogonal</option>
+                <option>Taguatinga</option>
+                <option>Varjão</option>
+                <option>Vicente Pires</option>
+              </select>
+            </div>
+
+            <div id="refContainer" style="display:none;">
+              <label for="ref">Referência (quem indicou)</label>
+              <input id="ref" name="ref" placeholder="AG001 ou SIV000123" readonly />
+              <small id="refHint" class="refHint"></small>
+            </div>
+          </div>
+
+          <div class="checks">
+            <div class="check">
+              <input type="checkbox" id="aceiteLGPD" />
+              <div>
+                <strong>Uso de dados (LGPD):</strong>
+                Autorizo o armazenamento e tratamento dos meus dados para fins de comunicação e relacionamento do SIV.
+              </div>
+            </div>
+
+            <div class="check">
+              <input type="checkbox" id="aceiteWhats" />
+              <div>
+                <strong>Autorização para WhatsApp:</strong>
+                Autorizo receber mensagens e atualizações por WhatsApp relacionadas às comunicações do SIV.
+              </div>
+            </div>
+
+            <!-- reCAPTCHA -->
+            <div class="recaptchaBox">
+              <div class="g-recaptcha" data-sitekey="6Ld43mUsAAAAADAkUu1EQcWCqvK4ROYVcByT2nDU"></div>
+              <p class="recaptchaHint">Verificação de segurança para evitar robôs.</p>
+            </div>
+          </div>
+
+          <button id="btnEnviar" type="submit">Cadastrar</button>
+
+          <div id="msg" class="msg"></div>
+
+          <div id="invite" class="invite">
+            <div class="inviteTitle">Seu link de convite</div>
+            <div class="inviteRow">
+              <input id="inviteLink" readonly />
+              <button type="button" id="btnCopy" class="btnSecondary">Copiar</button>
+            </div>
+            <div class="inviteSub">Compartilhe este link para formar a rede em árvore.</div>
+          </div>
+
+          <p class="smallnote">
+            Ao enviar, você concorda com os termos acima.
+          </p>
+        </form>
+      </div>
+
+      <!-- TELA SUCESSO (inicia escondida) -->
+      <div id="successArea" class="successArea" style="display:none;">
+        <div class="successGrid">
+          <img class="successImg" src="img/candidato.png" alt="Valdelino" />
+          <div>
+            <h3 class="successTitle">Cadastro realizado com sucesso!</h3>
+            <p id="successText" class="successText"></p>
+
+            <div class="successActions">
+              <button type="button" id="btnNovoCadastro" class="btnSecondary">Fazer novo cadastro</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="invite successInvite">
+          <div class="inviteTitle">Seu link de convite</div>
+          <div class="inviteRow">
+            <input id="inviteLinkSuccess" readonly />
+            <button type="button" id="btnCopySuccess" class="btnSecondary">Copiar</button>
+          </div>
+          <div class="inviteSub">Compartilhe este link para formar a rede em árvore.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+
+</html>

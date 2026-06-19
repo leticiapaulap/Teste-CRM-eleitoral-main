@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SIV - Login</title>
+  <meta name="description" content="Login administrativo e de lideres do SIV." />
+  <link rel="icon" href="img/LOGO-SIV.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="login.js" defer></script>
+</head>
+
+<body>
+  <main class="wrap loginWrap">
+    <section class="brand" aria-label="Acesso SIV">
+      <div class="topline"></div>
+
+      <div class="badge">
+        <span class="dot"></span>
+        <span>SIV - Area restrita</span>
+      </div>
+
+      <h1 class="title">Login</h1>
+
+      <p class="subtitle">
+        Acesso para deputado, equipe e lideres acompanharem cadastros e redes autorizadas.
+      </p>
+
+      <a class="loginButton loginBackButton" href="/">Voltar ao cadastro</a>
+    </section>
+
+    <section class="card" aria-label="Formulario de login">
+      <h2 class="formtitle">Entrar na area restrita</h2>
+      <p class="formhint">Use seu email e senha cadastrados.</p>
+
+      <form id="formLogin">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="seu@email.com" autocomplete="email" required />
+
+        <label for="password">Senha</label>
+        <input id="password" name="password" type="password" placeholder="Sua senha" autocomplete="current-password" required />
+
+        <button id="btnLogin" type="submit">Entrar</button>
+
+        <div id="loginMsg" class="msg"></div>
+      </form>
+    </section>
+  </main>
+</body>
+
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SIV - Painel</title>
+  <meta name="description" content="Painel interno do SIV." />
+  <link rel="icon" href="img/LOGO-SIV.png" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIINfQG2N3gCkCF2bFJOrM2FtkK5bM6r5eI="
+    crossorigin=""
+  />
+  <link rel="stylesheet" href="styles.css" />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+    defer
+  ></script>
+  <script type="module" src="dashboard.js" defer></script>
+</head>
+
+<body class="dashboardBody">
+  <main class="dashboardShell">
+    <header class="dashboardHeader">
+      <div>
+        <div class="badge">
+          <span class="dot"></span>
+          <span>SIV - Painel interno</span>
+        </div>
+        <h1 class="dashboardTitle">Rede e mapa do DF</h1>
+        <p id="dashboardUser" class="dashboardSubtitle"></p>
+      </div>
+
+      <div class="dashboardActions">
+        <a class="btnSecondary dashboardLink" href="/">Cadastro</a>
+        <button id="btnLogout" class="btnSecondary dashboardLogout" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section class="filterPanel" aria-label="Filtros do painel">
+      <div>
+        <label for="filterRole">Tipo</label>
+        <select id="filterRole">
+          <option value="">Todos</option>
+          <option value="LIDER">Lideres</option>
+          <option value="PESSOA">Pessoas</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="filterLeader">Lider</label>
+        <select id="filterLeader">
+          <option value="">Todos</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="filterRegion">Regiao administrativa</label>
+        <select id="filterRegion">
+          <option value="">Todas</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="filterLevel">Nivel</label>
+        <select id="filterLevel">
+          <option value="">Todos</option>
+          <option value="0">0 - Lider raiz</option>
+          <option value="1">1 - Diretos</option>
+          <option value="2">2 - Segundo nivel</option>
+          <option value="3">3+</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="filterSearch">Busca</label>
+        <input id="filterSearch" type="search" placeholder="Nome ou localidade" />
+      </div>
+    </section>
+
+    <section class="dashboardGrid" aria-label="Indicadores">
+      <article class="metricCard">
+        <span>Lideres</span>
+        <strong id="metricLeaders">0</strong>
+      </article>
+      <article class="metricCard">
+        <span>Pessoas cadastradas</span>
+        <strong id="metricUsers">0</strong>
+      </article>
+      <article class="metricCard">
+        <span>Regioes</span>
+        <strong id="metricRegions">0</strong>
+      </article>
+      <article class="metricCard">
+        <span>Pontos com localizacao</span>
+        <strong id="metricMap">0</strong>
+      </article>
+    </section>
+
+    <section class="dashboardLayout" aria-label="Mapa e resumo">
+      <article class="dashboardPanel mapPanel">
+        <div class="panelHeader">
+          <div>
+            <h2>Mapa satelite do Distrito Federal</h2>
+            <p id="mapHint">Marcadores carregados conforme permissao do usuario logado.</p>
+          </div>
+          <div class="mapLegend" aria-label="Legenda do mapa">
+            <span><i class="legendDot leaderDot"></i>Lider</span>
+            <span><i class="legendDot personDot"></i>Pessoa</span>
+          </div>
+        </div>
+
+        <div id="mapCanvas" class="mapCanvas" aria-label="Mapa visual do DF">
+          <iframe
+            class="satelliteFrame"
+            title="Mapa satelite do Distrito Federal"
+            src="https://www.google.com/maps?q=Distrito%20Federal%2C%20Brasil&t=k&z=10&output=embed"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
+          <div id="mapOverlay" class="mapOverlay" aria-hidden="false"></div>
+          <div class="mapLabel">Distrito Federal</div>
+        </div>
+
+        <div id="selectedPoint" class="selectedPoint">
+          Selecione um marcador para ver detalhes.
+        </div>
+      </article>
+
+      <aside class="dashboardPanel summaryPanel" aria-label="Resumo">
+        <div class="panelHeader">
+          <div>
+            <h2>Resumo</h2>
+            <p>Agrupamentos para filtros e mapa.</p>
+          </div>
+        </div>
+
+        <h3 class="summaryTitle">Por regiao</h3>
+        <div id="regionSummary" class="summaryList"></div>
+
+        <h3 class="summaryTitle">Lideres da regiao</h3>
+        <div id="regionLeaders" class="summaryList"></div>
+
+        <h3 class="summaryTitle">Rede do lider</h3>
+        <div id="leaderNetwork" class="summaryList"></div>
+      </aside>
+    </section>
+
+    <section class="dashboardLayout lowerLayout" aria-label="Listas da rede">
+      <article class="dashboardPanel tablePanel">
+        <div class="panelHeader">
+          <div>
+            <h2>Cadastros</h2>
+            <p id="tableHint">Lista filtrada de lideres e pessoas cadastradas.</p>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table class="dashboardTable">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Localidade</th>
+                <th>Lider responsavel</th>
+                <th>Nivel</th>
+                <th>Cadastro</th>
+              </tr>
+            </thead>
+            <tbody id="peopleTable"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <aside class="dashboardPanel networkPanel">
+        <div class="panelHeader">
+          <div>
+            <h2>Arvore da rede</h2>
+            <p id="networkHint">Visualizacao por niveis de indicacao.</p>
+          </div>
+        </div>
+
+        <div id="networkTree" class="networkTree"></div>
+      </aside>
+    </section>
+  </main>
+</body>
+
+</html>
