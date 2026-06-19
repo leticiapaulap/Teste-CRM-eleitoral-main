@@ -10,7 +10,7 @@ Site estatico com backend em Vercel Functions.
 - ORM anterior: nenhum.
 - Banco novo: PostgreSQL no Neon via `DATABASE_URL`.
 - ORM novo: nenhum; acesso SQL direto com `pg`, para manter a base simples.
-- Rotas: arquivos em `api/**`.
+- Rotas: `/api/siv` e uma funcao catch-all `/api/[...route]` para ficar dentro do limite do plano Hobby da Vercel.
 - Autenticacao: JWT Bearer token com senha criptografada via bcrypt.
 
 ## Variaveis de ambiente
@@ -80,6 +80,8 @@ npx vercel dev
 
 O front atual continua consumindo `POST /api/siv`. As novas APIs ficam disponiveis em `/api/auth/*`, `/api/admin/*`, `/api/leaders/*`, `/api/map/*` e `/api/upload/*`.
 
+No plano Hobby da Vercel, o limite e de 12 funcoes serverless por deploy. Por isso as APIs novas foram consolidadas em `api/[...route].js`; mesmo assim as URLs publicas continuam iguais.
+
 ## Deploy na Vercel
 
 1. Importe o projeto na Vercel.
@@ -87,6 +89,11 @@ O front atual continua consumindo `POST /api/siv`. As novas APIs ficam disponive
 3. Rode a migration apontando para o Neon antes de usar o sistema.
 4. Configure o dominio em Project Settings > Domains.
 5. Atualize `APP_URL` e `FRONTEND_URL` para o dominio final.
+
+O deploy usa apenas 2 funcoes serverless:
+
+- `api/siv.js`
+- `api/[...route].js`
 
 ## Storage de fotos
 

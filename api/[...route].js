@@ -1,0 +1,265 @@
+import { getConfig } from "../lib/config.js";
+import { query } from "../lib/db.js";
+import { ApiError, getQuery, handleError, methodNotAllowed, readJsonOrForm, sanitizeUser, sendJson } from "../lib/http.js";
+import { parseMultipart } from "../lib/multipart.js";
+import { getMapSummary, listMapPoints, toGeoJson } from "../lib/map-service.js";
+import { buildTree } from "../lib/referrals.js";
+import { requireAuth, ROLES, signToken, verifyPassword } from "../lib/security.js";
+import { storeProfilePhoto } from "../lib/storage.js";
+import { listUsers, getAdminMetrics } from "../lib/admin-service.js";
+import { createUser, ensureLeaderProfile, getLeaderNetwork, getUserByEmail } from "../lib/user-service.js";
+import { requireString, validateEmail } from "../lib/validation.js";
+
+export const config = { api: { bodyParser: false } };
+
+function getRoute(req) {
+  const route = req.query?.route;
+  if (Array.isArray(route)) return route.join("/");
+  if (typeof route === "string") return route;
+  return new URL(req.url, "http://localhost").pathname.replace(/^\/api\//, "");
+}
+
+function getDynamicId(route, pattern) {
+  const routeParts = route.split("/");
+  const patternParts = pattern.split("/");
+  if (routeParts.length !== patternParts.length) return null;
+
+  const params = {};
+  for (let index = 0; index < patternParts.length; index += 1) {
+    const expected = patternParts[index];
+    const actual = routeParts[index];
+    if (expected.startsWith(":")) {
+      params[expected.slice(1)] = actual;
+    } else if (expected !== actual) {
+      return null;
+    }
+  }
+  return params;
+}
+
+async function authRegister(req, res) {
+  if (req.method !== "POST") return methodNotAllowed(res, ["POST"]);
+
+  const contentType = req.headers["content-type"] || "";
+  let input;
+  let uploadMetadata = null;
+
+  if (contentType.includes("multipart/form-data")) {
+    const { fields, files } = await parseMultipart(req);
+    const file = files.photo || files.foto || files.profilePhoto;
+    uploadMetadata = await storeProfilePhoto(file);
+    input = { ...fields, photoUrl: uploadMetadata.fileUrl };
+  } else {
+    input = await readJsonOrForm(req);
+  }
+
+  const result = await createUser(input, uploadMetadata);
+  const token = signToken(result.user);
+  return sendJson(res, 201, { ok: true, user: result.user, leaderProfile: result.leaderProfile, token });
+}
+
+async function authLogin(req, res) {
+  if (req.method !== "POST") return methodNotAllowed(res, ["POST"]);
+
+  const body = await readJsonOrForm(req);
+  const email = validateEmail(body.email);
+  const password = requireString(body.password || body.senha, "password");
+  const user = await getUserByEmail(email);
+  if (!user || !(await verifyPassword(password, user.password_hash))) {
+    throw new ApiError(401, "Credenciais invalidas.");
+  }
+  const token = signToken(user);
+  return sendJson(res, 200, { ok: true, token, user: sanitizeUser(user) });
+}
+
+async function authMe(req, res) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const user = await requireAuth(req);
+  return sendJson(res, 200, { ok: true, user });
+}
+
+async function uploadProfilePhoto(req, res) {
+  if (req.method !== "POST") return methodNotAllowed(res, ["POST"]);
+  const { files } = await parseMultipart(req);
+  const file = files.photo || files.foto || files.profilePhoto;
+  const upload = await storeProfilePhoto(file);
+  return sendJson(res, 201, { ok: true, photoUrl: upload.fileUrl, file: upload });
+}
+
+async function leaderNetwork(req, res) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const user = await requireAuth(req, [ROLES.LIDER]);
+  const q = getQuery(req);
+  const result = await getLeaderNetwork(user.id, {
+    page: q.page || 1,
+    limit: q.limit || 50,
+    tree: q.format === "tree",
+    filters: {
+      localidade: q.localidade,
+      regiaoAdministrativa: q.regiao_administrativa,
+      level: q.level,
+      from: q.from,
+      to: q.to,
+    },
+  });
+  return sendJson(res, 200, { ok: true, ...result });
+}
+
+async function leaderReferralLink(req, res) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const user = await requireAuth(req, [ROLES.LIDER]);
+  const profile = await ensureLeaderProfile({ query }, user.id, getConfig().appUrl);
+  return sendJson(res, 200, { ok: true, referralCode: profile.referral_code, referralUrl: profile.referral_url });
+}
+
+async function leaderMetrics(req, res) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const user = await requireAuth(req, [ROLES.LIDER]);
+  const totals = await query(
+    `with recursive subtree as (
+       select user_id, parent_user_id from network_nodes where user_id = $1
+       union all
+       select child.user_id, child.parent_user_id
+         from network_nodes child
+         join subtree parent on child.parent_user_id = parent.user_id
+     )
+     select count(*)::int as total,
+            count(*) filter (where u.photo_url is not null)::int as total_com_foto,
+            count(*) filter (where ul.latitude is not null and ul.longitude is not null)::int as total_com_localizacao
+       from subtree
+       join network_nodes nn on nn.user_id = subtree.user_id
+       join users u on u.id = nn.user_id
+       left join user_locations ul on ul.user_id = u.id`,
+    [user.id]
+  );
+  const byLevel = await query(
+    `with recursive subtree as (
+       select user_id, parent_user_id from network_nodes where user_id = $1
+       union all
+       select child.user_id, child.parent_user_id
+         from network_nodes child
+         join subtree parent on child.parent_user_id = parent.user_id
+     )
+     select nn.level, count(*)::int as total
+       from subtree
+       join network_nodes nn on nn.user_id = subtree.user_id
+      group by nn.level
+      order by nn.level`,
+    [user.id]
+  );
+  return sendJson(res, 200, { ok: true, totals: totals.rows[0], byLevel: byLevel.rows });
+}
+
+async function adminLeaders(req, res) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
+  const result = await listUsers({ ...getQuery(req), role: "LIDER" });
+  return sendJson(res, 200, { ok: true, ...result });
+}
+
+async function adminUsers(req, res) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
+  const result = await listUsers(getQuery(req));
+  return sendJson(res, 200, { ok: true, ...result });
+}
+
+async function adminNetwork(req, res) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
+  const q = getQuery(req);
+  const result = await query(
+    `select u.id as user_id, u.name, u.email, u.phone, u.role, u.photo_url, u.created_at,
+            nn.parent_user_id, nn.root_leader_id, nn.level, nn.referral_code_used,
+            ul.localidade, ul.regiao_administrativa, ul.latitude, ul.longitude
+       from network_nodes nn
+       join users u on u.id = nn.user_id
+       left join user_locations ul on ul.user_id = u.id
+      order by nn.root_leader_id, nn.level, u.created_at desc`
+  );
+  const items = q.format === "tree" ? buildTree(result.rows) : result.rows;
+  return sendJson(res, 200, { ok: true, items });
+}
+
+async function adminLeaderNetwork(req, res, id) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
+  const q = getQuery(req);
+  const result = await getLeaderNetwork(id, {
+    page: q.page || 1,
+    limit: q.limit || 50,
+    tree: q.format === "tree",
+    filters: {
+      localidade: q.localidade,
+      regiaoAdministrativa: q.regiao_administrativa,
+      level: q.level,
+      from: q.from,
+      to: q.to,
+    },
+  });
+  return sendJson(res, 200, { ok: true, ...result });
+}
+
+async function adminUserById(req, res, id) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
+  const result = await query(
+    `select u.id, u.name, u.email, u.phone, u.role, u.photo_url, u.active, u.consent_accepted, u.consent_accepted_at, u.created_at, u.updated_at,
+            ul.localidade, ul.regiao_administrativa, ul.latitude, ul.longitude,
+            nn.parent_user_id, nn.root_leader_id, nn.level
+       from users u
+       left join user_locations ul on ul.user_id = u.id
+       left join network_nodes nn on nn.user_id = u.id
+      where u.id = $1`,
+    [id]
+  );
+  if (!result.rows[0]) throw new ApiError(404, "Usuario nao encontrado.");
+  return sendJson(res, 200, { ok: true, user: result.rows[0] });
+}
+
+async function adminMetrics(req, res) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
+  const metrics = await getAdminMetrics();
+  return sendJson(res, 200, { ok: true, metrics });
+}
+
+async function mapResponse(req, res, forcedRole, geojson = false) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const user = await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE, ROLES.LIDER]);
+  const q = forcedRole ? { ...getQuery(req), role: forcedRole } : getQuery(req);
+  const items = await listMapPoints(user, q);
+  if (geojson) return sendJson(res, 200, toGeoJson(items));
+  const summary = await getMapSummary(user, q);
+  return sendJson(res, 200, { ok: true, items, summary });
+}
+
+export default async function handler(req, res) {
+  try {
+    const route = getRoute(req);
+    const leaderNetworkMatch = getDynamicId(route, "admin/leaders/:id/network");
+    const userMatch = getDynamicId(route, "admin/users/:id");
+
+    if (route === "auth/register") return authRegister(req, res);
+    if (route === "auth/login") return authLogin(req, res);
+    if (route === "auth/me") return authMe(req, res);
+    if (route === "upload/profile-photo") return uploadProfilePhoto(req, res);
+    if (route === "leaders/me/network") return leaderNetwork(req, res);
+    if (route === "leaders/me/referral-link") return leaderReferralLink(req, res);
+    if (route === "leaders/me/metrics") return leaderMetrics(req, res);
+    if (route === "admin/leaders") return adminLeaders(req, res);
+    if (route === "admin/users") return adminUsers(req, res);
+    if (route === "admin/network") return adminNetwork(req, res);
+    if (route === "admin/metrics") return adminMetrics(req, res);
+    if (leaderNetworkMatch) return adminLeaderNetwork(req, res, leaderNetworkMatch.id);
+    if (userMatch) return adminUserById(req, res, userMatch.id);
+    if (route === "map/leaders") return mapResponse(req, res, ROLES.LIDER);
+    if (route === "map/users") return mapResponse(req, res);
+    if (route === "map/network") return mapResponse(req, res);
+    if (route === "map/geojson") return mapResponse(req, res, null, true);
+
+    return sendJson(res, 404, { ok: false, error: "Rota nao encontrada." });
+  } catch (error) {
+    return handleError(res, error);
+  }
+}
