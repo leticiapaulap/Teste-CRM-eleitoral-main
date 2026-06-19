@@ -257,6 +257,34 @@ async function mapResponse(req, res, forcedRole, geojson = false) {
   return sendJson(res, 200, { ok: true, items, summary });
 }
 
+async function healthCheck(req, res) {
+  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  const { getConfig } = await import("../lib/config.js");
+  const { query } = await import("../lib/db.js");
+  const config = getConfig();
+  const checks = {
+    databaseUrl: Boolean(config.databaseUrl),
+    jwtSecret: Boolean(config.jwtSecret),
+    usersTable: false,
+    db: false,
+  };
+
+  try {
+    await query("select 1");
+    checks.db = true;
+    const table = await query("select to_regclass('public.users') as table_name");
+    checks.usersTable = Boolean(table.rows[0]?.table_name);
+  } catch (error) {
+    return sendJson(res, 500, {
+      ok: false,
+      checks,
+      error: error.code || error.message,
+    });
+  }
+
+  return sendJson(res, 200, { ok: true, checks });
+}
+
 export default async function handler(req, res) {
   try {
     const route = getRoute(req);
@@ -266,6 +294,7 @@ export default async function handler(req, res) {
     if (route === "auth/register") return await authRegister(req, res);
     if (route === "auth/login") return await authLogin(req, res);
     if (route === "auth/me") return await authMe(req, res);
+    if (route === "health") return await healthCheck(req, res);
     if (route === "upload/profile-photo") return await uploadProfilePhoto(req, res);
     if (route === "leaders/me/network") return await leaderNetwork(req, res);
     if (route === "leaders/me/referral-link") return await leaderReferralLink(req, res);
