@@ -1,6 +1,7 @@
 console.log("script.js carregou ✅");
 
 const ENDPOINT = "/api/siv";
+const PUBLIC_APP_URL = "https://teste-crm-eleitoral-main.vercel.app";
 
 const form = document.getElementById("formSIV");
 const msg = document.getElementById("msg");
@@ -183,7 +184,8 @@ form.addEventListener("submit", async (e) => {
     let link = (json.invite_link || "").trim();
     if (!link) {
       // fallback: cria link com o código da pessoa
-      link = `${location.origin}${location.pathname}?ref=${encodeURIComponent(codigo)}`;
+      const publicOrigin = location.hostname.includes("localhost") ? PUBLIC_APP_URL : location.origin;
+      link = `${publicOrigin.replace(/\/$/, "")}${location.pathname}?ref=${encodeURIComponent(codigo)}`;
     }
 
     // ✅ Mostra link em ambos os lugares

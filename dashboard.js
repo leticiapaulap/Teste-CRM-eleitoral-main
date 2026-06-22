@@ -12,6 +12,8 @@ const DF_BOUNDS = {
   maxLng: -47.28,
 };
 
+const PUBLIC_APP_URL = "https://teste-crm-eleitoral-main.vercel.app";
+
 const fallbackPoints = [
   {
     id: "l1",
@@ -252,12 +254,30 @@ async function loadProfile() {
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Falha ao carregar perfil.");
     user = data.user;
+    const referralProfile = await loadMyReferralLink();
+    if (referralProfile) user = { ...user, ...referralProfile };
     localStorage.setItem("siv_user", JSON.stringify(user));
     isTeam = user.role === "EQUIPE";
     els.userLabel.textContent = `${user.name || user.email} - ${user.role}`;
     renderProfile(user);
   } catch {
     renderProfile(user);
+  }
+}
+
+async function loadMyReferralLink() {
+  try {
+    const response = await fetch("/api/leaders/me/referral-link", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) return null;
+    return {
+      referral_code: data.referralCode,
+      referral_url: data.referralUrl,
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -322,7 +342,7 @@ function renderProfile(profile) {
   `;
 
   if (els.referralLink) {
-    const link = profile.referral_url || "";
+    const link = getPublicReferralUrl(profile);
     els.referralLink.value = link;
     els.referralLink.closest(".invite").style.display = link ? "block" : "none";
   }
@@ -608,8 +628,9 @@ async function handleTableAction(action, id) {
     }
 
     if (action === "copy-link") {
-      await copyText(person.referral_url || "");
-      showAdminMessage(person.referral_url ? "Link copiado." : "Este cadastro ainda nao tem link salvo.", person.referral_url ? "ok" : "err");
+      const link = getPublicReferralUrl(person);
+      await copyText(link);
+      showAdminMessage(link ? "Link copiado." : "Este cadastro ainda nao tem link salvo.", link ? "ok" : "err");
       return;
     }
 
@@ -634,13 +655,39 @@ async function handleTableAction(action, id) {
       if (localidade === null) return;
       const regiao = prompt("Regiao administrativa", person.regiao_administrativa || "");
       if (regiao === null) return;
+      const latitude = prompt("Latitude", person.latitude ?? "");
+      if (latitude === null) return;
+      const longitude = prompt("Longitude", person.longitude ?? "");
+      if (longitude === null) return;
+      const photoUrl = prompt("URL/caminho da foto", person.photo_url || "");
+      if (photoUrl === null) return;
+      const active = prompt("Ativo? true ou false", person.active === false ? "false" : "true");
+      if (active === null) return;
+      const password = prompt("Nova senha (deixe vazio para manter a atual)", "");
+      if (password === null) return;
+
+      const payload = {
+        name,
+        email,
+        phone,
+        role,
+        localidade,
+        regiao_administrativa: regiao,
+        latitude,
+        longitude,
+        photo_url: photoUrl,
+        active,
+      };
+      if (password.trim()) payload.password = password;
 
       const updated = await adminRequest(`/api/admin/users/${encodeURIComponent(id)}`, {
         method: "PATCH",
-        body: JSON.stringify({ name, email, phone, role, localidade, regiao_administrativa: regiao }),
+        body: JSON.stringify(payload),
       });
 
-      allPoints = allPoints.map((point) => String(point.id) === String(id) ? updated.user : point);
+      allPoints = updated.user.active === false
+        ? allPoints.filter((point) => String(point.id) !== String(id))
+        : allPoints.map((point) => String(point.id) === String(id) ? updated.user : point);
       fillFilters(allPoints);
       render();
     }
@@ -673,8 +720,29 @@ function emailUsers(points) {
 }
 
 function renderReferralCell(point) {
-  if (!point.referral_url) return "-";
-  return `<small>${escapeHtml(point.referral_code || "")}</small><span class="linkCell">${escapeHtml(point.referral_url)}</span>`;
+  const link = getPublicReferralUrl(point);
+  if (!link) return "-";
+  return `<small>${escapeHtml(point.referral_code || "")}</small><span class="linkCell">${escapeHtml(link)}</span>`;
+}
+
+function getPublicReferralUrl(point) {
+  const code = point.referral_code || point.referralCode || extractReferralCode(point.referral_url || point.referralUrl);
+  if (!code) return "";
+
+  const currentOrigin = window.location.origin && !window.location.hostname.includes("localhost")
+    ? window.location.origin
+    : PUBLIC_APP_URL;
+  return `${currentOrigin.replace(/\/$/, "")}/cadastro?ref=${encodeURIComponent(code)}`;
+}
+
+function extractReferralCode(url) {
+  if (!url) return "";
+  try {
+    return new URL(url).searchParams.get("ref") || "";
+  } catch (_) {
+    const match = String(url).match(/[?&]ref=([^&]+)/);
+    return match ? decodeURIComponent(match[1]) : "";
+  }
 }
 
 async function loadContactMessages() {
