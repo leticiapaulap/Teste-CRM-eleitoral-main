@@ -377,7 +377,7 @@ function renderMap(points) {
     marker.className = `mapMarker ${point.role === "COORDENADORES" || point.role === "LIDERES" ? "leaderMarker" : "personMarker"}`;
     marker.style.left = `${lngToX(point.longitude)}%`;
     marker.style.top = `${latToY(point.latitude)}%`;
-    marker.title = `${point.name} - ${point.regiao_administrativa}`;
+    marker.title = `${point.localidade || point.regiao_administrativa || "Sem localidade"} - ${point.name}`;
     marker.setAttribute("aria-label", marker.title);
     marker.addEventListener("click", () => selectPoint(point));
     els.mapOverlay.appendChild(marker);
@@ -420,10 +420,13 @@ function selectPoint(point) {
     render();
   }
 
+  const locationLabel = point.localidade || point.regiao_administrativa || "Sem localidade";
+
   els.selected.innerHTML = `
-    <strong>${escapeHtml(point.name)}</strong>
+    <strong>${escapeHtml(locationLabel)}</strong>
+    <span>Pessoa: ${escapeHtml(point.name || "Nao informado")}</span>
     <span>${escapeHtml(point.role)} - ${escapeHtml(point.regiao_administrativa || "Sem regiao")}</span>
-    <span>${escapeHtml(point.localidade || "Sem localidade")} | Nivel ${point.level ?? "-"}</span>
+    <span>Nivel ${point.level ?? "-"}</span>
     <span>Responsavel: ${escapeHtml(point.root_leader_name || "Nao informado")}</span>
     <span>Cadastro: ${formatDate(point.created_at)}</span>
   `;
