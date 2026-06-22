@@ -126,6 +126,7 @@ form.addEventListener("submit", async (e) => {
   const whatsapp = normalizeWhatsApp(document.getElementById("whatsapp").value.trim());
   const bairro = document.getElementById("bairro").value.trim();
   const ra = document.getElementById("ra").value;
+  const foto = document.getElementById("foto")?.files?.[0];
 
   const urlRef = getRefFromURL();
   const veioPorLink = !!urlRef;
@@ -147,19 +148,23 @@ form.addEventListener("submit", async (e) => {
   if (!nome || nome.length < 3) return showError("Informe seu nome completo.");
   if (!whatsapp || whatsapp.length < 10) return showError("Informe um WhatsApp válido (com DDD).");
   if (!bairro || bairro.length < 2) return showError("Informe seu bairro.");
+  if (!foto) return showError("Tire ou selecione uma foto para concluir o cadastro.");
   if (!ra) return showError("Selecione a Região Administrativa (RA).");
   if (!aceite_lgpd) return showError("Você precisa aceitar o uso de dados (LGPD).");
   if (!aceite_whatsapp) return showError("Você precisa autorizar o contato por WhatsApp.");
 
   try {
     btn.disabled = true;
-    btn.textContent = "Enviando...";
+    btn.textContent = "Enviando foto...";
+    const photoUrl = await uploadPhoto(foto);
+    btn.textContent = "Enviando cadastro...";
 
     const body = new URLSearchParams({
       nome,
       whatsapp,
       bairro,
       ra,
+      photoUrl,
       ref: veioPorLink ? ref : "",
       aceite_lgpd: "true",
       aceite_whatsapp: "true",
@@ -220,6 +225,34 @@ form.addEventListener("submit", async (e) => {
     btn.textContent = "Cadastrar";
   }
 });
+
+async function uploadPhoto(file) {
+  const preparedFile = await preparePhotoFile(file);
+  const body = new FormData();
+  body.append("photo", preparedFile, preparedFile.name || file.name || "foto.jpg");
+  const res = await fetch("/api/upload/profile-photo", { method: "POST", body });
+  const text = await res.text();
+  let json;
+  try { json = JSON.parse(text); }
+  catch { throw new Error("Servidor retornou resposta invalida ao enviar a foto."); }
+  if (!res.ok || !json.ok) throw new Error(json.error || "Nao foi possivel enviar a foto.");
+  return json.photoUrl;
+}
+
+async function preparePhotoFile(file) {
+  if (!file?.type?.startsWith("image/")) return file;
+  const bitmap = await createImageBitmap(file);
+  const maxSize = 1024;
+  const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const context = canvas.getContext("2d");
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.82));
+  if (!blob) return file;
+  return new File([blob], "foto.jpg", { type: "image/jpeg" });
+}
 
 // voltar
 btnNovoCadastro?.addEventListener("click", () => {

@@ -595,8 +595,14 @@ async function createAdminUser(event) {
   showAdminMessage("", "");
   const formData = new FormData(els.adminForm);
   const body = Object.fromEntries(formData.entries());
+  const photoFile = formData.get("photo");
+  delete body.photo;
 
   try {
+    if (photoFile && photoFile.size) {
+      body.photoUrl = await uploadPhoto(photoFile);
+    }
+
     const response = await fetch("/api/admin/users", {
       method: "POST",
       headers: {
@@ -615,6 +621,35 @@ async function createAdminUser(event) {
   } catch (error) {
     showAdminMessage(`Erro: ${error.message || error}`, "err");
   }
+}
+
+async function uploadPhoto(file) {
+  const preparedFile = await preparePhotoFile(file);
+  const data = new FormData();
+  data.append("photo", preparedFile, preparedFile.name || file.name || "foto.jpg");
+  const response = await fetch("/api/upload/profile-photo", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: data,
+  });
+  const result = await response.json();
+  if (!response.ok || !result.ok) throw new Error(result.error || "Nao foi possivel enviar a foto.");
+  return result.photoUrl;
+}
+
+async function preparePhotoFile(file) {
+  if (!file?.type?.startsWith("image/")) return file;
+  const bitmap = await createImageBitmap(file);
+  const maxSize = 1024;
+  const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const context = canvas.getContext("2d");
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.82));
+  if (!blob) return file;
+  return new File([blob], "foto.jpg", { type: "image/jpeg" });
 }
 
 async function handleTableAction(action, id) {
