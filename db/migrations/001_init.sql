@@ -3,7 +3,7 @@ create extension if not exists pgcrypto;
 do $$
 begin
   if not exists (select 1 from pg_type where typname = 'user_role') then
-    create type user_role as enum ('DEPUTADO', 'EQUIPE', 'LIDER', 'PESSOA');
+    create type user_role as enum ('EQUIPE', 'COORDENADORES', 'LIDERES', 'CADASTRADOS');
   end if;
 end $$;
 
@@ -13,7 +13,7 @@ create table if not exists users (
   email text not null,
   phone text not null,
   password_hash text not null,
-  role user_role not null default 'PESSOA',
+  role user_role not null default 'CADASTRADOS',
   photo_url text,
   active boolean not null default true,
   consent_accepted boolean not null default false,

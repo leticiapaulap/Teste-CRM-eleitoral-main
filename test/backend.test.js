@@ -35,24 +35,35 @@ test("valida foto segura quando enviada", () => {
   assert.throws(() => assertValidPhotoUrl("javascript:alert(1)", { required: false }), ApiError);
 });
 
-test("cadastro exige foto para lideres e pessoas", () => {
+test("cadastro exige foto para coordenadores, lideres e cadastrados", () => {
   assert.throws(() => normalizeRegisterInput({
     name: "Maria Souza",
     email: "maria@example.com",
     phone: "(61) 99999-0000",
     password: "senha-segura",
-    role: "LIDER",
+    role: "COORDENADORES",
     localidade: "Taguatinga",
     regiao_administrativa: "Taguatinga",
     consent_accepted: true,
   }), ApiError);
 
   assert.throws(() => normalizeRegisterInput({
-    name: "Joao Souza",
-    email: "joao@example.com",
+    name: "Lider Souza",
+    email: "lider@example.com",
     phone: "(61) 98888-0000",
     password: "senha-segura",
-    role: "PESSOA",
+    role: "LIDERES",
+    localidade: "Ceilandia",
+    regiao_administrativa: "Ceilandia",
+    consent_accepted: true,
+  }), ApiError);
+
+  assert.throws(() => normalizeRegisterInput({
+    name: "Joao Souza",
+    email: "joao@example.com",
+    phone: "(61) 97777-0000",
+    password: "senha-segura",
+    role: "CADASTRADOS",
     localidade: "Ceilandia",
     regiao_administrativa: "Ceilandia",
     consent_accepted: true,
@@ -91,11 +102,11 @@ test("monta arvore de indicacoes por parent_user_id", () => {
   assert.equal(tree[0].children[0].children[0].user_id, "n2");
 });
 
-test("permissoes administrativas ficam restritas a deputado e equipe", () => {
-  assert.equal(isAdminRole(ROLES.DEPUTADO), true);
+test("permissoes administrativas ficam restritas a equipe", () => {
   assert.equal(isAdminRole(ROLES.EQUIPE), true);
-  assert.equal(isAdminRole(ROLES.LIDER), false);
-  assert.equal(isAdminRole(ROLES.PESSOA), false);
+  assert.equal(isAdminRole(ROLES.COORDENADORES), false);
+  assert.equal(isAdminRole(ROLES.LIDERES), false);
+  assert.equal(isAdminRole(ROLES.CADASTRADOS), false);
 });
 
 test("gera GeoJSON com propriedades necessarias para o mapa", () => {
@@ -103,7 +114,7 @@ test("gera GeoJSON com propriedades necessarias para o mapa", () => {
     {
       id: "u1",
       name: "Maria",
-      role: "LIDER",
+      role: "LIDERES",
       localidade: "Taguatinga",
       regiao_administrativa: "Taguatinga",
       latitude: -15.835,

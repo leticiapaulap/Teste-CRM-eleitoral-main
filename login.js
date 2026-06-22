@@ -26,7 +26,7 @@ function saveTestLogin() {
     id: "local-test-user",
     name: "Leticia Paula",
     email: TEST_LOGIN.email,
-    role: "DEPUTADO",
+    role: "EQUIPE",
   };
 
   localStorage.setItem("siv_token", "local-test-token");

@@ -16,7 +16,7 @@ const fallbackPoints = [
   {
     id: "l1",
     name: "Maria Souza",
-    role: "LIDER",
+    role: "LIDERES",
     localidade: "Taguatinga Centro",
     regiao_administrativa: "Taguatinga",
     latitude: -15.835,
@@ -31,7 +31,7 @@ const fallbackPoints = [
   {
     id: "p1",
     name: "Joao Silva",
-    role: "PESSOA",
+    role: "CADASTRADOS",
     localidade: "Ceilandia Norte",
     regiao_administrativa: "Ceilandia",
     latitude: -15.819,
@@ -46,7 +46,7 @@ const fallbackPoints = [
   {
     id: "p2",
     name: "Ana Paula",
-    role: "PESSOA",
+    role: "CADASTRADOS",
     localidade: "Samambaia Sul",
     regiao_administrativa: "Samambaia",
     latitude: -15.879,
@@ -61,7 +61,7 @@ const fallbackPoints = [
   {
     id: "l2",
     name: "Carlos Lima",
-    role: "LIDER",
+    role: "LIDERES",
     localidade: "Plano Piloto",
     regiao_administrativa: "Plano Piloto",
     latitude: -15.793,
@@ -76,7 +76,7 @@ const fallbackPoints = [
   {
     id: "p3",
     name: "Fernanda Rocha",
-    role: "PESSOA",
+    role: "CADASTRADOS",
     localidade: "Asa Norte",
     regiao_administrativa: "Plano Piloto",
     latitude: -15.765,
@@ -91,7 +91,7 @@ const fallbackPoints = [
   {
     id: "l3",
     name: "Rafael Costa",
-    role: "LIDER",
+    role: "LIDERES",
     localidade: "Sobradinho",
     regiao_administrativa: "Sobradinho",
     latitude: -15.653,
@@ -106,7 +106,7 @@ const fallbackPoints = [
   {
     id: "p4",
     name: "Beatriz Nunes",
-    role: "PESSOA",
+    role: "CADASTRADOS",
     localidade: "Sobradinho II",
     regiao_administrativa: "Sobradinho II",
     latitude: -15.648,
@@ -121,7 +121,7 @@ const fallbackPoints = [
   {
     id: "p5",
     name: "Luciana Alves",
-    role: "PESSOA",
+    role: "CADASTRADOS",
     localidade: "Gama Leste",
     regiao_administrativa: "Gama",
     latitude: -16.018,
@@ -136,7 +136,7 @@ const fallbackPoints = [
   {
     id: "p6",
     name: "Paulo Mendes",
-    role: "PESSOA",
+    role: "CADASTRADOS",
     localidade: "Recanto das Emas",
     regiao_administrativa: "Recanto das Emas",
     latitude: -15.905,
@@ -151,7 +151,7 @@ const fallbackPoints = [
   {
     id: "p7",
     name: "Simone Araujo",
-    role: "PESSOA",
+    role: "CADASTRADOS",
     localidade: "Planaltina",
     regiao_administrativa: "Planaltina",
     latitude: -15.617,
@@ -218,7 +218,7 @@ init();
 async function init() {
   allPoints = await loadMapPoints();
 
-  if (user.role === "LIDER") {
+  if (user.role === "COORDENADORES" || user.role === "LIDERES") {
     allPoints = allPoints.filter((point) => point.root_leader_id === user.id || token === "local-test-token");
   }
 
@@ -243,7 +243,7 @@ async function loadMapPoints() {
 
 function fillFilters(points) {
   const leaders = uniqueBy(
-    points.filter((point) => point.role === "LIDER"),
+    points.filter((point) => point.role === "COORDENADORES" || point.role === "LIDERES"),
     "id"
   );
   const regions = [...new Set(points.map((point) => point.regiao_administrativa).filter(Boolean))].sort();
@@ -292,8 +292,8 @@ function applyFilters(points) {
 }
 
 function renderMetrics(points) {
-  const leaders = points.filter((point) => point.role === "LIDER").length;
-  const people = points.filter((point) => point.role === "PESSOA").length;
+  const leaders = points.filter((point) => point.role === "LIDERES").length;
+  const people = points.filter((point) => point.role === "CADASTRADOS").length;
   const regions = new Set(points.map((point) => point.regiao_administrativa).filter(Boolean)).size;
   const located = points.filter((point) => hasLocation(point)).length;
 
@@ -312,7 +312,7 @@ function renderMap(points) {
   for (const point of locatedPoints) {
     const marker = document.createElement("button");
     marker.type = "button";
-    marker.className = `mapMarker ${point.role === "LIDER" ? "leaderMarker" : "personMarker"}`;
+    marker.className = `mapMarker ${point.role === "COORDENADORES" || point.role === "LIDERES" ? "leaderMarker" : "personMarker"}`;
     marker.style.left = `${lngToX(point.longitude)}%`;
     marker.style.top = `${latToY(point.latitude)}%`;
     marker.title = `${point.name} - ${point.regiao_administrativa}`;
@@ -334,8 +334,8 @@ function renderRegionAreas(points) {
 
     const lat = average(located.map((point) => Number(point.latitude)));
     const lng = average(located.map((point) => Number(point.longitude)));
-    const leaders = located.filter((point) => point.role === "LIDER").length;
-    const people = located.filter((point) => point.role === "PESSOA").length;
+    const leaders = located.filter((point) => point.role === "LIDERES").length;
+    const people = located.filter((point) => point.role === "CADASTRADOS").length;
 
     const area = document.createElement("button");
     area.type = "button";
@@ -344,7 +344,7 @@ function renderRegionAreas(points) {
     area.style.top = `${latToY(lat)}%`;
     area.style.width = `${Math.max(70, Math.min(150, located.length * 26))}px`;
     area.style.height = area.style.width;
-    area.title = `${group.label}: ${leaders} lider(es), ${people} pessoa(s)`;
+    area.title = `${group.label}: ${leaders} lider(es), ${people} cadastrado(s)`;
     area.setAttribute("aria-label", area.title);
     area.addEventListener("click", () => selectRegion(group.label));
     els.mapOverlay.appendChild(area);
@@ -352,7 +352,7 @@ function renderRegionAreas(points) {
 }
 
 function selectPoint(point) {
-  if (point.role === "LIDER") {
+  if (point.role === "COORDENADORES" || point.role === "LIDERES") {
     selectedLeaderId = point.id;
     els.leader.value = point.id;
     render();
@@ -362,7 +362,7 @@ function selectPoint(point) {
     <strong>${escapeHtml(point.name)}</strong>
     <span>${escapeHtml(point.role)} - ${escapeHtml(point.regiao_administrativa || "Sem regiao")}</span>
     <span>${escapeHtml(point.localidade || "Sem localidade")} | Nivel ${point.level ?? "-"}</span>
-    <span>Lider: ${escapeHtml(point.root_leader_name || "Nao informado")}</span>
+    <span>Responsavel: ${escapeHtml(point.root_leader_name || "Nao informado")}</span>
     <span>Cadastro: ${formatDate(point.created_at)}</span>
   `;
 }
@@ -384,11 +384,11 @@ function renderRegionSummary() {
 function renderRegionLeaders() {
   const region = selectedRegion || els.region.value;
   const leaders = allPoints.filter(
-    (point) => point.role === "LIDER" && (!region || point.regiao_administrativa === region)
+    (point) => (point.role === "COORDENADORES" || point.role === "LIDERES") && (!region || point.regiao_administrativa === region)
   );
 
   if (!leaders.length) {
-    els.regionLeaders.innerHTML = `<div class="emptyState">Clique em uma regiao para ver os lideres.</div>`;
+    els.regionLeaders.innerHTML = `<div class="emptyState">Clique em uma regiao para ver os responsaveis.</div>`;
     return;
   }
 
@@ -416,7 +416,7 @@ function renderRegionLeaders() {
 function renderLeaderNetwork() {
   const leaderId = selectedLeaderId || els.leader.value;
   if (!leaderId) {
-    els.leaderNetwork.innerHTML = `<div class="emptyState">Selecione um lider para ver a rede dele.</div>`;
+    els.leaderNetwork.innerHTML = `<div class="emptyState">Selecione um responsavel para ver a rede dele.</div>`;
     return;
   }
 
@@ -476,7 +476,7 @@ function renderTable(points) {
       (point) => `
         <tr>
           <td><strong>${escapeHtml(point.name)}</strong></td>
-          <td><span class="rolePill ${point.role === "LIDER" ? "roleLeader" : "rolePerson"}">${escapeHtml(point.role)}</span></td>
+          <td><span class="rolePill ${point.role === "COORDENADORES" || point.role === "LIDERES" ? "roleLeader" : "rolePerson"}">${escapeHtml(point.role)}</span></td>
           <td>${escapeHtml(point.localidade || "-")}<small>${escapeHtml(point.regiao_administrativa || "")}</small></td>
           <td>${escapeHtml(point.root_leader_name || "-")}</td>
           <td>${point.level ?? "-"}</td>

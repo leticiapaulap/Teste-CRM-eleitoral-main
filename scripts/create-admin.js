@@ -7,8 +7,8 @@ const email = process.env.ADMIN_EMAIL;
 const password = process.env.ADMIN_PASSWORD;
 const name = process.env.ADMIN_NAME || "Administrador SIV";
 const phone = process.env.ADMIN_PHONE || "61999999999";
-const role = process.env.ADMIN_ROLE || "DEPUTADO";
-const photoUrl = process.env.ADMIN_PHOTO_URL || "mock://profile-photos/admin.png";
+const role = process.env.ADMIN_ROLE || "EQUIPE";
+const photoUrl = process.env.ADMIN_PHOTO_URL || null;
 const localidade = process.env.ADMIN_LOCALIDADE || "Distrito Federal";
 const regiaoAdministrativa = process.env.ADMIN_REGIAO_ADMINISTRATIVA || "Distrito Federal";
 
@@ -22,8 +22,8 @@ if (password.length < 8) {
   process.exit(1);
 }
 
-if (!["DEPUTADO", "EQUIPE"].includes(role)) {
-  console.error("ADMIN_ROLE deve ser DEPUTADO ou EQUIPE.");
+if (role !== "EQUIPE") {
+  console.error("ADMIN_ROLE deve ser EQUIPE.");
   process.exit(1);
 }
 
@@ -32,7 +32,9 @@ const passwordHash = await hashPassword(password);
 
 await withTransaction(async (client) => {
   const existing = await client.query("select id from users where lower(email) = lower($1)", [email]);
+  let userId;
   if (existing.rows[0]) {
+    userId = existing.rows[0].id;
     await client.query(
       `update users
           set name = $1,
@@ -46,17 +48,15 @@ await withTransaction(async (client) => {
         where lower(email) = lower($6)`,
       [name, phone, passwordHash, role, photoUrl, email]
     );
-    console.log(`Usuario administrativo atualizado: ${email}`);
-    return;
+  } else {
+    const userResult = await client.query(
+      `insert into users (name, email, phone, password_hash, role, photo_url, active, consent_accepted, consent_accepted_at)
+       values ($1, $2, $3, $4, $5, $6, true, true, now())
+       returning id`,
+      [name, email, phone, passwordHash, role, photoUrl]
+    );
+    userId = userResult.rows[0].id;
   }
-
-  const userResult = await client.query(
-    `insert into users (name, email, phone, password_hash, role, photo_url, active, consent_accepted, consent_accepted_at)
-     values ($1, $2, $3, $4, $5, $6, true, true, now())
-     returning id`,
-    [name, email, phone, passwordHash, role, photoUrl]
-  );
-  const userId = userResult.rows[0].id;
 
   await client.query(
     `insert into user_locations (user_id, localidade, regiao_administrativa)
@@ -74,17 +74,15 @@ await withTransaction(async (client) => {
     [userId]
   );
 
-  if (role === "DEPUTADO") {
-    const code = makeReferralCode("SIV");
-    await client.query(
-      `insert into leader_profiles (user_id, referral_code, referral_url)
-       values ($1, $2, $3)
-       on conflict (user_id) do nothing`,
-      [userId, code, makeReferralUrl(config.appUrl, code)]
-    );
-  }
+  const code = makeReferralCode("SIV");
+  await client.query(
+    `insert into leader_profiles (user_id, referral_code, referral_url)
+     values ($1, $2, $3)
+     on conflict (user_id) do nothing`,
+    [userId, code, makeReferralUrl(config.appUrl, code)]
+  );
 
-  console.log(`Usuario administrativo criado: ${email}`);
+  console.log(`Usuario administrativo ${existing.rows[0] ? "atualizado" : "criado"}: ${email}`);
 });
 
 process.exit(0);

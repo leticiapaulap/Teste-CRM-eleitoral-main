@@ -46,13 +46,14 @@
         <label for="filterRole">Tipo</label>
         <select id="filterRole">
           <option value="">Todos</option>
-          <option value="LIDER">Lideres</option>
-          <option value="PESSOA">Pessoas</option>
+          <option value="COORDENADORES">Coordenadores</option>
+          <option value="LIDERES">Lideres</option>
+          <option value="CADASTRADOS">Cadastrados</option>
         </select>
       </div>
 
       <div>
-        <label for="filterLeader">Lider</label>
+        <label for="filterLeader">Responsavel</label>
         <select id="filterLeader">
           <option value="">Todos</option>
         </select>
@@ -69,7 +70,7 @@
         <label for="filterLevel">Nivel</label>
         <select id="filterLevel">
           <option value="">Todos</option>
-          <option value="0">0 - Lider raiz</option>
+          <option value="0">0 - Responsavel raiz</option>
           <option value="1">1 - Diretos</option>
           <option value="2">2 - Segundo nivel</option>
           <option value="3">3+</option>
@@ -88,7 +89,7 @@
         <strong id="metricLeaders">0</strong>
       </article>
       <article class="metricCard">
-        <span>Pessoas cadastradas</span>
+        <span>Cadastrados</span>
         <strong id="metricUsers">0</strong>
       </article>
       <article class="metricCard">
@@ -110,7 +111,7 @@
           </div>
           <div class="mapLegend" aria-label="Legenda do mapa">
             <span><i class="legendDot leaderDot"></i>Lider</span>
-            <span><i class="legendDot personDot"></i>Pessoa</span>
+            <span><i class="legendDot personDot"></i>Cadastrado</span>
           </div>
         </div>
 
@@ -142,10 +143,10 @@
         <h3 class="summaryTitle">Por regiao</h3>
         <div id="regionSummary" class="summaryList"></div>
 
-        <h3 class="summaryTitle">Lideres da regiao</h3>
+        <h3 class="summaryTitle">Responsaveis da regiao</h3>
         <div id="regionLeaders" class="summaryList"></div>
 
-        <h3 class="summaryTitle">Rede do lider</h3>
+        <h3 class="summaryTitle">Rede do responsavel</h3>
         <div id="leaderNetwork" class="summaryList"></div>
       </aside>
     </section>
@@ -155,7 +156,7 @@
         <div class="panelHeader">
           <div>
             <h2>Cadastros</h2>
-            <p id="tableHint">Lista filtrada de lideres e pessoas cadastradas.</p>
+            <p id="tableHint">Lista filtrada de coordenadores, lideres e cadastrados.</p>
           </div>
         </div>
 
@@ -166,7 +167,7 @@
                 <th>Nome</th>
                 <th>Tipo</th>
                 <th>Localidade</th>
-                <th>Lider responsavel</th>
+                <th>Responsavel</th>
                 <th>Nivel</th>
                 <th>Cadastro</th>
               </tr>

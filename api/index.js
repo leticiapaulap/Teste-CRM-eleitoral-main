@@ -92,7 +92,7 @@ async function leaderNetwork(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { requireAuth, ROLES } = await import("../lib/security.js");
   const { getLeaderNetwork } = await import("../lib/user-service.js");
-  const user = await requireAuth(req, [ROLES.LIDER]);
+  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES]);
   const q = getQuery(req);
   const result = await getLeaderNetwork(user.id, {
     page: q.page || 1,
@@ -115,7 +115,7 @@ async function leaderReferralLink(req, res) {
   const { query } = await import("../lib/db.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
   const { ensureLeaderProfile } = await import("../lib/user-service.js");
-  const user = await requireAuth(req, [ROLES.LIDER]);
+  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES]);
   const profile = await ensureLeaderProfile({ query }, user.id, getConfig().appUrl);
   return sendJson(res, 200, { ok: true, referralCode: profile.referral_code, referralUrl: profile.referral_url });
 }
@@ -124,7 +124,7 @@ async function leaderMetrics(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { query } = await import("../lib/db.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
-  const user = await requireAuth(req, [ROLES.LIDER]);
+  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES]);
   const totals = await query(
     `with recursive subtree as (
        select user_id, parent_user_id from network_nodes where user_id = $1
@@ -164,8 +164,8 @@ async function adminLeaders(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { listUsers } = await import("../lib/admin-service.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
-  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
-  const result = await listUsers({ ...getQuery(req), role: "LIDER" });
+  await requireAuth(req, [ROLES.EQUIPE]);
+  const result = await listUsers({ ...getQuery(req), role: ROLES.LIDERES });
   return sendJson(res, 200, { ok: true, ...result });
 }
 
@@ -173,7 +173,7 @@ async function adminUsers(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { listUsers } = await import("../lib/admin-service.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
-  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
+  await requireAuth(req, [ROLES.EQUIPE]);
   const result = await listUsers(getQuery(req));
   return sendJson(res, 200, { ok: true, ...result });
 }
@@ -183,7 +183,7 @@ async function adminNetwork(req, res) {
   const { query } = await import("../lib/db.js");
   const { buildTree } = await import("../lib/referrals.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
-  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
+  await requireAuth(req, [ROLES.EQUIPE]);
   const q = getQuery(req);
   const result = await query(
     `select u.id as user_id, u.name, u.email, u.phone, u.role, u.photo_url, u.created_at,
@@ -202,7 +202,7 @@ async function adminLeaderNetwork(req, res, id) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { requireAuth, ROLES } = await import("../lib/security.js");
   const { getLeaderNetwork } = await import("../lib/user-service.js");
-  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
+  await requireAuth(req, [ROLES.EQUIPE]);
   const q = getQuery(req);
   const result = await getLeaderNetwork(id, {
     page: q.page || 1,
@@ -223,7 +223,7 @@ async function adminUserById(req, res, id) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { query } = await import("../lib/db.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
-  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
+  await requireAuth(req, [ROLES.EQUIPE]);
   const result = await query(
     `select u.id, u.name, u.email, u.phone, u.role, u.photo_url, u.active, u.consent_accepted, u.consent_accepted_at, u.created_at, u.updated_at,
             ul.localidade, ul.regiao_administrativa, ul.latitude, ul.longitude,
@@ -242,7 +242,7 @@ async function adminMetrics(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { getAdminMetrics } = await import("../lib/admin-service.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
-  await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE]);
+  await requireAuth(req, [ROLES.EQUIPE]);
   const metrics = await getAdminMetrics();
   return sendJson(res, 200, { ok: true, metrics });
 }
@@ -251,7 +251,7 @@ async function mapResponse(req, res, forcedRole, geojson = false) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { getMapSummary, listMapPoints, toGeoJson } = await import("../lib/map-service.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
-  const user = await requireAuth(req, [ROLES.DEPUTADO, ROLES.EQUIPE, ROLES.LIDER]);
+  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES]);
   const q = forcedRole ? { ...getQuery(req), role: forcedRole } : getQuery(req);
   const items = await listMapPoints(user, q);
   if (geojson) return sendJson(res, 200, toGeoJson(items));
@@ -307,7 +307,7 @@ export default async function handler(req, res) {
     if (route === "admin/metrics") return await adminMetrics(req, res);
     if (leaderNetworkMatch) return await adminLeaderNetwork(req, res, leaderNetworkMatch.id);
     if (userMatch) return await adminUserById(req, res, userMatch.id);
-    if (route === "map/leaders") return await mapResponse(req, res, "LIDER");
+    if (route === "map/leaders") return await mapResponse(req, res, "LIDERES");
     if (route === "map/users") return await mapResponse(req, res);
     if (route === "map/network") return await mapResponse(req, res);
     if (route === "map/geojson") return await mapResponse(req, res, null, true);

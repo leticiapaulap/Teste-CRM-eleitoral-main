@@ -33,8 +33,8 @@ ADMIN_EMAIL=
 ADMIN_PASSWORD=
 ADMIN_NAME=Administrador SIV
 ADMIN_PHONE=61999999999
-ADMIN_ROLE=DEPUTADO
-ADMIN_PHOTO_URL=mock://profile-photos/admin.png
+ADMIN_ROLE=EQUIPE
+ADMIN_PHOTO_URL=
 ADMIN_LOCALIDADE=Distrito Federal
 ADMIN_REGIAO_ADMINISTRATIVA=Distrito Federal
 ```
@@ -111,7 +111,7 @@ Autenticacao:
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 
-Lider:
+Coordenadores e lideres:
 
 - `GET /api/leaders/me/network`
 - `GET /api/leaders/me/referral-link`
@@ -170,7 +170,7 @@ Content-Type: application/json
   "email": "maria@example.com",
   "phone": "(61) 99999-0000",
   "password": "senha-segura",
-  "role": "LIDER",
+  "role": "LIDERES",
   "photoUrl": "mock://profile-photos/perfil.png",
   "localidade": "Taguatinga",
   "regiao_administrativa": "Taguatinga",
@@ -220,7 +220,7 @@ Cadastro por indicacao:
   "email": "joao@example.com",
   "phone": "(61) 98888-0000",
   "password": "senha-segura",
-  "role": "PESSOA",
+  "role": "CADASTRADOS",
   "photoUrl": "mock://profile-photos/joao.png",
   "localidade": "Ceilandia",
   "regiao_administrativa": "Ceilandia",
@@ -231,25 +231,25 @@ Cadastro por indicacao:
 }
 ```
 
-Rede do lider:
+Rede do responsavel:
 
 ```http
 GET /api/leaders/me/network?format=tree
-Authorization: Bearer TOKEN_DO_LIDER
+Authorization: Bearer TOKEN_DO_RESPONSAVEL
 ```
 
 Rede completa administrativa:
 
 ```http
 GET /api/admin/network?format=tree
-Authorization: Bearer TOKEN_DEPUTADO_OU_EQUIPE
+Authorization: Bearer TOKEN_EQUIPE
 ```
 
 GeoJSON:
 
 ```http
-GET /api/map/geojson?role=LIDER
-Authorization: Bearer TOKEN_DEPUTADO_OU_EQUIPE
+GET /api/map/geojson?role=LIDERES
+Authorization: Bearer TOKEN_EQUIPE
 ```
 
 ## Backend para mapa satelite do DF
@@ -258,9 +258,9 @@ As rotas de mapa retornam dados prontos para o front plotar marcadores em biblio
 
 Regras:
 
-- `DEPUTADO` e `EQUIPE` visualizam todos os pontos.
-- `LIDER` visualiza apenas a propria sub-rede.
-- `PESSOA` nao acessa as rotas de mapa.
+- `EQUIPE` visualiza todos os pontos.
+- `COORDENADORES` e `LIDERES` visualizam apenas a propria sub-rede.
+- `CADASTRADOS` nao acessa as rotas de mapa.
 
 Campos principais retornados por ponto:
 
@@ -268,13 +268,13 @@ Campos principais retornados por ponto:
 {
   "id": "uuid",
   "name": "Maria Souza",
-  "role": "LIDER",
+  "role": "LIDERES",
   "localidade": "Taguatinga",
   "regiao_administrativa": "Taguatinga",
   "latitude": -15.835,
   "longitude": -48.056,
   "root_leader_id": "uuid",
-  "root_leader_name": "Lider responsavel",
+  "root_leader_name": "Responsavel",
   "parent_user_id": "uuid",
   "parent_user_name": "Indicador direto",
   "level": 1,
@@ -284,7 +284,7 @@ Campos principais retornados por ponto:
 
 Filtros aceitos:
 
-- `role=LIDER` ou `role=PESSOA`
+- `role=COORDENADORES`, `role=LIDERES` ou `role=CADASTRADOS`
 - `leader_id=uuid`
 - `localidade=Taguatinga`
 - `regiao_administrativa=Taguatinga`
@@ -321,25 +321,25 @@ Resposta inclui agrupamentos:
 GeoJSON:
 
 ```http
-GET /api/map/geojson?role=LIDER
+GET /api/map/geojson?role=LIDERES
 Authorization: Bearer TOKEN
 ```
 
 Rede de indicacao para mapa:
 
 ```http
-GET /api/map/network?leader_id=UUID_DO_LIDER
-Authorization: Bearer TOKEN_DEPUTADO_OU_EQUIPE
+GET /api/map/network?leader_id=UUID_DO_RESPONSAVEL
+Authorization: Bearer TOKEN_EQUIPE
 ```
 
 ## Criar primeiro usuario administrativo
 
-O cadastro publico bloqueia `DEPUTADO` e `EQUIPE`. Crie o primeiro admin por SQL controlado ou habilite temporariamente `ALLOW_ADMIN_REGISTER=true` apenas em ambiente seguro, cadastre o admin, e volte para `false`.
+O cadastro publico bloqueia `EQUIPE`. Crie o primeiro admin por SQL controlado ou habilite temporariamente `ALLOW_ADMIN_REGISTER=true` apenas em ambiente seguro, cadastre o admin, e volte para `false`.
 
 Tambem existe um script para criar ou atualizar o primeiro admin sem gravar senha no codigo:
 
 ```bash
-ADMIN_EMAIL=lelekapaula@hotmail.com ADMIN_PASSWORD=12345678 ADMIN_ROLE=DEPUTADO npm run admin:create
+ADMIN_EMAIL=lelekapaula@hotmail.com ADMIN_PASSWORD=12345678 ADMIN_ROLE=EQUIPE npm run admin:create
 ```
 
 No PowerShell:
@@ -347,7 +347,7 @@ No PowerShell:
 ```powershell
 $env:ADMIN_EMAIL="lelekapaula@hotmail.com"
 $env:ADMIN_PASSWORD="12345678"
-$env:ADMIN_ROLE="DEPUTADO"
+$env:ADMIN_ROLE="EQUIPE"
 npm run admin:create
 ```
 
@@ -362,7 +362,7 @@ npm test
 Cobertura basica:
 
 - validacao de email, telefone e coordenadas;
-- foto opcional para admins e obrigatoria para lideres/pessoas;
+- foto opcional para equipe e obrigatoria para coordenadores/lideres/cadastrados;
 - geracao de link por `APP_URL`;
 - arvore de indicacoes;
 - papeis administrativos.
@@ -370,6 +370,6 @@ Cobertura basica:
 ## Observacoes para conectar o front futuramente
 
 - O front atual ainda usa `/api/siv` e nao foi alterado.
-- Para usar o novo backend, o front precisara enviar credenciais. A foto e opcional apenas para admins; lideres e pessoas precisam enviar foto.
+- Para usar o novo backend, o front precisara enviar credenciais. A foto e opcional apenas para equipe; coordenadores, lideres e cadastrados precisam enviar foto.
 - O cadastro visual atual nao possui campos de email, senha e foto.
-- As telas de login, painel administrativo, painel do lider e mapa ainda precisam ser criadas ou conectadas no front.
+- As telas de login, painel administrativo, painel dos responsaveis e mapa ainda precisam ser criadas ou conectadas no front.
