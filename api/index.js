@@ -27,6 +27,20 @@ function getDynamicId(route, pattern) {
   return params;
 }
 
+function getPublicAppUrl(req) {
+  const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim();
+  const forwardedHost = String(req.headers["x-forwarded-host"] || "").split(",")[0].trim();
+  const host = forwardedHost || req.headers.host;
+  const proto = forwardedProto || (host?.includes("localhost") ? "http" : "https");
+  if (host && !String(host).includes("localhost")) return `${proto}://${host}`;
+
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) return `https://${vercelUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
+
+  const fallback = process.env.APP_URL || "http://localhost:3000";
+  return fallback.replace(/\/$/, "");
+}
+
 async function authRegister(req, res) {
   if (req.method !== "POST") return methodNotAllowed(res, ["POST"]);
   const { parseMultipart } = await import("../lib/multipart.js");
@@ -49,7 +63,7 @@ async function authRegister(req, res) {
     input = await readJsonOrForm(req);
   }
 
-  const result = await createUser(input, uploadMetadata);
+  const result = await createUser(input, uploadMetadata, { appUrl: getPublicAppUrl(req) });
   const token = signToken(result.user);
   return sendJson(res, 201, { ok: true, user: result.user, leaderProfile: result.leaderProfile, token });
 }
@@ -140,7 +154,7 @@ async function leaderReferralLink(req, res) {
   const { requireAuth, ROLES } = await import("../lib/security.js");
   const { ensureLeaderProfile } = await import("../lib/user-service.js");
   const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES, ROLES.CADASTRADOS]);
-  const profile = await ensureLeaderProfile({ query }, user.id, getConfig().appUrl);
+  const profile = await ensureLeaderProfile({ query }, user.id, getPublicAppUrl(req));
   return sendJson(res, 200, { ok: true, referralCode: profile.referral_code, referralUrl: profile.referral_url });
 }
 
@@ -196,16 +210,15 @@ async function adminLeaders(req, res) {
 async function adminUsers(req, res) {
   if (!["GET", "POST"].includes(req.method)) return methodNotAllowed(res, ["GET", "POST"]);
   const { ensureReferralLinksForAll, listUsers } = await import("../lib/admin-service.js");
-  const { getConfig } = await import("../lib/config.js");
   const { createUser } = await import("../lib/user-service.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
   await requireAuth(req, [ROLES.EQUIPE]);
   if (req.method === "POST") {
     const input = await readJsonOrForm(req);
-    const result = await createUser(input, null, { allowAdminRole: true });
+    const result = await createUser(input, null, { allowAdminRole: true, appUrl: getPublicAppUrl(req) });
     return sendJson(res, 201, { ok: true, user: result.user, leaderProfile: result.leaderProfile });
   }
-  await ensureReferralLinksForAll(getConfig().appUrl);
+  await ensureReferralLinksForAll(getPublicAppUrl(req));
   const result = await listUsers(getQuery(req));
   return sendJson(res, 200, { ok: true, ...result });
 }
