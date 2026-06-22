@@ -68,6 +68,38 @@ async function authRegister(req, res) {
   return sendJson(res, 201, { ok: true, user: result.user, leaderProfile: result.leaderProfile, token });
 }
 
+async function sivRegister(req, res) {
+  if (req.method !== "POST") return methodNotAllowed(res, ["POST"]);
+  const { randomBytes } = await import("node:crypto");
+  const { createUser } = await import("../lib/user-service.js");
+  const { ROLES } = await import("../lib/security.js");
+  const input = await readJsonOrForm(req);
+  const phone = String(input.whatsapp || input.phone || input.telefone || "").replace(/\D/g, "");
+  const generatedEmail = `${phone || randomBytes(4).toString("hex")}.${Date.now()}@cadastro.siv.local`;
+  const result = await createUser(
+    {
+      name: input.name || input.nome,
+      email: input.email || generatedEmail,
+      phone: input.phone || input.telefone || input.whatsapp,
+      password: input.password || randomBytes(12).toString("hex"),
+      role: ROLES.CADASTRADOS,
+      photoUrl: input.photoUrl || input.photo_url || "/img/LOGO-SIV.png",
+      localidade: input.localidade || input.bairro,
+      regiao_administrativa: input.regiao_administrativa || input.ra,
+      referralCode: input.referralCode || input.referral_code || input.ref,
+      consent_accepted: input.consent_accepted ?? input.aceite_lgpd ?? true,
+    },
+    null,
+    { appUrl: getPublicAppUrl(req) }
+  );
+  return sendJson(res, 201, {
+    ok: true,
+    codigo_pessoa: result.leaderProfile?.referral_code,
+    invite_link: result.leaderProfile?.referral_url,
+    user: result.user,
+  });
+}
+
 async function authLogin(req, res) {
   if (req.method !== "POST") return methodNotAllowed(res, ["POST"]);
   const { canLogin, signToken, verifyPassword } = await import("../lib/security.js");
@@ -339,6 +371,7 @@ export default async function handler(req, res) {
     const userMatch = getDynamicId(route, "admin/users/:id");
 
     if (route === "auth/register") return await authRegister(req, res);
+    if (route === "siv") return await sivRegister(req, res);
     if (route === "auth/login") return await authLogin(req, res);
     if (route === "auth/me") return await authMe(req, res);
     if (route === "contact/messages") return await contactMessages(req, res);

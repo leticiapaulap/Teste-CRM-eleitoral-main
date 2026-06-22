@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/cadastro",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/api/siv",
+      "destination": "/api?route=siv"
+    },
+    {
       "source": "/api/auth/:path*",
       "destination": "/api?route=auth/:path*"
     },

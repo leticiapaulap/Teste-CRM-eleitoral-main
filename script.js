@@ -185,7 +185,7 @@ form.addEventListener("submit", async (e) => {
     if (!link) {
       // fallback: cria link com o código da pessoa
       const publicOrigin = location.hostname.includes("localhost") ? PUBLIC_APP_URL : location.origin;
-      link = `${publicOrigin.replace(/\/$/, "")}${location.pathname}?ref=${encodeURIComponent(codigo)}`;
+      link = `${publicOrigin.replace(/\/$/, "")}/?ref=${encodeURIComponent(codigo)}`;
     }
 
     // ✅ Mostra link em ambos os lugares

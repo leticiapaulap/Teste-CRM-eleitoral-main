@@ -732,7 +732,7 @@ function getPublicReferralUrl(point) {
   const currentOrigin = window.location.origin && !window.location.hostname.includes("localhost")
     ? window.location.origin
     : PUBLIC_APP_URL;
-  return `${currentOrigin.replace(/\/$/, "")}/cadastro?ref=${encodeURIComponent(code)}`;
+  return `${currentOrigin.replace(/\/$/, "")}/?ref=${encodeURIComponent(code)}`;
 }
 
 function extractReferralCode(url) {
