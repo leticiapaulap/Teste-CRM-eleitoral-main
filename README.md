@@ -140,6 +140,11 @@ Upload:
 
 - `POST /api/upload/profile-photo`
 
+Contato:
+
+- `POST /api/contact/messages`
+- `GET /api/contact/messages` somente `EQUIPE`
+
 ## Testar no Postman/Insomnia
 
 Upload de foto de perfil:

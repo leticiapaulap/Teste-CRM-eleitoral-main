@@ -413,6 +413,85 @@ body:not(.isTeam) .adminOnlyColumn{
   color:#fff;
 }
 
+.linkCell{
+  display:block;
+  max-width:220px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--blue-700);
+}
+
+.messageList{
+  display:grid;
+  gap:10px;
+}
+
+.messageItem{
+  border:1px solid #e4ebfb;
+  border-radius:10px;
+  background:#f7f9ff;
+  padding:10px;
+}
+
+.messageItem div{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.messageItem strong,
+.messageItem span,
+.messageItem small{
+  display:block;
+}
+
+.messageItem span,
+.messageItem small{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.messageItem p{
+  margin:8px 0;
+  color:#223553;
+  font-size:13px;
+  line-height:1.35;
+}
+
+.contactBox{
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid #e4ebfb;
+}
+
+.contactBox h3{
+  margin:0 0 4px;
+  color:#13233d;
+  font-size:16px;
+}
+
+.contactBox p{
+  margin:0 0 10px;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.contactForm{
+  display:grid;
+  gap:8px;
+}
+
+.contactForm textarea{
+  width:100%;
+  min-height:88px;
+  padding:12px;
+  border:1px solid #d7dfed;
+  border-radius:12px;
+  resize:vertical;
+  font:inherit;
+}
+
 .dashboardLink{
   text-decoration:none;
 }

@@ -163,13 +163,26 @@
               <input id="inviteLink" readonly />
               <button type="button" id="btnCopy" class="btnSecondary">Copiar</button>
             </div>
-            <div class="inviteSub">Compartilhe este link para formar a rede em árvore.</div>
+            <div class="inviteSub">Guarde este link. Ele permite que novas pessoas se cadastrem abaixo de você na árvore.</div>
           </div>
 
           <p class="smallnote">
             Ao enviar, você concorda com os termos acima.
           </p>
         </form>
+
+        <section class="contactBox" aria-label="Entrar em contato">
+          <h3>Entrar em contato</h3>
+          <p>Envie uma mensagem para a equipe pelo chat online.</p>
+          <form id="contactForm" class="contactForm">
+            <input id="contactName" name="name" placeholder="Seu nome" required />
+            <input id="contactPhone" name="phone" placeholder="WhatsApp" />
+            <input id="contactEmail" name="email" type="email" placeholder="Email" />
+            <textarea id="contactMessage" name="message" placeholder="Digite sua mensagem" required></textarea>
+            <button id="btnContact" type="submit">Enviar mensagem</button>
+            <div id="contactMsg" class="msg"></div>
+          </form>
+        </section>
       </div>
 
       <!-- TELA SUCESSO (inicia escondida) -->
@@ -192,7 +205,7 @@
             <input id="inviteLinkSuccess" readonly />
             <button type="button" id="btnCopySuccess" class="btnSecondary">Copiar</button>
           </div>
-          <div class="inviteSub">Compartilhe este link para formar a rede em árvore.</div>
+          <div class="inviteSub">Guarde este link. Ele permite que novas pessoas se cadastrem abaixo de você na árvore.</div>
         </div>
       </div>
     </section>

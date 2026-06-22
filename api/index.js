@@ -56,7 +56,7 @@ async function authRegister(req, res) {
 
 async function authLogin(req, res) {
   if (req.method !== "POST") return methodNotAllowed(res, ["POST"]);
-  const { signToken, verifyPassword } = await import("../lib/security.js");
+  const { canLogin, signToken, verifyPassword } = await import("../lib/security.js");
   const { getUserByEmail } = await import("../lib/user-service.js");
   const { requireString, validateEmail } = await import("../lib/validation.js");
 
@@ -67,8 +67,30 @@ async function authLogin(req, res) {
   if (!user || !(await verifyPassword(password, user.password_hash))) {
     throw new ApiError(401, "Credenciais invalidas.");
   }
+  if (!canLogin(user.role)) {
+    throw new ApiError(403, "Login permitido apenas para equipe e coordenadores.");
+  }
   const token = signToken(user);
   return sendJson(res, 200, { ok: true, token, user: sanitizeUser(user) });
+}
+
+async function contactMessages(req, res) {
+  const { requireAuth, ROLES } = await import("../lib/security.js");
+  const { createContactMessage, listContactMessages } = await import("../lib/admin-service.js");
+
+  if (req.method === "POST") {
+    const input = await readJsonOrForm(req);
+    const message = await createContactMessage(input);
+    return sendJson(res, 201, { ok: true, message });
+  }
+
+  if (req.method === "GET") {
+    await requireAuth(req, [ROLES.EQUIPE]);
+    const result = await listContactMessages(getQuery(req));
+    return sendJson(res, 200, { ok: true, ...result });
+  }
+
+  return methodNotAllowed(res, ["GET", "POST"]);
 }
 
 async function authMe(req, res) {
@@ -173,7 +195,8 @@ async function adminLeaders(req, res) {
 
 async function adminUsers(req, res) {
   if (!["GET", "POST"].includes(req.method)) return methodNotAllowed(res, ["GET", "POST"]);
-  const { listUsers } = await import("../lib/admin-service.js");
+  const { ensureReferralLinksForAll, listUsers } = await import("../lib/admin-service.js");
+  const { getConfig } = await import("../lib/config.js");
   const { createUser } = await import("../lib/user-service.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
   await requireAuth(req, [ROLES.EQUIPE]);
@@ -182,6 +205,7 @@ async function adminUsers(req, res) {
     const result = await createUser(input, null, { allowAdminRole: true });
     return sendJson(res, 201, { ok: true, user: result.user, leaderProfile: result.leaderProfile });
   }
+  await ensureReferralLinksForAll(getConfig().appUrl);
   const result = await listUsers(getQuery(req));
   return sendJson(res, 200, { ok: true, ...result });
 }
@@ -304,6 +328,7 @@ export default async function handler(req, res) {
     if (route === "auth/register") return await authRegister(req, res);
     if (route === "auth/login") return await authLogin(req, res);
     if (route === "auth/me") return await authMe(req, res);
+    if (route === "contact/messages") return await contactMessages(req, res);
     if (route === "health") return await healthCheck(req, res);
     if (route === "upload/profile-photo") return await uploadProfilePhoto(req, res);
     if (route === "leaders/me/network") return await leaderNetwork(req, res);

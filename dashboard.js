@@ -177,6 +177,9 @@ const els = {
   referralLink: document.getElementById("profileReferralLink"),
   copyReferral: document.getElementById("btnCopyReferral"),
   adminPanel: document.getElementById("adminPanel"),
+  messagesPanel: document.getElementById("teamMessagesPanel"),
+  messagesList: document.getElementById("contactMessagesList"),
+  refreshMessages: document.getElementById("btnRefreshMessages"),
   adminForm: document.getElementById("adminCreateForm"),
   adminMsg: document.getElementById("adminMsg"),
   emailVisible: document.getElementById("btnEmailVisible"),
@@ -223,6 +226,7 @@ els.leader.addEventListener("input", () => {
 els.copyReferral?.addEventListener("click", copyReferralLink);
 els.adminForm?.addEventListener("submit", createAdminUser);
 els.emailVisible?.addEventListener("click", () => emailUsers(filteredPoints));
+els.refreshMessages?.addEventListener("click", loadContactMessages);
 
 init();
 
@@ -260,7 +264,9 @@ async function loadProfile() {
 function configureAccess() {
   isTeam = user?.role === "EQUIPE";
   if (els.adminPanel) els.adminPanel.hidden = !isTeam;
+  if (els.messagesPanel) els.messagesPanel.hidden = !isTeam;
   document.body.classList.toggle("isTeam", isTeam);
+  if (isTeam) loadContactMessages();
 }
 
 async function loadMapPoints() {
@@ -523,7 +529,7 @@ function renderSummaryList(container, items, options = {}) {
 
 function renderTable(points) {
   if (!points.length) {
-    els.table.innerHTML = `<tr><td colspan="${isTeam ? 8 : 6}">Nenhum cadastro encontrado.</td></tr>`;
+    els.table.innerHTML = `<tr><td colspan="${isTeam ? 9 : 6}">Nenhum cadastro encontrado.</td></tr>`;
     return;
   }
 
@@ -536,12 +542,14 @@ function renderTable(points) {
           ${isTeam ? `<td>${escapeHtml(point.email || "-")}<small>${escapeHtml(point.phone || "")}</small></td>` : ""}
           <td>${escapeHtml(point.localidade || "-")}<small>${escapeHtml(point.regiao_administrativa || "")}</small></td>
           <td>${escapeHtml(point.root_leader_name || "-")}</td>
+          ${isTeam ? `<td>${renderReferralCell(point)}</td>` : ""}
           <td>${point.level ?? "-"}</td>
           <td>${formatDate(point.created_at)}</td>
           ${isTeam ? `
             <td>
               <div class="tableActions">
                 <button type="button" class="btnTiny" data-action="email" data-id="${escapeHtml(point.id)}">Email</button>
+                <button type="button" class="btnTiny" data-action="copy-link" data-id="${escapeHtml(point.id)}">Link</button>
                 <button type="button" class="btnTiny" data-action="edit" data-id="${escapeHtml(point.id)}">Editar</button>
                 <button type="button" class="btnTiny btnDanger" data-action="delete" data-id="${escapeHtml(point.id)}">Excluir</button>
               </div>
@@ -593,6 +601,12 @@ async function handleTableAction(action, id) {
 
     if (action === "email") {
       emailUsers([person]);
+      return;
+    }
+
+    if (action === "copy-link") {
+      await copyText(person.referral_url || "");
+      showAdminMessage(person.referral_url ? "Link copiado." : "Este cadastro ainda nao tem link salvo.", person.referral_url ? "ok" : "err");
       return;
     }
 
@@ -655,16 +669,62 @@ function emailUsers(points) {
   window.location.href = `mailto:?bcc=${encodeURIComponent(emails.join(","))}`;
 }
 
+function renderReferralCell(point) {
+  if (!point.referral_url) return "-";
+  return `<small>${escapeHtml(point.referral_code || "")}</small><span class="linkCell">${escapeHtml(point.referral_url)}</span>`;
+}
+
+async function loadContactMessages() {
+  if (!isTeam || !els.messagesList) return;
+  try {
+    const response = await fetch("/api/contact/messages?limit=50", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel carregar mensagens.");
+    renderContactMessages(data.items || []);
+  } catch (error) {
+    els.messagesList.innerHTML = `<div class="emptyState">Erro ao carregar mensagens: ${escapeHtml(error.message || error)}</div>`;
+  }
+}
+
+function renderContactMessages(messages) {
+  if (!messages.length) {
+    els.messagesList.innerHTML = `<div class="emptyState">Nenhuma mensagem recebida.</div>`;
+    return;
+  }
+
+  els.messagesList.innerHTML = messages.map((message) => `
+    <article class="messageItem">
+      <div>
+        <strong>${escapeHtml(message.name)}</strong>
+        <span>${formatDate(message.created_at)}</span>
+      </div>
+      <p>${escapeHtml(message.message)}</p>
+      <small>${escapeHtml(message.email || "-")} ${escapeHtml(message.phone || "")}</small>
+    </article>
+  `).join("");
+}
+
+async function copyText(text) {
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const input = document.createElement("input");
+    input.value = text;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand("copy");
+    input.remove();
+  }
+}
+
 async function copyReferralLink() {
   if (!els.referralLink?.value) return;
-  try {
-    await navigator.clipboard.writeText(els.referralLink.value);
-    els.copyReferral.textContent = "Copiado!";
-    setTimeout(() => (els.copyReferral.textContent = "Copiar"), 1200);
-  } catch {
-    els.referralLink.select();
-    document.execCommand("copy");
-  }
+  await copyText(els.referralLink.value);
+  els.copyReferral.textContent = "Copiado!";
+  setTimeout(() => (els.copyReferral.textContent = "Copiar"), 1200);
 }
 
 function showAdminMessage(text, type) {

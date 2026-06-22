@@ -110,6 +110,17 @@
       <div id="adminMsg" class="msg"></div>
     </section>
 
+    <section id="teamMessagesPanel" class="dashboardPanel messagesPanel" aria-label="Mensagens de contato" hidden>
+      <div class="panelHeader">
+        <div>
+          <h2>Mensagens do contato</h2>
+          <p>Mensagens enviadas pelo chat online do cadastro.</p>
+        </div>
+        <button type="button" id="btnRefreshMessages" class="btnSecondary">Atualizar</button>
+      </div>
+      <div id="contactMessagesList" class="messageList"></div>
+    </section>
+
     <section class="filterPanel" aria-label="Filtros do painel">
       <div>
         <label for="filterRole">Tipo</label>
@@ -238,6 +249,7 @@
                 <th class="adminOnlyColumn">Contato</th>
                 <th>Localidade</th>
                 <th>Responsavel</th>
+                <th class="adminOnlyColumn">Link</th>
                 <th>Nivel</th>
                 <th>Cadastro</th>
                 <th class="adminOnlyColumn">Acoes</th>

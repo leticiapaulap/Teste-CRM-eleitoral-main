@@ -19,6 +19,9 @@ const btnCopy = document.getElementById("btnCopy");                  // botão c
 
 const inviteLinkSuccess = document.getElementById("inviteLinkSuccess"); // input na tela de sucesso
 const btnCopySuccess = document.getElementById("btnCopySuccess");       // botão copiar na tela de sucesso
+const contactForm = document.getElementById("contactForm");
+const contactMsg = document.getElementById("contactMsg");
+const btnContact = document.getElementById("btnContact");
 
 function showError(text) {
   msg.className = "msg err";
@@ -189,7 +192,7 @@ form.addEventListener("submit", async (e) => {
     // texto de sucesso
     if (successText) {
       successText.textContent =
-        `Seu cadastro foi concluído! Seu código é ${codigo}. Copie o link abaixo para convidar outras pessoas:`;
+        `Seu cadastro foi concluído! Seu código é ${codigo}. Guarde o link abaixo: ele será usado para cadastrar novas pessoas abaixo de você na árvore.`;
     }
 
     // troca tela (se existir)
@@ -254,5 +257,40 @@ btnCopySuccess?.addEventListener("click", async () => {
   } catch {
     inviteLinkSuccess.select();
     document.execCommand("copy");
+  }
+});
+
+contactForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  contactMsg.style.display = "none";
+
+  const body = {
+    name: document.getElementById("contactName").value.trim(),
+    phone: document.getElementById("contactPhone").value.trim(),
+    email: document.getElementById("contactEmail").value.trim(),
+    message: document.getElementById("contactMessage").value.trim(),
+  };
+
+  try {
+    btnContact.disabled = true;
+    btnContact.textContent = "Enviando...";
+    const response = await fetch("/api/contact/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel enviar.");
+    contactMsg.className = "msg ok";
+    contactMsg.textContent = "Mensagem enviada. A equipe vai visualizar no painel.";
+    contactMsg.style.display = "block";
+    contactForm.reset();
+  } catch (error) {
+    contactMsg.className = "msg err";
+    contactMsg.textContent = `Erro: ${error.message || error}`;
+    contactMsg.style.display = "block";
+  } finally {
+    btnContact.disabled = false;
+    btnContact.textContent = "Enviar mensagem";
   }
 });

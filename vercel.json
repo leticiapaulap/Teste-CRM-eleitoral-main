@@ -19,6 +19,10 @@
     {
       "source": "/api/map/:path*",
       "destination": "/api?route=map/:path*"
+    },
+    {
+      "source": "/api/contact/:path*",
+      "destination": "/api?route=contact/:path*"
     }
   ]
 }
