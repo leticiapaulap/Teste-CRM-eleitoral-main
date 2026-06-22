@@ -41,8 +41,10 @@ async function authRegister(req, res) {
   if (contentType.includes("multipart/form-data")) {
     const { fields, files } = await parseMultipart(req);
     const file = files.photo || files.foto || files.profilePhoto;
-    uploadMetadata = await storeProfilePhoto(file);
-    input = { ...fields, photoUrl: uploadMetadata.fileUrl };
+    if (file) {
+      uploadMetadata = await storeProfilePhoto(file);
+    }
+    input = { ...fields, photoUrl: uploadMetadata?.fileUrl };
   } else {
     input = await readJsonOrForm(req);
   }

@@ -14,7 +14,7 @@ create table if not exists users (
   phone text not null,
   password_hash text not null,
   role user_role not null default 'PESSOA',
-  photo_url text not null,
+  photo_url text,
   active boolean not null default true,
   consent_accepted boolean not null default false,
   consent_accepted_at timestamptz,

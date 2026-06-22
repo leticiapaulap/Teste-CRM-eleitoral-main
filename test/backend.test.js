@@ -4,6 +4,7 @@ import { ApiError } from "../lib/http.js";
 import { buildTree, makeReferralCode, makeReferralUrl } from "../lib/referrals.js";
 import { isAdminRole, ROLES } from "../lib/security.js";
 import { toGeoJson } from "../lib/map-service.js";
+import { normalizeRegisterInput } from "../lib/user-service.js";
 import {
   assertValidPhotoUrl,
   validateCoordinate,
@@ -19,7 +20,7 @@ test("valida email, telefone e coordenadas", () => {
   assert.throws(() => validateCoordinate("-200", "latitude", -90, 90), ApiError);
 });
 
-test("exige foto segura no cadastro/upload", () => {
+test("valida foto segura quando enviada", () => {
   const file = { mimetype: "image/png", originalFilename: "perfil.png", size: 1024 };
   assert.deepEqual(validatePhotoMetadata(file, 2048), {
     mimeType: "image/png",
@@ -30,6 +31,47 @@ test("exige foto segura no cadastro/upload", () => {
   assert.throws(() => validatePhotoMetadata({ mimetype: "application/x-msdownload", originalFilename: "x.exe", size: 1 }, 2048), ApiError);
   assert.throws(() => validatePhotoMetadata({ mimetype: "image/png", originalFilename: "perfil.png", size: 4096 }, 2048), ApiError);
   assert.equal(assertValidPhotoUrl("/uploads/profile-photos/perfil.png"), "/uploads/profile-photos/perfil.png");
+  assert.equal(assertValidPhotoUrl("", { required: false }), null);
+  assert.throws(() => assertValidPhotoUrl("javascript:alert(1)", { required: false }), ApiError);
+});
+
+test("cadastro exige foto para lideres e pessoas", () => {
+  assert.throws(() => normalizeRegisterInput({
+    name: "Maria Souza",
+    email: "maria@example.com",
+    phone: "(61) 99999-0000",
+    password: "senha-segura",
+    role: "LIDER",
+    localidade: "Taguatinga",
+    regiao_administrativa: "Taguatinga",
+    consent_accepted: true,
+  }), ApiError);
+
+  assert.throws(() => normalizeRegisterInput({
+    name: "Joao Souza",
+    email: "joao@example.com",
+    phone: "(61) 98888-0000",
+    password: "senha-segura",
+    role: "PESSOA",
+    localidade: "Ceilandia",
+    regiao_administrativa: "Ceilandia",
+    consent_accepted: true,
+  }), ApiError);
+});
+
+test("cadastro de admin aceita foto opcional", () => {
+  const input = normalizeRegisterInput({
+    name: "Admin SIV",
+    email: "admin@example.com",
+    phone: "(61) 99999-0000",
+    password: "senha-segura",
+    role: "EQUIPE",
+    localidade: "Distrito Federal",
+    regiao_administrativa: "Distrito Federal",
+    consent_accepted: true,
+  });
+
+  assert.equal(input.photoUrl, null);
 });
 
 test("gera link de indicacao usando APP_URL sem dominio fixo", () => {

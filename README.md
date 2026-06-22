@@ -139,7 +139,7 @@ Upload:
 
 ## Testar no Postman/Insomnia
 
-Upload de foto obrigatoria:
+Upload de foto de perfil:
 
 ```http
 POST /api/upload/profile-photo
@@ -362,7 +362,7 @@ npm test
 Cobertura basica:
 
 - validacao de email, telefone e coordenadas;
-- foto obrigatoria e tipos seguros;
+- foto opcional para admins e obrigatoria para lideres/pessoas;
 - geracao de link por `APP_URL`;
 - arvore de indicacoes;
 - papeis administrativos.
@@ -370,6 +370,6 @@ Cobertura basica:
 ## Observacoes para conectar o front futuramente
 
 - O front atual ainda usa `/api/siv` e nao foi alterado.
-- Para usar o novo backend, o front precisara enviar foto obrigatoria e credenciais.
+- Para usar o novo backend, o front precisara enviar credenciais. A foto e opcional apenas para admins; lideres e pessoas precisam enviar foto.
 - O cadastro visual atual nao possui campos de email, senha e foto.
 - As telas de login, painel administrativo, painel do lider e mapa ainda precisam ser criadas ou conectadas no front.
