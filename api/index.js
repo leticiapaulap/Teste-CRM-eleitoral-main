@@ -74,8 +74,10 @@ async function authLogin(req, res) {
 async function authMe(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { requireAuth } = await import("../lib/security.js");
+  const { getUserProfile } = await import("../lib/admin-service.js");
   const user = await requireAuth(req);
-  return sendJson(res, 200, { ok: true, user });
+  const profile = await getUserProfile(user.id);
+  return sendJson(res, 200, { ok: true, user: profile || user });
 }
 
 async function uploadProfilePhoto(req, res) {
@@ -92,7 +94,7 @@ async function leaderNetwork(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { requireAuth, ROLES } = await import("../lib/security.js");
   const { getLeaderNetwork } = await import("../lib/user-service.js");
-  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES]);
+  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES, ROLES.CADASTRADOS]);
   const q = getQuery(req);
   const result = await getLeaderNetwork(user.id, {
     page: q.page || 1,
@@ -115,7 +117,7 @@ async function leaderReferralLink(req, res) {
   const { query } = await import("../lib/db.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
   const { ensureLeaderProfile } = await import("../lib/user-service.js");
-  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES]);
+  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES, ROLES.CADASTRADOS]);
   const profile = await ensureLeaderProfile({ query }, user.id, getConfig().appUrl);
   return sendJson(res, 200, { ok: true, referralCode: profile.referral_code, referralUrl: profile.referral_url });
 }
@@ -124,7 +126,7 @@ async function leaderMetrics(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { query } = await import("../lib/db.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
-  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES]);
+  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES, ROLES.CADASTRADOS]);
   const totals = await query(
     `with recursive subtree as (
        select user_id, parent_user_id from network_nodes where user_id = $1
@@ -170,10 +172,16 @@ async function adminLeaders(req, res) {
 }
 
 async function adminUsers(req, res) {
-  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  if (!["GET", "POST"].includes(req.method)) return methodNotAllowed(res, ["GET", "POST"]);
   const { listUsers } = await import("../lib/admin-service.js");
+  const { createUser } = await import("../lib/user-service.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
   await requireAuth(req, [ROLES.EQUIPE]);
+  if (req.method === "POST") {
+    const input = await readJsonOrForm(req);
+    const result = await createUser(input, null, { allowAdminRole: true });
+    return sendJson(res, 201, { ok: true, user: result.user, leaderProfile: result.leaderProfile });
+  }
   const result = await listUsers(getQuery(req));
   return sendJson(res, 200, { ok: true, ...result });
 }
@@ -220,22 +228,22 @@ async function adminLeaderNetwork(req, res, id) {
 }
 
 async function adminUserById(req, res, id) {
-  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
-  const { query } = await import("../lib/db.js");
+  if (!["GET", "PATCH", "DELETE"].includes(req.method)) return methodNotAllowed(res, ["GET", "PATCH", "DELETE"]);
   const { requireAuth, ROLES } = await import("../lib/security.js");
+  const { deleteUser, getUserProfile, updateUser } = await import("../lib/admin-service.js");
   await requireAuth(req, [ROLES.EQUIPE]);
-  const result = await query(
-    `select u.id, u.name, u.email, u.phone, u.role, u.photo_url, u.active, u.consent_accepted, u.consent_accepted_at, u.created_at, u.updated_at,
-            ul.localidade, ul.regiao_administrativa, ul.latitude, ul.longitude,
-            nn.parent_user_id, nn.root_leader_id, nn.level
-       from users u
-       left join user_locations ul on ul.user_id = u.id
-       left join network_nodes nn on nn.user_id = u.id
-      where u.id = $1`,
-    [id]
-  );
-  if (!result.rows[0]) throw new ApiError(404, "Usuario nao encontrado.");
-  return sendJson(res, 200, { ok: true, user: result.rows[0] });
+  if (req.method === "PATCH") {
+    const input = await readJsonOrForm(req);
+    const user = await updateUser(id, input);
+    return sendJson(res, 200, { ok: true, user });
+  }
+  if (req.method === "DELETE") {
+    await deleteUser(id);
+    return sendJson(res, 200, { ok: true });
+  }
+  const user = await getUserProfile(id);
+  if (!user) throw new ApiError(404, "Usuario nao encontrado.");
+  return sendJson(res, 200, { ok: true, user });
 }
 
 async function adminMetrics(req, res) {
@@ -251,7 +259,7 @@ async function mapResponse(req, res, forcedRole, geojson = false) {
   if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
   const { getMapSummary, listMapPoints, toGeoJson } = await import("../lib/map-service.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
-  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES]);
+  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES, ROLES.CADASTRADOS]);
   const q = forcedRole ? { ...getQuery(req), role: forcedRole } : getQuery(req);
   const items = await listMapPoints(user, q);
   if (geojson) return sendJson(res, 200, toGeoJson(items));

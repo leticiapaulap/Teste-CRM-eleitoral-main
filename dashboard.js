@@ -1,5 +1,5 @@
 const token = localStorage.getItem("siv_token");
-const user = JSON.parse(localStorage.getItem("siv_user") || "null");
+let user = JSON.parse(localStorage.getItem("siv_user") || "null");
 
 if (!token || !user) {
   window.location.href = "/login.html";
@@ -169,9 +169,17 @@ let allPoints = [];
 let filteredPoints = [];
 let selectedRegion = "";
 let selectedLeaderId = "";
+let isTeam = user?.role === "EQUIPE";
 
 const els = {
   userLabel: document.getElementById("dashboardUser"),
+  profile: document.getElementById("profileDetails"),
+  referralLink: document.getElementById("profileReferralLink"),
+  copyReferral: document.getElementById("btnCopyReferral"),
+  adminPanel: document.getElementById("adminPanel"),
+  adminForm: document.getElementById("adminCreateForm"),
+  adminMsg: document.getElementById("adminMsg"),
+  emailVisible: document.getElementById("btnEmailVisible"),
   role: document.getElementById("filterRole"),
   leader: document.getElementById("filterLeader"),
   region: document.getElementById("filterRegion"),
@@ -212,25 +220,55 @@ els.leader.addEventListener("input", () => {
   selectedLeaderId = els.leader.value;
   render();
 });
+els.copyReferral?.addEventListener("click", copyReferralLink);
+els.adminForm?.addEventListener("submit", createAdminUser);
+els.emailVisible?.addEventListener("click", () => emailUsers(filteredPoints));
 
 init();
 
 async function init() {
+  await loadProfile();
+  configureAccess();
   allPoints = await loadMapPoints();
-
-  if (user.role === "COORDENADORES" || user.role === "LIDERES") {
-    allPoints = allPoints.filter((point) => point.root_leader_id === user.id || token === "local-test-token");
-  }
 
   fillFilters(allPoints);
   render();
+}
+
+async function loadProfile() {
+  if (token === "local-test-token") {
+    renderProfile(user);
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/auth/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Falha ao carregar perfil.");
+    user = data.user;
+    localStorage.setItem("siv_user", JSON.stringify(user));
+    isTeam = user.role === "EQUIPE";
+    els.userLabel.textContent = `${user.name || user.email} - ${user.role}`;
+    renderProfile(user);
+  } catch {
+    renderProfile(user);
+  }
+}
+
+function configureAccess() {
+  isTeam = user?.role === "EQUIPE";
+  if (els.adminPanel) els.adminPanel.hidden = !isTeam;
+  document.body.classList.toggle("isTeam", isTeam);
 }
 
 async function loadMapPoints() {
   if (token === "local-test-token") return fallbackPoints;
 
   try {
-    const response = await fetch("/api/map/network", {
+    const endpoint = isTeam ? "/api/admin/users?limit=200" : "/api/map/network";
+    const response = await fetch(endpoint, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await response.json();
@@ -264,6 +302,24 @@ function render() {
   renderSummaries(filteredPoints);
   renderTable(filteredPoints);
   renderTree(filteredPoints);
+}
+
+function renderProfile(profile) {
+  if (!els.profile) return;
+  els.profile.innerHTML = `
+    <div><span>Nome</span><strong>${escapeHtml(profile.name || "-")}</strong></div>
+    <div><span>Email</span><strong>${escapeHtml(profile.email || "-")}</strong></div>
+    <div><span>Telefone</span><strong>${escapeHtml(profile.phone || "-")}</strong></div>
+    <div><span>Tipo</span><strong>${escapeHtml(profile.role || "-")}</strong></div>
+    <div><span>Localidade</span><strong>${escapeHtml(profile.localidade || "-")}</strong></div>
+    <div><span>Regiao</span><strong>${escapeHtml(profile.regiao_administrativa || "-")}</strong></div>
+  `;
+
+  if (els.referralLink) {
+    const link = profile.referral_url || "";
+    els.referralLink.value = link;
+    els.referralLink.closest(".invite").style.display = link ? "block" : "none";
+  }
 }
 
 function applyFilters(points) {
@@ -467,7 +523,7 @@ function renderSummaryList(container, items, options = {}) {
 
 function renderTable(points) {
   if (!points.length) {
-    els.table.innerHTML = `<tr><td colspan="6">Nenhum cadastro encontrado.</td></tr>`;
+    els.table.innerHTML = `<tr><td colspan="${isTeam ? 8 : 6}">Nenhum cadastro encontrado.</td></tr>`;
     return;
   }
 
@@ -477,14 +533,145 @@ function renderTable(points) {
         <tr>
           <td><strong>${escapeHtml(point.name)}</strong></td>
           <td><span class="rolePill ${point.role === "COORDENADORES" || point.role === "LIDERES" ? "roleLeader" : "rolePerson"}">${escapeHtml(point.role)}</span></td>
+          ${isTeam ? `<td>${escapeHtml(point.email || "-")}<small>${escapeHtml(point.phone || "")}</small></td>` : ""}
           <td>${escapeHtml(point.localidade || "-")}<small>${escapeHtml(point.regiao_administrativa || "")}</small></td>
           <td>${escapeHtml(point.root_leader_name || "-")}</td>
           <td>${point.level ?? "-"}</td>
           <td>${formatDate(point.created_at)}</td>
+          ${isTeam ? `
+            <td>
+              <div class="tableActions">
+                <button type="button" class="btnTiny" data-action="email" data-id="${escapeHtml(point.id)}">Email</button>
+                <button type="button" class="btnTiny" data-action="edit" data-id="${escapeHtml(point.id)}">Editar</button>
+                <button type="button" class="btnTiny btnDanger" data-action="delete" data-id="${escapeHtml(point.id)}">Excluir</button>
+              </div>
+            </td>
+          ` : ""}
         </tr>
       `
     )
     .join("");
+
+  if (isTeam) {
+    els.table.querySelectorAll("[data-action]").forEach((button) => {
+      button.addEventListener("click", () => handleTableAction(button.dataset.action, button.dataset.id));
+    });
+  }
+}
+
+async function createAdminUser(event) {
+  event.preventDefault();
+  showAdminMessage("", "");
+  const formData = new FormData(els.adminForm);
+  const body = Object.fromEntries(formData.entries());
+
+  try {
+    const response = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel adicionar.");
+    els.adminForm.reset();
+    showAdminMessage("Cadastro adicionado.", "ok");
+    allPoints = await loadMapPoints();
+    fillFilters(allPoints);
+    render();
+  } catch (error) {
+    showAdminMessage(`Erro: ${error.message || error}`, "err");
+  }
+}
+
+async function handleTableAction(action, id) {
+  try {
+    const person = allPoints.find((point) => String(point.id) === String(id));
+    if (!person) return;
+
+    if (action === "email") {
+      emailUsers([person]);
+      return;
+    }
+
+    if (action === "delete") {
+      if (!confirm(`Excluir o cadastro de ${person.name}?`)) return;
+      await adminRequest(`/api/admin/users/${encodeURIComponent(id)}`, { method: "DELETE" });
+      allPoints = allPoints.filter((point) => String(point.id) !== String(id));
+      render();
+      return;
+    }
+
+    if (action === "edit") {
+      const name = prompt("Nome", person.name || "");
+      if (name === null) return;
+      const email = prompt("Email", person.email || "");
+      if (email === null) return;
+      const phone = prompt("Telefone", person.phone || "");
+      if (phone === null) return;
+      const role = prompt("Tipo: EQUIPE, COORDENADORES, LIDERES ou CADASTRADOS", person.role || "CADASTRADOS");
+      if (role === null) return;
+      const localidade = prompt("Localidade", person.localidade || "");
+      if (localidade === null) return;
+      const regiao = prompt("Regiao administrativa", person.regiao_administrativa || "");
+      if (regiao === null) return;
+
+      const updated = await adminRequest(`/api/admin/users/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name, email, phone, role, localidade, regiao_administrativa: regiao }),
+      });
+
+      allPoints = allPoints.map((point) => String(point.id) === String(id) ? updated.user : point);
+      fillFilters(allPoints);
+      render();
+    }
+  } catch (error) {
+    showAdminMessage(`Erro: ${error.message || error}`, "err");
+  }
+}
+
+async function adminRequest(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...(options.headers || {}),
+    },
+  });
+  const data = await response.json();
+  if (!response.ok || !data.ok) throw new Error(data.error || "Operacao administrativa falhou.");
+  return data;
+}
+
+function emailUsers(points) {
+  const emails = [...new Set(points.map((point) => point.email).filter(Boolean))];
+  if (!emails.length) {
+    showAdminMessage("Nenhum email disponivel para os filtros atuais.", "err");
+    return;
+  }
+  window.location.href = `mailto:?bcc=${encodeURIComponent(emails.join(","))}`;
+}
+
+async function copyReferralLink() {
+  if (!els.referralLink?.value) return;
+  try {
+    await navigator.clipboard.writeText(els.referralLink.value);
+    els.copyReferral.textContent = "Copiado!";
+    setTimeout(() => (els.copyReferral.textContent = "Copiar"), 1200);
+  } catch {
+    els.referralLink.select();
+    document.execCommand("copy");
+  }
+}
+
+function showAdminMessage(text, type) {
+  if (!els.adminMsg) return;
+  els.adminMsg.textContent = text;
+  els.adminMsg.className = type ? `msg ${type}` : "msg";
+  els.adminMsg.style.display = text ? "block" : "none";
 }
 
 function renderTree(points) {

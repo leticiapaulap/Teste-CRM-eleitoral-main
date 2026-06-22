@@ -121,9 +121,12 @@ Admin:
 
 - `GET /api/admin/leaders`
 - `GET /api/admin/users`
+- `POST /api/admin/users`
 - `GET /api/admin/network`
 - `GET /api/admin/leaders/:id/network`
 - `GET /api/admin/users/:id`
+- `PATCH /api/admin/users/:id`
+- `DELETE /api/admin/users/:id`
 - `GET /api/admin/metrics`
 
 Mapa:
@@ -258,9 +261,10 @@ As rotas de mapa retornam dados prontos para o front plotar marcadores em biblio
 
 Regras:
 
-- `EQUIPE` visualiza todos os pontos.
-- `COORDENADORES` e `LIDERES` visualizam apenas a propria sub-rede.
-- `CADASTRADOS` nao acessa as rotas de mapa.
+- `EQUIPE` visualiza tudo, cria, edita, exclui e pode compor email para a lista filtrada no painel.
+- `COORDENADORES`, `LIDERES` e `CADASTRADOS` visualizam os proprios dados e a propria sub-rede.
+- `CADASTRADOS` visualiza somente quem for cadastrado abaixo dele.
+- Envio real de email em massa ainda depende de configurar um provedor SMTP/SendGrid/etc.; por enquanto o painel abre o cliente de email com BCC.
 
 Campos principais retornados por ponto:
 

@@ -340,6 +340,79 @@ body{
   align-items:center;
 }
 
+.profilePanel,
+.adminPanel{
+  margin-bottom:12px;
+}
+
+.profileGrid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+
+.profileGrid div{
+  border:1px solid #e4ebfb;
+  border-radius:10px;
+  background:#f7f9ff;
+  padding:10px;
+}
+
+.profileGrid span,
+.profileGrid strong{
+  display:block;
+}
+
+.profileGrid span{
+  color:var(--muted);
+  font-size:12px;
+  margin-bottom:4px;
+}
+
+.profileGrid strong{
+  color:#13233d;
+  font-size:13px;
+}
+
+.adminInvite{
+  margin-top:10px;
+}
+
+.adminForm{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap:10px;
+}
+
+.adminForm button{
+  align-self:end;
+  min-height:40px;
+}
+
+body:not(.isTeam) .adminOnlyColumn{
+  display:none;
+}
+
+.tableActions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.btnTiny{
+  width:auto;
+  margin:0;
+  padding:6px 8px;
+  border-radius:8px;
+  box-shadow:none;
+  font-size:11px;
+}
+
+.btnDanger{
+  background:#c62828;
+  color:#fff;
+}
+
 .dashboardLink{
   text-decoration:none;
 }
@@ -1351,6 +1424,11 @@ body.dashboardBody{
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .adminForm,
+  .profileGrid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .dashboardLayout,
   .lowerLayout{
     grid-template-columns:1fr;
@@ -1375,7 +1453,9 @@ body.dashboardBody{
   }
 
   .filterPanel,
-  .dashboardGrid{
+  .dashboardGrid,
+  .adminForm,
+  .profileGrid{
     grid-template-columns:1fr;
   }
 }

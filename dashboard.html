@@ -41,6 +41,75 @@
       </div>
     </header>
 
+    <section class="dashboardPanel profilePanel" aria-label="Informacoes pessoais">
+      <div class="panelHeader">
+        <div>
+          <h2>Informacoes pessoais</h2>
+          <p>Dados do usuario logado e link de cadastro da rede.</p>
+        </div>
+      </div>
+      <div id="profileDetails" class="profileGrid"></div>
+      <div class="invite adminInvite">
+        <div class="inviteTitle">Seu link de cadastro</div>
+        <div class="inviteRow">
+          <input id="profileReferralLink" readonly />
+          <button type="button" id="btnCopyReferral" class="btnSecondary">Copiar</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="adminPanel" class="dashboardPanel adminPanel" aria-label="Administracao da equipe" hidden>
+      <div class="panelHeader">
+        <div>
+          <h2>Administracao da equipe</h2>
+          <p>Criar, editar, excluir e contatar cadastros.</p>
+        </div>
+        <button type="button" id="btnEmailVisible" class="btnSecondary">Email para lista</button>
+      </div>
+
+      <form id="adminCreateForm" class="adminForm">
+        <div>
+          <label for="adminName">Nome</label>
+          <input id="adminName" name="name" required />
+        </div>
+        <div>
+          <label for="adminEmail">Email</label>
+          <input id="adminEmail" name="email" type="email" required />
+        </div>
+        <div>
+          <label for="adminPhone">Telefone</label>
+          <input id="adminPhone" name="phone" required />
+        </div>
+        <div>
+          <label for="adminPassword">Senha</label>
+          <input id="adminPassword" name="password" type="password" required />
+        </div>
+        <div>
+          <label for="adminRole">Tipo</label>
+          <select id="adminRole" name="role" required>
+            <option value="COORDENADORES">Coordenador</option>
+            <option value="LIDERES">Lider</option>
+            <option value="CADASTRADOS">Cadastrado</option>
+            <option value="EQUIPE">Equipe</option>
+          </select>
+        </div>
+        <div>
+          <label for="adminLocalidade">Localidade</label>
+          <input id="adminLocalidade" name="localidade" required />
+        </div>
+        <div>
+          <label for="adminRegiao">Regiao administrativa</label>
+          <input id="adminRegiao" name="regiao_administrativa" />
+        </div>
+        <div>
+          <label for="adminPhotoUrl">Foto URL</label>
+          <input id="adminPhotoUrl" name="photoUrl" placeholder="Obrigatoria fora da equipe" />
+        </div>
+        <button id="btnAdminCreate" type="submit">Adicionar cadastro</button>
+      </form>
+      <div id="adminMsg" class="msg"></div>
+    </section>
+
     <section class="filterPanel" aria-label="Filtros do painel">
       <div>
         <label for="filterRole">Tipo</label>
@@ -166,10 +235,12 @@
               <tr>
                 <th>Nome</th>
                 <th>Tipo</th>
+                <th class="adminOnlyColumn">Contato</th>
                 <th>Localidade</th>
                 <th>Responsavel</th>
                 <th>Nivel</th>
                 <th>Cadastro</th>
+                <th class="adminOnlyColumn">Acoes</th>
               </tr>
             </thead>
             <tbody id="peopleTable"></tbody>
