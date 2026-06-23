@@ -146,7 +146,7 @@ form.addEventListener("submit", async (e) => {
 
   if (!nome || nome.length < 3) return showError("Informe seu nome completo.");
   if (!whatsapp || whatsapp.length < 10) return showError("Informe um WhatsApp válido (com DDD).");
-  if (!bairro || bairro.length < 2) return showError("Informe seu bairro.");
+  if (!bairro || bairro.length < 2) return showError("Selecione a localidade.");
   if (!foto) return showError("Tire ou selecione uma foto para concluir o cadastro.");
   if (!ra) return showError("Selecione a Região Administrativa (RA).");
   if (!aceite_lgpd) return showError("Você precisa aceitar o uso de dados (LGPD).");

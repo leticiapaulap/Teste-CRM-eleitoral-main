@@ -81,8 +81,6 @@ function renderUser() {
     ${detailItem("Tipo", user.role)}
     ${detailItem("Localidade", user.localidade)}
     ${detailItem("Regiao", user.regiao_administrativa)}
-    ${detailItem("Latitude", user.latitude)}
-    ${detailItem("Longitude", user.longitude)}
     ${detailItem("Nivel", user.level)}
     ${detailItem("Quem indicou", user.parent_user_name || user.parent_user_id)}
     ${detailItem("Responsavel raiz", user.root_leader_name || user.root_leader_id)}
@@ -100,8 +98,6 @@ function renderUser() {
   setValue("editRole", user.role || "CADASTRADOS");
   setValue("editLocalidade", user.localidade || "");
   setValue("editRegiao", user.regiao_administrativa || "");
-  setValue("editLatitude", user.latitude ?? "");
-  setValue("editLongitude", user.longitude ?? "");
   setValue("editPassword", "");
   document.getElementById("editActive").checked = user.active !== false;
   document.getElementById("editPhoto").value = "";
@@ -123,8 +119,6 @@ async function saveUser(event) {
     role: formData.get("role"),
     localidade: formData.get("localidade"),
     regiao_administrativa: formData.get("regiao_administrativa"),
-    latitude: formData.get("latitude"),
-    longitude: formData.get("longitude"),
     active: document.getElementById("editActive").checked ? "true" : "false",
   };
   const password = String(formData.get("password") || "").trim();

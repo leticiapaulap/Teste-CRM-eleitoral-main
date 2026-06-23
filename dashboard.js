@@ -707,8 +707,6 @@ function openEditDialog(person, { self = false } = {}) {
   setEditValue("editRole", person.role || "CADASTRADOS");
   setEditValue("editLocalidade", person.localidade || "");
   setEditValue("editRegiao", person.regiao_administrativa || "");
-  setEditValue("editLatitude", person.latitude ?? "");
-  setEditValue("editLongitude", person.longitude ?? "");
   setEditValue("editPassword", "");
   const active = document.getElementById("editActive");
   if (active) active.checked = person.active !== false;
@@ -745,8 +743,6 @@ async function saveEditForm(event) {
     phone: formData.get("phone"),
     localidade: formData.get("localidade"),
     regiao_administrativa: formData.get("regiao_administrativa"),
-    latitude: formData.get("latitude"),
-    longitude: formData.get("longitude"),
   };
   if (!isSelfEdit || isTeam) {
     payload.role = formData.get("role");
