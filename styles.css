@@ -601,6 +601,65 @@ body:not(.isTeam) .adminOnlyColumn{
   padding:0;
 }
 
+.detailTreeBlock{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid #e4ebfb;
+}
+
+.detailTreeBlock h3{
+  margin:0 0 4px;
+  color:#13233d;
+  font-size:16px;
+}
+
+.detailTreeBlock p{
+  margin:0 0 10px;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.detailNetworkTree{
+  display:grid;
+  gap:8px;
+}
+
+.detailTreeNode{
+  display:grid;
+  gap:8px;
+}
+
+.detailTreeCard{
+  border:1px solid #e4ebfb;
+  border-radius:10px;
+  padding:10px;
+  background:#f7f9ff;
+}
+
+.rootTreeNode > .detailTreeCard{
+  background:#eef5ff;
+  border-color:#cfe0ff;
+}
+
+.detailTreeCard strong,
+.detailTreeCard span{
+  display:block;
+}
+
+.detailTreeCard span{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.detailTreeChildren{
+  display:grid;
+  gap:8px;
+  margin-left:18px;
+  padding-left:12px;
+  border-left:2px solid #d7dfed;
+}
+
 .detailChatPanel{
   align-self:start;
   position:sticky;

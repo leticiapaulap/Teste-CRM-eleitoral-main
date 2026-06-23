@@ -582,10 +582,7 @@ function renderTable(points) {
           ${isTeam ? `
             <td>
               <div class="tableActions">
-                <button type="button" class="btnTiny" data-action="email" data-id="${escapeHtml(point.id)}">Email</button>
-                <button type="button" class="btnTiny" data-action="copy-link" data-id="${escapeHtml(point.id)}">Link</button>
                 <button type="button" class="btnTiny" data-action="edit" data-id="${escapeHtml(point.id)}">Editar</button>
-                <button type="button" class="btnTiny btnDanger" data-action="delete" data-id="${escapeHtml(point.id)}">Excluir</button>
               </div>
             </td>
           ` : ""}

@@ -24,6 +24,7 @@ const els = {
   contact: document.getElementById("detailContact"),
   location: document.getElementById("detailLocation"),
   grid: document.getElementById("detailGrid"),
+  tree: document.getElementById("detailNetworkTree"),
   referral: document.getElementById("detailReferralLink"),
   form: document.getElementById("detailEditForm"),
   msg: document.getElementById("detailMsg"),
@@ -41,6 +42,7 @@ const els = {
 };
 
 let currentUser = null;
+let networkTree = [];
 let templateIndex = 0;
 
 els.logout.addEventListener("click", () => {
@@ -73,9 +75,19 @@ async function loadUser() {
   try {
     const data = await requestJson(`/api/admin/users/${encodeURIComponent(userId)}`);
     currentUser = data.user;
+    await loadNetworkTree();
     renderUser();
   } catch (error) {
     showMessage(`Erro: ${error.message || error}`, "err");
+  }
+}
+
+async function loadNetworkTree() {
+  try {
+    const data = await requestJson(`/api/admin/leaders/${encodeURIComponent(userId)}/network?format=tree`);
+    networkTree = Array.isArray(data.items) ? data.items : [];
+  } catch {
+    networkTree = [];
   }
 }
 
@@ -110,6 +122,7 @@ function renderUser() {
     ${detailItem("Criado em", formatDate(user.created_at))}
     ${detailItem("Atualizado em", formatDate(user.updated_at))}
   `;
+  renderNetworkTree();
 
   setValue("editName", user.name || "");
   setValue("editEmail", user.email || "");
@@ -120,6 +133,32 @@ function renderUser() {
   setValue("editPassword", "");
   document.getElementById("editActive").checked = user.active !== false;
   document.getElementById("editPhoto").value = "";
+}
+
+function renderNetworkTree() {
+  if (!els.tree) return;
+  const roots = networkTree.length === 1 && String(networkTree[0].user_id) === String(userId)
+    ? networkTree[0].children || []
+    : networkTree;
+  if (!roots.length) {
+    els.tree.innerHTML = `<div class="emptyState">Nenhum cadastro abaixo deste link ainda.</div>`;
+    return;
+  }
+  els.tree.innerHTML = roots.map((node) => renderTreeNode(node, true)).join("");
+}
+
+function renderTreeNode(node, isRoot = false) {
+  const children = Array.isArray(node.children) ? node.children : [];
+  return `
+    <div class="detailTreeNode${isRoot ? " rootTreeNode" : ""}">
+      <div class="detailTreeCard">
+        <strong>${escapeHtml(node.name || "-")}</strong>
+        <span>${escapeHtml(node.role || "-")} - nivel ${node.level ?? "-"}</span>
+        <span>${escapeHtml(node.localidade || node.regiao_administrativa || "-")}</span>
+      </div>
+      ${children.length ? `<div class="detailTreeChildren">${children.map((child) => renderTreeNode(child)).join("")}</div>` : ""}
+    </div>
+  `;
 }
 
 function detailItem(label, value) {
