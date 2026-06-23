@@ -2323,3 +2323,174 @@ body.dashboardBody{
     width:100%;
   }
 }
+
+/* Layout principal com menu lateral de tela inteira */
+body.dashboardBody{
+  padding:0 !important;
+}
+
+.dashboardShell{
+  width:100% !important;
+  max-width:none !important;
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:250px minmax(0, 1fr);
+  grid-template-rows:auto minmax(0, 1fr);
+  gap:0;
+}
+
+.dashboardHeader{
+  grid-column:2;
+  grid-row:1;
+  padding:24px 28px 10px;
+}
+
+.dashboardWorkspace{
+  display:contents;
+}
+
+.sideMenu{
+  grid-column:1;
+  grid-row:1 / span 2;
+  position:sticky;
+  top:0;
+  align-self:start;
+  width:250px !important;
+  max-width:250px !important;
+  min-height:100vh;
+  border-radius:0;
+  padding:22px 14px;
+  background:rgba(255,255,255,.98);
+  box-shadow:8px 0 28px rgba(0,0,0,.18);
+}
+
+.sideMenuHeader{
+  padding:0 2px 18px;
+  margin-bottom:6px;
+  border-bottom:1px solid #e4ebfb;
+}
+
+.sideMenuTitle{
+  font-size:18px;
+}
+
+.sideMenuToggle{
+  padding:8px 10px !important;
+  border-radius:10px;
+  font-size:12px !important;
+}
+
+.sideMenuButton{
+  min-height:48px;
+  border-radius:12px;
+}
+
+.dashboardContent{
+  grid-column:2;
+  grid-row:2;
+  padding:0 28px 28px;
+}
+
+.menuCollapsed .dashboardShell{
+  grid-template-columns:82px minmax(0, 1fr);
+}
+
+.menuCollapsed .sideMenu{
+  width:82px !important;
+  max-width:82px !important;
+  padding:22px 10px;
+}
+
+.menuCollapsed .sideMenuTitle{
+  display:none;
+}
+
+.menuCollapsed .sideMenuHeader{
+  justify-content:center;
+}
+
+.menuCollapsed .sideIcon{
+  flex:0 0 34px;
+  width:34px;
+  height:34px;
+}
+
+.menuCollapsed .sideMenuToggle{
+  width:100% !important;
+  font-size:11px !important;
+}
+
+.homeGrid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    "map map"
+    "register chat";
+  gap:14px;
+  align-items:stretch;
+}
+
+.homeMapCard{
+  grid-area:map;
+}
+
+.homeActionCard{
+  grid-area:register;
+}
+
+.homeAlertCard{
+  grid-area:chat;
+}
+
+.homeMapPreview{
+  height:180px;
+  min-height:180px;
+}
+
+@media (max-width: 900px){
+  .dashboardShell,
+  .menuCollapsed .dashboardShell{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto auto;
+  }
+
+  .dashboardHeader,
+  .dashboardContent,
+  .sideMenu{
+    grid-column:1;
+  }
+
+  .sideMenu,
+  .menuCollapsed .sideMenu{
+    grid-row:2;
+    position:static;
+    width:100% !important;
+    max-width:none !important;
+    min-height:auto;
+    border-radius:0;
+    padding:12px;
+  }
+
+  .dashboardHeader{
+    grid-row:1;
+    padding:18px 14px 8px;
+  }
+
+  .dashboardContent{
+    grid-row:3;
+    padding:0 14px 18px;
+  }
+
+  .menuCollapsed .sideText,
+  .menuCollapsed .sideMenuTitle{
+    display:inline !important;
+  }
+
+  .homeGrid{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "map"
+      "register"
+      "chat";
+  }
+}
