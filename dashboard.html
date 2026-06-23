@@ -43,14 +43,79 @@
 
     <div class="dashboardWorkspace">
       <aside class="sideMenu" aria-label="Menu do painel">
-        <button type="button" class="sideMenuButton active" data-view-target="profile">Informacoes pessoais</button>
-        <button type="button" class="sideMenuButton teamOnlyNav" data-view-target="admin">Administracao da equipe</button>
-        <button type="button" class="sideMenuButton teamOnlyNav" data-view-target="messages">Mensagens do chat</button>
-        <button type="button" class="sideMenuButton" data-view-target="map">Mapa e resumo</button>
-        <button type="button" class="sideMenuButton" data-view-target="network">Cadastros e arvore</button>
+        <div class="sideMenuHeader">
+          <strong class="sideMenuTitle">Menu</strong>
+          <button type="button" id="btnToggleMenu" class="sideMenuToggle" aria-label="Recolher menu lateral">Menu</button>
+        </div>
+        <button type="button" class="sideMenuButton active" data-view-target="home">
+          <span class="sideIcon">IN</span>
+          <span class="sideText">Inicial</span>
+        </button>
+        <button type="button" class="sideMenuButton" data-view-target="profile">
+          <span class="sideIcon">PE</span>
+          <span class="sideText">Informacoes pessoais</span>
+        </button>
+        <button type="button" class="sideMenuButton teamOnlyNav" data-view-target="admin">
+          <span class="sideIcon">AD</span>
+          <span class="sideText">Administracao da equipe</span>
+        </button>
+        <button type="button" class="sideMenuButton teamOnlyNav" data-view-target="messages">
+          <span class="sideIcon">MS</span>
+          <span class="sideText">Mensagens do chat</span>
+          <span id="sideMessageBadge" class="sideBadge" hidden>0</span>
+        </button>
+        <button type="button" class="sideMenuButton" data-view-target="map">
+          <span class="sideIcon">MP</span>
+          <span class="sideText">Mapa e resumo</span>
+        </button>
+        <button type="button" class="sideMenuButton" data-view-target="network">
+          <span class="sideIcon">AR</span>
+          <span class="sideText">Cadastros e arvore</span>
+        </button>
       </aside>
 
       <div class="dashboardContent">
+    <section class="dashboardView dashboardHome" data-view="home" aria-label="Inicio">
+      <div class="homeGrid">
+        <article class="dashboardPanel homeMapCard">
+          <div class="panelHeader">
+            <div>
+              <h2>Mapa do DF</h2>
+              <p>Acompanhe os cadastros por regiao administrativa.</p>
+            </div>
+          </div>
+          <div class="homeMapPreview">
+            <iframe
+              title="Previa do mapa do Distrito Federal"
+              src="https://www.google.com/maps?q=Distrito%20Federal%2C%20Brasil&t=k&z=10&output=embed"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
+          <button type="button" class="btnSecondary" data-go-view="map">Abrir mapa completo</button>
+        </article>
+
+        <article class="dashboardPanel homeActionCard teamOnlyHome">
+          <div>
+            <span class="homeKicker">Cadastro</span>
+            <h2>Cadastrar nova pessoa</h2>
+            <p>Abra o formulario interno para adicionar coordenadores, lideres, cadastrados ou equipe.</p>
+          </div>
+          <button type="button" data-go-view="admin">Abrir cadastro</button>
+        </article>
+
+        <article id="homeMessageAlert" class="dashboardPanel homeAlertCard teamOnlyHome">
+          <div>
+            <span class="homeKicker">Chat</span>
+            <h2>Mensagens para responder</h2>
+            <p>As mensagens enviadas pelo contato ficam dentro do login da equipe.</p>
+          </div>
+          <strong id="homePendingMessages">0</strong>
+          <button type="button" class="btnSecondary" data-go-view="messages">Ver mensagens</button>
+        </article>
+      </div>
+    </section>
+
     <section class="dashboardPanel profilePanel dashboardView" data-view="profile" aria-label="Informacoes pessoais">
       <div class="panelHeader">
         <div>

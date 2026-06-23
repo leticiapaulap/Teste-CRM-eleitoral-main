@@ -172,7 +172,7 @@ let filteredPoints = [];
 let selectedRegion = "";
 let selectedLeaderId = "";
 let isTeam = user?.role === "EQUIPE";
-let activeView = "profile";
+let activeView = "home";
 
 const els = {
   userLabel: document.getElementById("dashboardUser"),
@@ -210,9 +210,15 @@ const els = {
   editTitle: document.getElementById("editDialogTitle"),
   closeEdit: document.getElementById("btnCloseEdit"),
   cancelEdit: document.getElementById("btnCancelEdit"),
+  menuToggle: document.getElementById("btnToggleMenu"),
+  sideMessageBadge: document.getElementById("sideMessageBadge"),
+  homePendingMessages: document.getElementById("homePendingMessages"),
+  homeMessageAlert: document.getElementById("homeMessageAlert"),
   sideButtons: document.querySelectorAll("[data-view-target]"),
+  viewLinks: document.querySelectorAll("[data-go-view]"),
   views: document.querySelectorAll(".dashboardView"),
   teamNavItems: document.querySelectorAll(".teamOnlyNav"),
+  teamHomeItems: document.querySelectorAll(".teamOnlyHome"),
 };
 
 document.getElementById("btnLogout").addEventListener("click", () => {
@@ -246,6 +252,12 @@ els.closeEdit?.addEventListener("click", closeEditDialog);
 els.cancelEdit?.addEventListener("click", closeEditDialog);
 els.sideButtons.forEach((button) => {
   button.addEventListener("click", () => setDashboardView(button.dataset.viewTarget));
+});
+els.viewLinks.forEach((button) => {
+  button.addEventListener("click", () => setDashboardView(button.dataset.goView));
+});
+els.menuToggle?.addEventListener("click", () => {
+  document.body.classList.toggle("menuCollapsed");
 });
 
 init();
@@ -307,13 +319,16 @@ function configureAccess() {
   els.teamNavItems.forEach((item) => {
     item.hidden = !isTeam;
   });
+  els.teamHomeItems.forEach((item) => {
+    item.hidden = !isTeam;
+  });
   document.body.classList.toggle("isTeam", isTeam);
   if (isTeam) loadContactMessages();
 }
 
 function setDashboardView(view) {
   const restricted = ["admin", "messages"];
-  activeView = !isTeam && restricted.includes(view) ? "profile" : view || "profile";
+  activeView = !isTeam && restricted.includes(view) ? "home" : view || "home";
 
   els.sideButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.viewTarget === activeView);
@@ -867,10 +882,22 @@ async function loadContactMessages() {
     });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel carregar mensagens.");
-    renderContactMessages(data.items || []);
+    const items = data.items || [];
+    updateMessageBadge(items);
+    renderContactMessages(items);
   } catch (error) {
     els.messagesList.innerHTML = `<div class="emptyState">Erro ao carregar mensagens: ${escapeHtml(error.message || error)}</div>`;
   }
+}
+
+function updateMessageBadge(messages) {
+  const pending = messages.filter((message) => !message.reply && message.status !== "RESPONDIDO").length;
+  if (els.sideMessageBadge) {
+    els.sideMessageBadge.textContent = pending > 99 ? "99+" : String(pending);
+    els.sideMessageBadge.hidden = pending <= 0;
+  }
+  if (els.homePendingMessages) els.homePendingMessages.textContent = String(pending);
+  els.homeMessageAlert?.classList.toggle("hasPending", pending > 0);
 }
 
 function renderContactMessages(messages) {
