@@ -1,6 +1,12 @@
 const token = localStorage.getItem("siv_token");
 const loggedUser = JSON.parse(localStorage.getItem("siv_user") || "null");
 const PUBLIC_APP_URL = "https://teste-crm-eleitoral-main.vercel.app";
+const MESSAGE_TEMPLATES = {
+  boasVindas: "Ola, {nome}! Seu cadastro no SIV foi confirmado. Qualquer duvida, pode falar comigo por aqui.",
+  linkCadastro: "Ola, {nome}! Este e seu link de cadastro para enviar para novas pessoas: {link}\n\nGuarde esse link para acompanhar sua rede.",
+  confirmacao: "Ola, {nome}! Estou confirmando seus dados no SIV. Sua localidade esta como {localidade} e sua regiao administrativa como {regiao}.",
+  convite: "Ola, {nome}! Voce pode encaminhar este link para novas pessoas se cadastrarem abaixo de voce na rede: {link}",
+};
 
 if (!token || !loggedUser) {
   window.location.href = "/login.html";
@@ -26,9 +32,16 @@ const els = {
   email: document.getElementById("btnEmailDetail"),
   delete: document.getElementById("btnDeleteDetail"),
   logout: document.getElementById("btnLogout"),
+  template: document.getElementById("messageTemplate"),
+  message: document.getElementById("messageText"),
+  bot: document.getElementById("btnBotMessage"),
+  whatsapp: document.getElementById("btnSendWhatsapp"),
+  sendEmail: document.getElementById("btnSendEmail"),
+  copyMessage: document.getElementById("btnCopyMessage"),
 };
 
 let currentUser = null;
+let templateIndex = 0;
 
 els.logout.addEventListener("click", () => {
   localStorage.removeItem("siv_token");
@@ -40,6 +53,11 @@ els.copyTop.addEventListener("click", copyReferralLink);
 els.copyInline.addEventListener("click", copyReferralLink);
 els.email.addEventListener("click", emailUser);
 els.delete.addEventListener("click", deleteUser);
+els.template.addEventListener("change", renderMessageTemplate);
+els.bot.addEventListener("click", rotateBotMessage);
+els.whatsapp.addEventListener("click", sendWhatsappMessage);
+els.sendEmail.addEventListener("click", sendEmailMessage);
+els.copyMessage.addEventListener("click", copyMessageText);
 
 init();
 
@@ -73,6 +91,7 @@ function renderUser() {
   els.contact.textContent = `${user.email || "-"} | ${user.phone || "-"}`;
   els.location.textContent = `${user.localidade || "-"} ${user.regiao_administrativa ? `- ${user.regiao_administrativa}` : ""}`;
   els.referral.value = link;
+  renderMessageTemplate();
 
   els.grid.innerHTML = `
     ${detailItem("Nome", user.name)}
@@ -178,6 +197,53 @@ async function copyReferralLink() {
 function emailUser() {
   if (!currentUser?.email) return showMessage("Este cadastro nao tem email.", "err");
   window.location.href = `mailto:${currentUser.email}`;
+}
+
+function renderMessageTemplate() {
+  if (!currentUser) return;
+  const key = els.template.value || "boasVindas";
+  els.message.value = fillTemplate(MESSAGE_TEMPLATES[key] || MESSAGE_TEMPLATES.boasVindas);
+}
+
+function rotateBotMessage() {
+  const keys = Object.keys(MESSAGE_TEMPLATES);
+  templateIndex = (templateIndex + 1) % keys.length;
+  els.template.value = keys[templateIndex];
+  renderMessageTemplate();
+}
+
+function fillTemplate(template) {
+  return template
+    .replaceAll("{nome}", currentUser?.name || "")
+    .replaceAll("{link}", getPublicReferralUrl(currentUser) || "")
+    .replaceAll("{localidade}", currentUser?.localidade || "")
+    .replaceAll("{regiao}", currentUser?.regiao_administrativa || "");
+}
+
+function getCurrentMessage() {
+  return String(els.message.value || "").trim();
+}
+
+function sendWhatsappMessage() {
+  if (!currentUser?.phone) return showMessage("Este cadastro nao tem telefone.", "err");
+  const message = getCurrentMessage();
+  if (!message) return showMessage("Digite ou gere uma mensagem.", "err");
+  const phone = String(currentUser.phone).replace(/\D/g, "");
+  window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener");
+}
+
+function sendEmailMessage() {
+  if (!currentUser?.email) return showMessage("Este cadastro nao tem email.", "err");
+  const message = getCurrentMessage();
+  if (!message) return showMessage("Digite ou gere uma mensagem.", "err");
+  window.location.href = `mailto:${currentUser.email}?subject=${encodeURIComponent("Mensagem SIV")}&body=${encodeURIComponent(message)}`;
+}
+
+async function copyMessageText() {
+  const message = getCurrentMessage();
+  if (!message) return showMessage("Digite ou gere uma mensagem.", "err");
+  await navigator.clipboard.writeText(message);
+  showMessage("Mensagem copiada.", "ok");
 }
 
 async function deleteUser() {

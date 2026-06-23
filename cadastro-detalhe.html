@@ -162,6 +162,37 @@
           </div>
         </form>
       </article>
+
+      <aside class="dashboardPanel detailChatPanel" aria-label="Chat de envio">
+        <div class="panelHeader">
+          <div>
+            <h2>Chat de envio</h2>
+            <p>Mensagens prontas para WhatsApp e email.</p>
+          </div>
+        </div>
+
+        <div class="botBox">
+          <span>Robo de mensagens</span>
+          <button type="button" id="btnBotMessage" class="btnSecondary">Gerar mensagem</button>
+        </div>
+
+        <label for="messageTemplate">Modelo automatico</label>
+        <select id="messageTemplate">
+          <option value="boasVindas">Boas-vindas</option>
+          <option value="linkCadastro">Enviar link de cadastro</option>
+          <option value="confirmacao">Confirmar dados</option>
+          <option value="convite">Convite para cadastrar rede</option>
+        </select>
+
+        <label for="messageText">Mensagem</label>
+        <textarea id="messageText" class="chatTextarea"></textarea>
+
+        <div class="chatActions">
+          <button type="button" id="btnSendWhatsapp">WhatsApp</button>
+          <button type="button" id="btnSendEmail" class="btnSecondary">Email</button>
+          <button type="button" id="btnCopyMessage" class="btnSecondary">Copiar</button>
+        </div>
+      </aside>
     </section>
   </main>
 </body>

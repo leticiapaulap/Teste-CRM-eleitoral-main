@@ -322,6 +322,7 @@ body{
   .detailHero,
   .detailLayout{ grid-template-columns:1fr; }
   .detailActions{ justify-content:flex-start; }
+  .detailChatPanel{ position:static; }
 }
 
 @media (max-width: 520px){
@@ -332,6 +333,8 @@ body{
   .editGrid{ grid-template-columns:1fr; }
   .detailActions button,
   .detailActions a{ width:100%; }
+  .chatActions{ grid-template-columns:1fr; }
+  .botBox{ flex-direction:column; align-items:stretch; }
 }
 
 .dashboardBody{
@@ -590,12 +593,54 @@ body:not(.isTeam) .adminOnlyColumn{
 
 .detailLayout{
   display:grid;
-  grid-template-columns:minmax(0, .95fr) minmax(0, 1.05fr);
+  grid-template-columns:minmax(0, .9fr) minmax(0, 1fr) minmax(280px, .72fr);
   gap:12px;
 }
 
 .detailEditForm{
   padding:0;
+}
+
+.detailChatPanel{
+  align-self:start;
+  position:sticky;
+  top:12px;
+}
+
+.botBox{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  border:1px solid #e4ebfb;
+  border-radius:10px;
+  background:#f7f9ff;
+  margin-bottom:12px;
+}
+
+.botBox span{
+  color:#13233d;
+  font-weight:800;
+  font-size:13px;
+}
+
+.chatTextarea{
+  width:100%;
+  min-height:180px;
+  padding:12px;
+  border:1px solid #d7dfed;
+  border-radius:12px;
+  resize:vertical;
+  font:inherit;
+  line-height:1.4;
+}
+
+.chatActions{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  margin-top:10px;
 }
 
 .contactBox{
