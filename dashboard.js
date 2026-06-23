@@ -172,6 +172,7 @@ let filteredPoints = [];
 let selectedRegion = "";
 let selectedLeaderId = "";
 let isTeam = user?.role === "EQUIPE";
+let activeView = "profile";
 
 const els = {
   userLabel: document.getElementById("dashboardUser"),
@@ -209,6 +210,9 @@ const els = {
   editTitle: document.getElementById("editDialogTitle"),
   closeEdit: document.getElementById("btnCloseEdit"),
   cancelEdit: document.getElementById("btnCancelEdit"),
+  sideButtons: document.querySelectorAll("[data-view-target]"),
+  views: document.querySelectorAll(".dashboardView"),
+  teamNavItems: document.querySelectorAll(".teamOnlyNav"),
 };
 
 document.getElementById("btnLogout").addEventListener("click", () => {
@@ -240,12 +244,16 @@ els.refreshMessages?.addEventListener("click", loadContactMessages);
 els.editForm?.addEventListener("submit", saveEditForm);
 els.closeEdit?.addEventListener("click", closeEditDialog);
 els.cancelEdit?.addEventListener("click", closeEditDialog);
+els.sideButtons.forEach((button) => {
+  button.addEventListener("click", () => setDashboardView(button.dataset.viewTarget));
+});
 
 init();
 
 async function init() {
   await loadProfile();
   configureAccess();
+  setDashboardView(activeView);
   allPoints = await loadMapPoints();
 
   fillFilters(allPoints);
@@ -296,8 +304,26 @@ function configureAccess() {
   isTeam = user?.role === "EQUIPE";
   if (els.adminPanel) els.adminPanel.hidden = !isTeam;
   if (els.messagesPanel) els.messagesPanel.hidden = !isTeam;
+  els.teamNavItems.forEach((item) => {
+    item.hidden = !isTeam;
+  });
   document.body.classList.toggle("isTeam", isTeam);
   if (isTeam) loadContactMessages();
+}
+
+function setDashboardView(view) {
+  const restricted = ["admin", "messages"];
+  activeView = !isTeam && restricted.includes(view) ? "profile" : view || "profile";
+
+  els.sideButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.viewTarget === activeView);
+  });
+
+  els.views.forEach((section) => {
+    section.classList.toggle("isHiddenView", section.dataset.view !== activeView);
+  });
+
+  if (activeView === "messages") loadContactMessages();
 }
 
 async function loadMapPoints() {

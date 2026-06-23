@@ -41,7 +41,17 @@
       </div>
     </header>
 
-    <section class="dashboardPanel profilePanel" aria-label="Informacoes pessoais">
+    <div class="dashboardWorkspace">
+      <aside class="sideMenu" aria-label="Menu do painel">
+        <button type="button" class="sideMenuButton active" data-view-target="profile">Informacoes pessoais</button>
+        <button type="button" class="sideMenuButton teamOnlyNav" data-view-target="admin">Administracao da equipe</button>
+        <button type="button" class="sideMenuButton teamOnlyNav" data-view-target="messages">Mensagens do chat</button>
+        <button type="button" class="sideMenuButton" data-view-target="map">Mapa e resumo</button>
+        <button type="button" class="sideMenuButton" data-view-target="network">Cadastros e arvore</button>
+      </aside>
+
+      <div class="dashboardContent">
+    <section class="dashboardPanel profilePanel dashboardView" data-view="profile" aria-label="Informacoes pessoais">
       <div class="panelHeader">
         <div>
           <h2>Informacoes pessoais</h2>
@@ -59,7 +69,7 @@
       </div>
     </section>
 
-    <section id="adminPanel" class="dashboardPanel adminPanel" aria-label="Administracao da equipe" hidden>
+    <section id="adminPanel" class="dashboardPanel adminPanel dashboardView" data-view="admin" aria-label="Administracao da equipe" hidden>
       <div class="panelHeader">
         <div>
           <h2>Administracao da equipe</h2>
@@ -253,7 +263,7 @@
       </form>
     </dialog>
 
-    <section id="teamMessagesPanel" class="dashboardPanel messagesPanel" aria-label="Mensagens de contato" hidden>
+    <section id="teamMessagesPanel" class="dashboardPanel messagesPanel dashboardView" data-view="messages" aria-label="Mensagens de contato" hidden>
       <div class="panelHeader">
         <div>
           <h2>Mensagens do contato</h2>
@@ -264,7 +274,7 @@
       <div id="contactMessagesList" class="messageList"></div>
     </section>
 
-    <section class="filterPanel" aria-label="Filtros do painel">
+    <section class="filterPanel dashboardView" data-view="network" aria-label="Filtros do painel">
       <div>
         <label for="filterRole">Tipo</label>
         <select id="filterRole">
@@ -306,7 +316,7 @@
       </div>
     </section>
 
-    <section class="dashboardGrid" aria-label="Indicadores">
+    <section class="dashboardGrid dashboardView" data-view="map" aria-label="Indicadores">
       <article class="metricCard">
         <span>Lideres</span>
         <strong id="metricLeaders">0</strong>
@@ -325,7 +335,7 @@
       </article>
     </section>
 
-    <section class="dashboardLayout" aria-label="Mapa e resumo">
+    <section class="dashboardLayout dashboardView" data-view="map" aria-label="Mapa e resumo">
       <article class="dashboardPanel mapPanel">
         <div class="panelHeader">
           <div>
@@ -374,7 +384,7 @@
       </aside>
     </section>
 
-    <section class="dashboardLayout lowerLayout" aria-label="Listas da rede">
+    <section class="dashboardLayout lowerLayout dashboardView" data-view="network" aria-label="Listas da rede">
       <article class="dashboardPanel tablePanel">
         <div class="panelHeader">
           <div>
@@ -414,6 +424,8 @@
         <div id="networkTree" class="networkTree"></div>
       </aside>
     </section>
+      </div>
+    </div>
   </main>
 </body>
 

@@ -318,6 +318,11 @@ body{
 
 @media (max-width: 780px){
   .dashboardHeader{ flex-direction:column; }
+  .dashboardWorkspace{ grid-template-columns:1fr; }
+  .sideMenu{
+    position:static;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
   .dashboardGrid{ grid-template-columns: 1fr 1fr; }
   .detailHero,
   .detailLayout{ grid-template-columns:1fr; }
@@ -331,6 +336,7 @@ body{
   .modalActions{ flex-direction:column; }
   .modalActions button{ width:100%; }
   .editGrid{ grid-template-columns:1fr; }
+  .sideMenu{ grid-template-columns:1fr; }
   .detailActions button,
   .detailActions a{ width:100%; }
   .chatActions{ grid-template-columns:1fr; }
@@ -350,6 +356,51 @@ body{
   display:flex;
   gap:10px;
   align-items:center;
+}
+
+.dashboardWorkspace{
+  display:grid;
+  grid-template-columns:220px minmax(0, 1fr);
+  gap:14px;
+  align-items:start;
+}
+
+.sideMenu{
+  position:sticky;
+  top:18px;
+  display:grid;
+  gap:8px;
+  padding:10px;
+  border-radius:14px;
+  background:rgba(255,255,255,.96);
+  box-shadow:var(--shadow);
+}
+
+.sideMenuButton{
+  width:100%;
+  margin:0;
+  padding:11px 12px;
+  border-radius:10px;
+  box-shadow:none;
+  background:#f7f9ff;
+  color:#13233d;
+  border:1px solid #e4ebfb;
+  text-align:left;
+  font-weight:800;
+}
+
+.sideMenuButton.active{
+  background:var(--blue-700);
+  color:#fff;
+  border-color:var(--blue-700);
+}
+
+.dashboardContent{
+  min-width:0;
+}
+
+.dashboardView.isHiddenView{
+  display:none;
 }
 
 .profilePanel,
