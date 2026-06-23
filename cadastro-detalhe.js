@@ -39,12 +39,15 @@ const els = {
   saveSupport: document.getElementById("btnSaveSupport"),
   copyMessage: document.getElementById("btnCopyMessage"),
   supportHistory: document.getElementById("supportHistory"),
+  detailNavButtons: document.querySelectorAll("[data-detail-view-target]"),
+  detailViews: document.querySelectorAll("[data-detail-view]"),
 };
 
 let currentUser = null;
 let networkTree = [];
 let supportMessages = [];
 let templateIndex = 0;
+let activeDetailView = "detail-info";
 
 els.logout.addEventListener("click", () => {
   localStorage.removeItem("siv_token");
@@ -60,6 +63,9 @@ els.template.addEventListener("change", renderMessageTemplate);
 els.bot.addEventListener("click", rotateBotMessage);
 els.saveSupport.addEventListener("click", saveSupportMessage);
 els.copyMessage.addEventListener("click", copyMessageText);
+els.detailNavButtons.forEach((button) => {
+  button.addEventListener("click", () => setDetailView(button.dataset.detailViewTarget));
+});
 
 init();
 
@@ -68,7 +74,18 @@ async function init() {
     showMessage("Cadastro nao informado.", "err");
     return;
   }
+  setDetailView(activeDetailView);
   await loadUser();
+}
+
+function setDetailView(view) {
+  activeDetailView = view || "detail-info";
+  els.detailNavButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.detailViewTarget === activeDetailView);
+  });
+  els.detailViews.forEach((section) => {
+    section.classList.toggle("isHiddenView", section.dataset.detailView !== activeDetailView);
+  });
 }
 
 async function loadUser() {

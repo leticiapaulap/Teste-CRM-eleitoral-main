@@ -668,9 +668,7 @@ body:not(.isTeam) .adminOnlyColumn{
 }
 
 .detailLayout{
-  display:grid;
-  grid-template-columns:minmax(0, .95fr) minmax(0, 1.05fr);
-  gap:12px;
+  display:block;
 }
 
 .detailEditForm{
@@ -737,7 +735,6 @@ body:not(.isTeam) .adminOnlyColumn{
 }
 
 .detailChatPanel{
-  grid-column:1 / -1;
   align-self:stretch;
   position:static;
 }

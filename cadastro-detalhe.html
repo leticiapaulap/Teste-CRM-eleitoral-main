@@ -46,8 +46,17 @@
       </div>
     </section>
 
+    <div class="dashboardWorkspace">
+      <aside class="sideMenu" aria-label="Menu do cadastro">
+        <button type="button" class="sideMenuButton active" data-detail-view-target="detail-info">Informacoes pessoais</button>
+        <button type="button" class="sideMenuButton" data-detail-view-target="detail-edit">Editar cadastro</button>
+        <button type="button" class="sideMenuButton" data-detail-view-target="detail-support">Mensagens do chat</button>
+        <button type="button" class="sideMenuButton" data-detail-view-target="detail-tree">Cadastros e arvore</button>
+      </aside>
+
+      <div class="dashboardContent">
     <section class="detailLayout">
-      <article class="dashboardPanel">
+      <article class="dashboardPanel dashboardView" data-detail-view="detail-info">
         <div class="panelHeader">
           <div>
             <h2>Dados completos</h2>
@@ -62,15 +71,9 @@
             <button type="button" id="btnCopyDetailLinkInline" class="btnSecondary">Copiar</button>
           </div>
         </div>
-
-        <div class="detailTreeBlock">
-          <h3>Arvore deste cadastro</h3>
-          <p>Pessoas cadastradas a partir do link deste cadastro.</p>
-          <div id="detailNetworkTree" class="detailNetworkTree"></div>
-        </div>
       </article>
 
-      <article class="dashboardPanel">
+      <article class="dashboardPanel dashboardView" data-detail-view="detail-edit">
         <div class="panelHeader">
           <div>
             <h2>Editar cadastro</h2>
@@ -169,7 +172,7 @@
         </form>
       </article>
 
-      <aside class="dashboardPanel detailChatPanel" aria-label="Suporte interno">
+      <aside class="dashboardPanel detailChatPanel dashboardView" data-detail-view="detail-support" aria-label="Suporte interno">
         <div class="panelHeader">
           <div>
             <h2>Suporte interno</h2>
@@ -203,7 +206,19 @@
           <div id="supportHistory" class="supportHistory"></div>
         </div>
       </aside>
+
+      <article class="dashboardPanel dashboardView" data-detail-view="detail-tree">
+        <div class="panelHeader">
+          <div>
+            <h2>Cadastros e arvore</h2>
+            <p>Pessoas cadastradas a partir do link deste cadastro.</p>
+          </div>
+        </div>
+        <div id="detailNetworkTree" class="detailNetworkTree"></div>
+      </article>
     </section>
+      </div>
+    </div>
   </main>
 </body>
 
