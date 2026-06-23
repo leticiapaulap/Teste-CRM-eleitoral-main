@@ -854,15 +854,52 @@ function renderContactMessages(messages) {
   }
 
   els.messagesList.innerHTML = messages.map((message) => `
-    <article class="messageItem">
+    <article class="messageItem" data-message-id="${escapeHtml(message.id)}">
       <div>
-        <strong>${escapeHtml(message.name)}</strong>
-        <span>${formatDate(message.created_at)}</span>
+        <strong>${escapeHtml(message.user_name || message.name)}</strong>
+        <span>${escapeHtml(message.status || "NOVO")} - ${formatDate(message.created_at)}</span>
       </div>
       <p>${escapeHtml(message.message)}</p>
       <small>${escapeHtml(message.email || "-")} ${escapeHtml(message.phone || "")}</small>
+      ${message.reply ? `
+        <div class="messageReply">
+          <strong>Resposta</strong>
+          <p>${escapeHtml(message.reply)}</p>
+          <small>${formatDate(message.replied_at)}</small>
+        </div>
+      ` : `
+        <label for="reply-${escapeHtml(message.id)}">Responder</label>
+        <textarea id="reply-${escapeHtml(message.id)}" class="replyTextarea" placeholder="Digite a resposta da equipe"></textarea>
+        <button type="button" class="btnTiny" data-action="reply-message" data-id="${escapeHtml(message.id)}">Salvar resposta</button>
+      `}
     </article>
   `).join("");
+
+  els.messagesList.querySelectorAll('[data-action="reply-message"]').forEach((button) => {
+    button.addEventListener("click", () => replyContactMessage(button.dataset.id));
+  });
+}
+
+async function replyContactMessage(id) {
+  const textarea = document.getElementById(`reply-${id}`);
+  const reply = textarea?.value?.trim();
+  if (!reply) return showAdminMessage("Digite a resposta antes de salvar.", "err");
+  try {
+    const response = await fetch(`/api/contact/messages/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ reply }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel responder.");
+    showAdminMessage("Resposta salva.", "ok");
+    await loadContactMessages();
+  } catch (error) {
+    showAdminMessage(`Erro: ${error.message || error}`, "err");
+  }
 }
 
 async function copyText(text) {

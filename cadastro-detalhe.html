@@ -169,11 +169,11 @@
         </form>
       </article>
 
-      <aside class="dashboardPanel detailChatPanel" aria-label="Chat de envio">
+      <aside class="dashboardPanel detailChatPanel" aria-label="Suporte interno">
         <div class="panelHeader">
           <div>
-            <h2>Chat de envio</h2>
-            <p>Mensagens prontas para WhatsApp e email.</p>
+            <h2>Suporte interno</h2>
+            <p>Registre mensagens para visualizar e responder pelo login.</p>
           </div>
         </div>
 
@@ -190,13 +190,17 @@
           <option value="convite">Convite para cadastrar rede</option>
         </select>
 
-        <label for="messageText">Mensagem</label>
+        <label for="messageText">Mensagem para registrar</label>
         <textarea id="messageText" class="chatTextarea"></textarea>
 
         <div class="chatActions">
-          <button type="button" id="btnSendWhatsapp">WhatsApp</button>
-          <button type="button" id="btnSendEmail" class="btnSecondary">Email</button>
+          <button type="button" id="btnSaveSupport">Salvar no suporte</button>
           <button type="button" id="btnCopyMessage" class="btnSecondary">Copiar</button>
+        </div>
+
+        <div class="supportHistoryBlock">
+          <h3>Historico</h3>
+          <div id="supportHistory" class="supportHistory"></div>
         </div>
       </aside>
     </section>

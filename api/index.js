@@ -139,6 +139,16 @@ async function contactMessages(req, res) {
   return methodNotAllowed(res, ["GET", "POST"]);
 }
 
+async function contactMessageById(req, res, id) {
+  if (req.method !== "PATCH") return methodNotAllowed(res, ["PATCH"]);
+  const { requireAuth, ROLES } = await import("../lib/security.js");
+  const { replyContactMessage } = await import("../lib/admin-service.js");
+  await requireAuth(req, [ROLES.EQUIPE]);
+  const input = await readJsonOrForm(req);
+  const message = await replyContactMessage(id, input);
+  return sendJson(res, 200, { ok: true, message });
+}
+
 async function authMe(req, res) {
   if (!["GET", "PATCH"].includes(req.method)) return methodNotAllowed(res, ["GET", "PATCH"]);
   const { requireAuth } = await import("../lib/security.js");
@@ -376,12 +386,14 @@ export default async function handler(req, res) {
     const route = getRoute(req);
     const leaderNetworkMatch = getDynamicId(route, "admin/leaders/:id/network");
     const userMatch = getDynamicId(route, "admin/users/:id");
+    const contactMessageMatch = getDynamicId(route, "contact/messages/:id");
 
     if (route === "auth/register") return await authRegister(req, res);
     if (route === "siv") return await sivRegister(req, res);
     if (route === "auth/login") return await authLogin(req, res);
     if (route === "auth/me") return await authMe(req, res);
     if (route === "contact/messages") return await contactMessages(req, res);
+    if (contactMessageMatch) return await contactMessageById(req, res, contactMessageMatch.id);
     if (route === "health") return await healthCheck(req, res);
     if (route === "upload/profile-photo") return await uploadProfilePhoto(req, res);
     if (route === "leaders/me/network") return await leaderNetwork(req, res);

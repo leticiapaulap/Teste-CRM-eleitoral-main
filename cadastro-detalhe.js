@@ -36,13 +36,14 @@ const els = {
   template: document.getElementById("messageTemplate"),
   message: document.getElementById("messageText"),
   bot: document.getElementById("btnBotMessage"),
-  whatsapp: document.getElementById("btnSendWhatsapp"),
-  sendEmail: document.getElementById("btnSendEmail"),
+  saveSupport: document.getElementById("btnSaveSupport"),
   copyMessage: document.getElementById("btnCopyMessage"),
+  supportHistory: document.getElementById("supportHistory"),
 };
 
 let currentUser = null;
 let networkTree = [];
+let supportMessages = [];
 let templateIndex = 0;
 
 els.logout.addEventListener("click", () => {
@@ -57,8 +58,7 @@ els.email.addEventListener("click", emailUser);
 els.delete.addEventListener("click", deleteUser);
 els.template.addEventListener("change", renderMessageTemplate);
 els.bot.addEventListener("click", rotateBotMessage);
-els.whatsapp.addEventListener("click", sendWhatsappMessage);
-els.sendEmail.addEventListener("click", sendEmailMessage);
+els.saveSupport.addEventListener("click", saveSupportMessage);
 els.copyMessage.addEventListener("click", copyMessageText);
 
 init();
@@ -76,9 +76,19 @@ async function loadUser() {
     const data = await requestJson(`/api/admin/users/${encodeURIComponent(userId)}`);
     currentUser = data.user;
     await loadNetworkTree();
+    await loadSupportMessages();
     renderUser();
   } catch (error) {
     showMessage(`Erro: ${error.message || error}`, "err");
+  }
+}
+
+async function loadSupportMessages() {
+  try {
+    const data = await requestJson(`/api/contact/messages?user_id=${encodeURIComponent(userId)}&limit=50`);
+    supportMessages = Array.isArray(data.items) ? data.items : [];
+  } catch {
+    supportMessages = [];
   }
 }
 
@@ -123,6 +133,7 @@ function renderUser() {
     ${detailItem("Atualizado em", formatDate(user.updated_at))}
   `;
   renderNetworkTree();
+  renderSupportHistory();
 
   setValue("editName", user.name || "");
   setValue("editEmail", user.email || "");
@@ -263,19 +274,27 @@ function getCurrentMessage() {
   return String(els.message.value || "").trim();
 }
 
-function sendWhatsappMessage() {
-  if (!currentUser?.phone) return showMessage("Este cadastro nao tem telefone.", "err");
+async function saveSupportMessage() {
   const message = getCurrentMessage();
   if (!message) return showMessage("Digite ou gere uma mensagem.", "err");
-  const phone = String(currentUser.phone).replace(/\D/g, "");
-  window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener");
-}
-
-function sendEmailMessage() {
-  if (!currentUser?.email) return showMessage("Este cadastro nao tem email.", "err");
-  const message = getCurrentMessage();
-  if (!message) return showMessage("Digite ou gere uma mensagem.", "err");
-  window.location.href = `mailto:${currentUser.email}?subject=${encodeURIComponent("Mensagem SIV")}&body=${encodeURIComponent(message)}`;
+  try {
+    await requestJson("/api/contact/messages", {
+      method: "POST",
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        name: currentUser.name,
+        email: currentUser.email,
+        phone: currentUser.phone,
+        message,
+      }),
+    });
+    els.message.value = "";
+    await loadSupportMessages();
+    renderSupportHistory();
+    showMessage("Mensagem registrada no suporte.", "ok");
+  } catch (error) {
+    showMessage(`Erro: ${error.message || error}`, "err");
+  }
 }
 
 async function copyMessageText() {
@@ -283,6 +302,24 @@ async function copyMessageText() {
   if (!message) return showMessage("Digite ou gere uma mensagem.", "err");
   await navigator.clipboard.writeText(message);
   showMessage("Mensagem copiada.", "ok");
+}
+
+function renderSupportHistory() {
+  if (!els.supportHistory) return;
+  if (!supportMessages.length) {
+    els.supportHistory.innerHTML = `<div class="emptyState">Nenhuma mensagem registrada para este cadastro.</div>`;
+    return;
+  }
+  els.supportHistory.innerHTML = supportMessages.map((message) => `
+    <article class="supportHistoryItem">
+      <div>
+        <strong>${escapeHtml(message.name || currentUser.name || "-")}</strong>
+        <span>${formatDate(message.created_at)}</span>
+      </div>
+      <p>${escapeHtml(message.message)}</p>
+      ${message.reply ? `<div class="supportReply"><strong>Resposta da equipe</strong><p>${escapeHtml(message.reply)}</p><small>${formatDate(message.replied_at)}</small></div>` : `<small>${escapeHtml(message.status || "NOVO")}</small>`}
+    </article>
+  `).join("");
 }
 
 async function deleteUser() {

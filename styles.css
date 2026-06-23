@@ -482,6 +482,31 @@ body:not(.isTeam) .adminOnlyColumn{
   line-height:1.35;
 }
 
+.replyTextarea{
+  width:100%;
+  min-height:78px;
+  margin:8px 0;
+  padding:10px;
+  border:1px solid #d7dfed;
+  border-radius:10px;
+  resize:vertical;
+  font:inherit;
+}
+
+.messageReply,
+.supportReply{
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  background:#eef5ff;
+  border:1px solid #cfe0ff;
+}
+
+.messageReply p,
+.supportReply p{
+  margin:6px 0;
+}
+
 .editDialog{
   width:min(760px, calc(100vw - 28px));
   border:0;
@@ -697,9 +722,52 @@ body:not(.isTeam) .adminOnlyColumn{
 
 .chatActions{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+  grid-template-columns:1fr 1fr;
   gap:8px;
   margin-top:10px;
+}
+
+.supportHistoryBlock{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid #e4ebfb;
+}
+
+.supportHistoryBlock h3{
+  margin:0 0 10px;
+  color:#13233d;
+  font-size:16px;
+}
+
+.supportHistory{
+  display:grid;
+  gap:10px;
+}
+
+.supportHistoryItem{
+  padding:10px;
+  border:1px solid #e4ebfb;
+  border-radius:10px;
+  background:#f7f9ff;
+}
+
+.supportHistoryItem div:first-child{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.supportHistoryItem span,
+.supportHistoryItem small{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.supportHistoryItem p{
+  margin:8px 0 0;
+  color:#223553;
+  font-size:13px;
+  line-height:1.35;
 }
 
 .contactBox{
