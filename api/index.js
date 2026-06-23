@@ -140,10 +140,17 @@ async function contactMessages(req, res) {
 }
 
 async function authMe(req, res) {
-  if (req.method !== "GET") return methodNotAllowed(res, ["GET"]);
+  if (!["GET", "PATCH"].includes(req.method)) return methodNotAllowed(res, ["GET", "PATCH"]);
   const { requireAuth } = await import("../lib/security.js");
-  const { getUserProfile } = await import("../lib/admin-service.js");
+  const { getUserProfile, updateUser } = await import("../lib/admin-service.js");
   const user = await requireAuth(req);
+  if (req.method === "PATCH") {
+    const input = await readJsonOrForm(req);
+    delete input.role;
+    delete input.active;
+    const updated = await updateUser(user.id, input);
+    return sendJson(res, 200, { ok: true, user: updated });
+  }
   const profile = await getUserProfile(user.id);
   return sendJson(res, 200, { ok: true, user: profile || user });
 }

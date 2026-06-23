@@ -323,6 +323,10 @@ body{
 
 @media (max-width: 520px){
   .dashboardGrid{ grid-template-columns: 1fr; }
+  .modalHeader,
+  .modalActions{ flex-direction:column; }
+  .modalActions button{ width:100%; }
+  .editGrid{ grid-template-columns:1fr; }
 }
 
 .dashboardBody{
@@ -457,6 +461,65 @@ body:not(.isTeam) .adminOnlyColumn{
   color:#223553;
   font-size:13px;
   line-height:1.35;
+}
+
+.editDialog{
+  width:min(760px, calc(100vw - 28px));
+  border:0;
+  border-radius:14px;
+  padding:0;
+  box-shadow:0 24px 80px rgba(19,35,61,.28);
+}
+
+.editDialog::backdrop{
+  background:rgba(11,22,39,.42);
+}
+
+.editForm{
+  padding:18px;
+}
+
+.modalHeader{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+
+.modalHeader h2{
+  margin:0;
+  font-size:20px;
+  color:#13233d;
+}
+
+.modalHeader p{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.editGrid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap:12px;
+}
+
+.editActive{
+  align-items:center;
+  margin:0;
+  min-height:42px;
+}
+
+.editActive.isDisabled{
+  opacity:.55;
+}
+
+.modalActions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:14px;
 }
 
 .contactBox{

@@ -176,6 +176,7 @@ let isTeam = user?.role === "EQUIPE";
 const els = {
   userLabel: document.getElementById("dashboardUser"),
   profile: document.getElementById("profileDetails"),
+  editProfile: document.getElementById("btnEditProfile"),
   referralLink: document.getElementById("profileReferralLink"),
   copyReferral: document.getElementById("btnCopyReferral"),
   adminPanel: document.getElementById("adminPanel"),
@@ -202,6 +203,12 @@ const els = {
   metricUsers: document.getElementById("metricUsers"),
   metricRegions: document.getElementById("metricRegions"),
   metricMap: document.getElementById("metricMap"),
+  editDialog: document.getElementById("editDialog"),
+  editForm: document.getElementById("editForm"),
+  editMsg: document.getElementById("editMsg"),
+  editTitle: document.getElementById("editDialogTitle"),
+  closeEdit: document.getElementById("btnCloseEdit"),
+  cancelEdit: document.getElementById("btnCancelEdit"),
 };
 
 document.getElementById("btnLogout").addEventListener("click", () => {
@@ -226,9 +233,13 @@ els.leader.addEventListener("input", () => {
   render();
 });
 els.copyReferral?.addEventListener("click", copyReferralLink);
+els.editProfile?.addEventListener("click", () => openEditDialog(user, { self: true }));
 els.adminForm?.addEventListener("submit", createAdminUser);
 els.emailVisible?.addEventListener("click", () => emailUsers(filteredPoints));
 els.refreshMessages?.addEventListener("click", loadContactMessages);
+els.editForm?.addEventListener("submit", saveEditForm);
+els.closeEdit?.addEventListener("click", closeEditDialog);
+els.cancelEdit?.addEventListener("click", closeEditDialog);
 
 init();
 
@@ -678,57 +689,106 @@ async function handleTableAction(action, id) {
     }
 
     if (action === "edit") {
-      const name = prompt("Nome", person.name || "");
-      if (name === null) return;
-      const email = prompt("Email", person.email || "");
-      if (email === null) return;
-      const phone = prompt("Telefone", person.phone || "");
-      if (phone === null) return;
-      const role = prompt("Tipo: EQUIPE, COORDENADORES, LIDERES ou CADASTRADOS", person.role || "CADASTRADOS");
-      if (role === null) return;
-      const localidade = prompt("Localidade", person.localidade || "");
-      if (localidade === null) return;
-      const regiao = prompt("Regiao administrativa", person.regiao_administrativa || "");
-      if (regiao === null) return;
-      const latitude = prompt("Latitude", person.latitude ?? "");
-      if (latitude === null) return;
-      const longitude = prompt("Longitude", person.longitude ?? "");
-      if (longitude === null) return;
-      const photoUrl = prompt("URL/caminho da foto", person.photo_url || "");
-      if (photoUrl === null) return;
-      const active = prompt("Ativo? true ou false", person.active === false ? "false" : "true");
-      if (active === null) return;
-      const password = prompt("Nova senha (deixe vazio para manter a atual)", "");
-      if (password === null) return;
-
-      const payload = {
-        name,
-        email,
-        phone,
-        role,
-        localidade,
-        regiao_administrativa: regiao,
-        latitude,
-        longitude,
-        photo_url: photoUrl,
-        active,
-      };
-      if (password.trim()) payload.password = password;
-
-      const updated = await adminRequest(`/api/admin/users/${encodeURIComponent(id)}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
-
-      allPoints = updated.user.active === false
-        ? allPoints.filter((point) => String(point.id) !== String(id))
-        : allPoints.map((point) => String(point.id) === String(id) ? updated.user : point);
-      fillFilters(allPoints);
-      render();
+      openEditDialog(person);
     }
   } catch (error) {
     showAdminMessage(`Erro: ${error.message || error}`, "err");
   }
+}
+
+function openEditDialog(person, { self = false } = {}) {
+  if (!person || !els.editDialog || !els.editForm) return;
+  els.editForm.dataset.self = self ? "true" : "false";
+  els.editTitle.textContent = self ? "Editar minhas informacoes" : `Editar ${person.name || "cadastro"}`;
+  setEditValue("editId", person.id || "");
+  setEditValue("editName", person.name || "");
+  setEditValue("editEmail", person.email || "");
+  setEditValue("editPhone", person.phone || "");
+  setEditValue("editRole", person.role || "CADASTRADOS");
+  setEditValue("editLocalidade", person.localidade || "");
+  setEditValue("editRegiao", person.regiao_administrativa || "");
+  setEditValue("editLatitude", person.latitude ?? "");
+  setEditValue("editLongitude", person.longitude ?? "");
+  setEditValue("editPassword", "");
+  const active = document.getElementById("editActive");
+  if (active) active.checked = person.active !== false;
+  const role = document.getElementById("editRole");
+  const activeBlock = active?.closest(".editActive");
+  if (role) role.disabled = self && !isTeam;
+  if (active) active.disabled = self && !isTeam;
+  if (activeBlock) activeBlock.classList.toggle("isDisabled", self && !isTeam);
+  const photo = document.getElementById("editPhoto");
+  if (photo) photo.value = "";
+  showEditMessage("", "");
+  els.editDialog.showModal();
+}
+
+function setEditValue(id, value) {
+  const field = document.getElementById(id);
+  if (field) field.value = value;
+}
+
+function closeEditDialog() {
+  els.editDialog?.close();
+}
+
+async function saveEditForm(event) {
+  event.preventDefault();
+  showEditMessage("", "");
+  const formData = new FormData(els.editForm);
+  const id = formData.get("id");
+  const photoFile = formData.get("photo");
+  const isSelfEdit = els.editForm.dataset.self === "true";
+  const payload = {
+    name: formData.get("name"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    localidade: formData.get("localidade"),
+    regiao_administrativa: formData.get("regiao_administrativa"),
+    latitude: formData.get("latitude"),
+    longitude: formData.get("longitude"),
+  };
+  if (!isSelfEdit || isTeam) {
+    payload.role = formData.get("role");
+    payload.active = document.getElementById("editActive")?.checked ? "true" : "false";
+  }
+  const password = String(formData.get("password") || "").trim();
+  if (password) payload.password = password;
+
+  try {
+    if (photoFile && photoFile.size) {
+      payload.photo_url = await uploadPhoto(photoFile);
+    }
+
+    const updated = await adminRequest(isSelfEdit ? "/api/auth/me" : `/api/admin/users/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+
+    if (String(id) === String(user.id)) {
+      user = { ...user, ...updated.user };
+      localStorage.setItem("siv_user", JSON.stringify(user));
+      els.userLabel.textContent = `${user.name || user.email} - ${user.role}`;
+      renderProfile(user);
+    }
+
+    allPoints = updated.user.active === false
+      ? allPoints.filter((point) => String(point.id) !== String(id))
+      : allPoints.map((point) => String(point.id) === String(id) ? updated.user : point);
+    fillFilters(allPoints);
+    render();
+    closeEditDialog();
+    showAdminMessage("Cadastro atualizado.", "ok");
+  } catch (error) {
+    showEditMessage(`Erro: ${error.message || error}`, "err");
+  }
+}
+
+function showEditMessage(text, type) {
+  if (!els.editMsg) return;
+  els.editMsg.textContent = text;
+  els.editMsg.className = type ? `msg ${type}` : "msg";
+  els.editMsg.style.display = text ? "block" : "none";
 }
 
 async function adminRequest(url, options = {}) {

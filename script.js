@@ -48,7 +48,7 @@ function normalizeWhatsApp(input) {
 
 function isValidRef(ref) {
   // aceita AGxxx... ou SIVxxxxxx...
-  return /^AG\d{3,}$/i.test(ref) || /^SIV\d{6,}$/i.test(ref);
+  return /^AG\d{3,}$/i.test(ref) || /^SIV[A-Z0-9]{6,}$/i.test(ref);
 }
 
 function lockRef(value) {
@@ -136,14 +136,13 @@ form.addEventListener("submit", async (e) => {
 
   if (veioPorLink) {
     if (!ref || ref.length < 3) return showError("Referência inválida.");
-    if (!isValidRef(ref)) return showError("A referência deve ser AG001 ou SIV000123 (exemplo).");
+    if (!isValidRef(ref)) return showError("Referencia invalida. Use o link de cadastro enviado pelo responsavel.");
   }
 
   const aceite_lgpd = document.getElementById("aceiteLGPD").checked;
   const aceite_whatsapp = document.getElementById("aceiteWhats").checked;
 
   const recaptchaToken = (window.grecaptcha) ? grecaptcha.getResponse() : "";
-  if (!recaptchaToken) return showError("Confirme a verificação anti-robô (reCAPTCHA).");
 
   if (!nome || nome.length < 3) return showError("Informe seu nome completo.");
   if (!whatsapp || whatsapp.length < 10) return showError("Informe um WhatsApp válido (com DDD).");

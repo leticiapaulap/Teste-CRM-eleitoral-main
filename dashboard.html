@@ -47,6 +47,7 @@
           <h2>Informacoes pessoais</h2>
           <p>Dados do usuario logado e link de cadastro da rede.</p>
         </div>
+        <button type="button" id="btnEditProfile" class="btnSecondary">Editar meus dados</button>
       </div>
       <div id="profileDetails" class="profileGrid"></div>
       <div class="invite adminInvite">
@@ -109,6 +110,78 @@
       </form>
       <div id="adminMsg" class="msg"></div>
     </section>
+
+    <dialog id="editDialog" class="editDialog">
+      <form id="editForm" class="editForm" method="dialog">
+        <div class="modalHeader">
+          <div>
+            <h2 id="editDialogTitle">Editar cadastro</h2>
+            <p>Atualize os dados e salve as alteracoes.</p>
+          </div>
+          <button type="button" id="btnCloseEdit" class="btnSecondary">Fechar</button>
+        </div>
+
+        <input id="editId" name="id" type="hidden" />
+
+        <div class="editGrid">
+          <div>
+            <label for="editName">Nome</label>
+            <input id="editName" name="name" required />
+          </div>
+          <div>
+            <label for="editEmail">Email</label>
+            <input id="editEmail" name="email" type="email" required />
+          </div>
+          <div>
+            <label for="editPhone">Telefone</label>
+            <input id="editPhone" name="phone" required />
+          </div>
+          <div>
+            <label for="editRole">Tipo</label>
+            <select id="editRole" name="role" required>
+              <option value="EQUIPE">Equipe</option>
+              <option value="COORDENADORES">Coordenador</option>
+              <option value="LIDERES">Lider</option>
+              <option value="CADASTRADOS">Cadastrado</option>
+            </select>
+          </div>
+          <div>
+            <label for="editLocalidade">Localidade</label>
+            <input id="editLocalidade" name="localidade" required />
+          </div>
+          <div>
+            <label for="editRegiao">Regiao administrativa</label>
+            <input id="editRegiao" name="regiao_administrativa" />
+          </div>
+          <div>
+            <label for="editLatitude">Latitude</label>
+            <input id="editLatitude" name="latitude" inputmode="decimal" />
+          </div>
+          <div>
+            <label for="editLongitude">Longitude</label>
+            <input id="editLongitude" name="longitude" inputmode="decimal" />
+          </div>
+          <div>
+            <label for="editPhoto">Nova foto</label>
+            <input id="editPhoto" name="photo" type="file" accept="image/*" capture="user" />
+          </div>
+          <div>
+            <label for="editPassword">Nova senha</label>
+            <input id="editPassword" name="password" type="password" placeholder="Deixe vazio para manter" />
+          </div>
+          <label class="check editActive">
+            <input id="editActive" name="active" type="checkbox" />
+            <span>Cadastro ativo</span>
+          </label>
+        </div>
+
+        <div id="editMsg" class="msg"></div>
+        <div class="modalActions">
+          <button type="button" id="btnCancelEdit" class="btnSecondary">Cancelar</button>
+          <button type="submit" id="btnSaveEdit">Salvar alteracoes</button>
+        </div>
+      </form>
+    </dialog>
 
     <section id="teamMessagesPanel" class="dashboardPanel messagesPanel" aria-label="Mensagens de contato" hidden>
       <div class="panelHeader">
