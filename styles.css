@@ -2230,25 +2230,32 @@ body.dashboardBody{
 }
 
 .sideMenu{
-  width:220px;
-  min-width:0;
-  overflow:hidden;
+  width:220px !important;
+  max-width:220px !important;
+  min-width:0 !important;
+  overflow:hidden !important;
   z-index:2;
 }
 
 .sideMenuButton{
-  width:100%;
-  max-width:100%;
-  min-width:0;
-  margin-top:0;
-  box-shadow:none;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  margin-top:0 !important;
+  box-shadow:none !important;
+  overflow:hidden;
 }
 
 .sideMenuToggle{
   width:auto;
-  margin-top:0;
-  box-shadow:none;
+  margin-top:0 !important;
+  box-shadow:none !important;
   white-space:nowrap;
+}
+
+.sideText{
+  flex:1 1 auto;
+  min-width:0 !important;
 }
 
 .menuCollapsed .dashboardWorkspace{
@@ -2256,12 +2263,30 @@ body.dashboardBody{
 }
 
 .menuCollapsed .sideMenu{
-  width:74px;
+  width:74px !important;
+  max-width:74px !important;
 }
 
 .menuCollapsed .sideMenuToggle,
 .menuCollapsed .sideMenuButton{
-  width:100%;
+  width:100% !important;
+}
+
+.menuCollapsed .sideMenuToggle{
+  font-size:11px !important;
+  padding:7px 0 !important;
+}
+
+.menuCollapsed .sideMenuToggle::after{
+  content:"" !important;
+}
+
+.menuCollapsed .sideMenuButton{
+  gap:0 !important;
+}
+
+.menuCollapsed .sideText{
+  display:none !important;
 }
 
 .dashboardHome .dashboardPanel{

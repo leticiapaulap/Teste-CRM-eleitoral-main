@@ -257,12 +257,17 @@ els.viewLinks.forEach((button) => {
   button.addEventListener("click", () => setDashboardView(button.dataset.goView));
 });
 els.menuToggle?.addEventListener("click", () => {
-  document.body.classList.toggle("menuCollapsed");
+  const collapsed = document.body.classList.toggle("menuCollapsed");
+  localStorage.setItem("siv_menu_collapsed", collapsed ? "1" : "0");
+  updateMenuToggle(collapsed);
 });
 
 init();
 
 async function init() {
+  const collapsed = localStorage.getItem("siv_menu_collapsed") === "1";
+  document.body.classList.toggle("menuCollapsed", collapsed);
+  updateMenuToggle(collapsed);
   await loadProfile();
   configureAccess();
   setDashboardView(activeView);
@@ -339,6 +344,12 @@ function setDashboardView(view) {
   });
 
   if (activeView === "messages") loadContactMessages();
+}
+
+function updateMenuToggle(collapsed) {
+  if (!els.menuToggle) return;
+  els.menuToggle.textContent = collapsed ? "Abrir" : "Recolher";
+  els.menuToggle.setAttribute("aria-label", collapsed ? "Abrir menu lateral" : "Recolher menu lateral");
 }
 
 async function loadMapPoints() {
