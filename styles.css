@@ -1616,6 +1616,20 @@ input:focus, select:focus{
   color: var(--muted);
 }
 
+.coordinatorAccess{
+  margin:12px 0;
+  padding:12px;
+  border-radius:14px;
+  background:#eef4ff;
+  border:1px solid #d6e5ff;
+}
+
+.coordinatorAccess h3{
+  margin:0 0 10px;
+  color:#13233d;
+  font-size:15px;
+}
+
 button{
   appearance:none;
   border:none;
@@ -1673,6 +1687,23 @@ button:disabled{
   color:#13233d;
   margin-bottom: 8px;
 }
+
+.inviteRoleChooser{
+  display:grid;
+  gap:6px;
+  margin-bottom:10px;
+}
+
+.inviteRoleChooser label{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+}
+
+.inviteRoleChooser select{
+  width:100%;
+}
+
 .inviteRow{
   display:flex;
   gap:10px;

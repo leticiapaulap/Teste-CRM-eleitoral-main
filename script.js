@@ -23,6 +23,9 @@ const btnCopySuccess = document.getElementById("btnCopySuccess");       // botã
 const contactForm = document.getElementById("contactForm");
 const contactMsg = document.getElementById("contactMsg");
 const btnContact = document.getElementById("btnContact");
+const coordinatorAccess = document.getElementById("coordinatorAccess");
+const coordinatorEmail = document.getElementById("email");
+const coordinatorPassword = document.getElementById("password");
 
 function showError(text) {
   msg.className = "msg err";
@@ -40,6 +43,12 @@ function getRefFromURL() {
   const url = new URL(window.location.href);
   const r = url.searchParams.get("ref");
   return (r && r.trim()) ? r.trim() : "";
+}
+
+function getInviteRoleFromURL() {
+  const url = new URL(window.location.href);
+  const role = String(url.searchParams.get("tipo") || "").trim().toUpperCase();
+  return ["COORDENADORES", "LIDERES", "CADASTRADOS"].includes(role) ? role : "";
 }
 
 function normalizeWhatsApp(input) {
@@ -101,11 +110,21 @@ function setInviteLinkEverywhere(link) {
   if (inviteLinkSuccess) inviteLinkSuccess.value = link;
 }
 
+function setupCoordinatorAccess() {
+  const isCoordinatorLink = getInviteRoleFromURL() === "COORDENADORES";
+  if (!coordinatorAccess) return;
+  coordinatorAccess.style.display = isCoordinatorLink ? "block" : "none";
+  coordinatorEmail?.toggleAttribute("required", isCoordinatorLink);
+  coordinatorPassword?.toggleAttribute("required", isCoordinatorLink);
+}
+
 // init ref
 (function init() {
   const ref = getRefFromURL();
   if (ref) lockRef(ref);
   else unlockRef();
+
+  setupCoordinatorAccess();
 
   // inicia bloco de convite escondido no form
   if (inviteBox) inviteBox.style.display = "none";
@@ -127,6 +146,9 @@ form.addEventListener("submit", async (e) => {
   const bairro = document.getElementById("bairro").value.trim();
   const ra = document.getElementById("ra").value;
   const foto = document.getElementById("foto")?.files?.[0];
+  const inviteRole = getInviteRoleFromURL();
+  const email = coordinatorEmail?.value?.trim() || "";
+  const password = coordinatorPassword?.value || "";
 
   const urlRef = getRefFromURL();
   const veioPorLink = !!urlRef;
@@ -149,6 +171,8 @@ form.addEventListener("submit", async (e) => {
   if (!bairro || bairro.length < 2) return showError("Selecione a localidade.");
   if (!foto) return showError("Tire ou selecione uma foto para concluir o cadastro.");
   if (!ra) return showError("Selecione a Região Administrativa (RA).");
+  if (inviteRole === "COORDENADORES" && !email) return showError("Informe o email de login do coordenador.");
+  if (inviteRole === "COORDENADORES" && password.length < 8) return showError("Informe uma senha com pelo menos 8 caracteres.");
   if (!aceite_lgpd) return showError("Você precisa aceitar o uso de dados (LGPD).");
   if (!aceite_whatsapp) return showError("Você precisa autorizar o contato por WhatsApp.");
 
@@ -165,6 +189,9 @@ form.addEventListener("submit", async (e) => {
       ra,
       photoUrl,
       ref: veioPorLink ? ref : "",
+      email: inviteRole === "COORDENADORES" ? email : "",
+      password: inviteRole === "COORDENADORES" ? password : "",
+      target_role: veioPorLink ? inviteRole : "",
       aceite_lgpd: "true",
       aceite_whatsapp: "true",
       recaptchaToken

@@ -72,21 +72,41 @@ async function sivRegister(req, res) {
   if (req.method !== "POST") return methodNotAllowed(res, ["POST"]);
   const { randomBytes } = await import("node:crypto");
   const { createUser } = await import("../lib/user-service.js");
+  const { query } = await import("../lib/db.js");
   const { ROLES } = await import("../lib/security.js");
   const input = await readJsonOrForm(req);
   const phone = String(input.whatsapp || input.phone || input.telefone || "").replace(/\D/g, "");
   const generatedEmail = `${phone || randomBytes(4).toString("hex")}.${Date.now()}@cadastro.siv.local`;
+  const referralCode = String(input.referralCode || input.referral_code || input.ref || "").trim();
+  const requestedRole = String(input.target_role || input.invite_role || input.tipo_cadastro || "").trim().toUpperCase();
+  let publicRole = ROLES.CADASTRADOS;
+
+  if (referralCode && [ROLES.COORDENADORES, ROLES.LIDERES, ROLES.CADASTRADOS].includes(requestedRole)) {
+    const owner = await query(
+      `select u.role
+         from leader_profiles lp
+         join users u on u.id = lp.user_id
+        where lp.referral_code = $1 and lp.active = true and u.active = true`,
+      [referralCode]
+    );
+    if (owner.rows[0]?.role === ROLES.EQUIPE) publicRole = requestedRole;
+  }
+
+  if (publicRole === ROLES.COORDENADORES && (!input.email || !input.password)) {
+    throw new ApiError(400, "Email e senha sao obrigatorios para cadastro de coordenador.");
+  }
+
   const result = await createUser(
     {
       name: input.name || input.nome,
       email: input.email || generatedEmail,
       phone: input.phone || input.telefone || input.whatsapp,
       password: input.password || randomBytes(12).toString("hex"),
-      role: ROLES.CADASTRADOS,
+      role: publicRole,
       photoUrl: input.photoUrl || input.photo_url || "/img/LOGO-SIV.png",
       localidade: input.localidade || input.bairro,
       regiao_administrativa: input.regiao_administrativa || input.ra,
-      referralCode: input.referralCode || input.referral_code || input.ref,
+      referralCode,
       consent_accepted: input.consent_accepted ?? input.aceite_lgpd ?? true,
     },
     null,

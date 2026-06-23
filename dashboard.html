@@ -127,6 +127,14 @@
       <div id="profileDetails" class="profileGrid"></div>
       <div class="invite adminInvite">
         <div class="inviteTitle">Seu link de cadastro</div>
+        <div class="inviteRoleChooser teamOnlyHome">
+          <label for="profileReferralRole">Tipo permitido neste link</label>
+          <select id="profileReferralRole">
+            <option value="CADASTRADOS">Cadastrado</option>
+            <option value="COORDENADORES">Coordenador</option>
+            <option value="LIDERES">Lider</option>
+          </select>
+        </div>
         <div class="inviteRow">
           <input id="profileReferralLink" readonly />
           <button type="button" id="btnCopyReferral" class="btnSecondary">Copiar</button>

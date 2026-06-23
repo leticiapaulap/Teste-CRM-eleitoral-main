@@ -179,6 +179,7 @@ const els = {
   profile: document.getElementById("profileDetails"),
   editProfile: document.getElementById("btnEditProfile"),
   referralLink: document.getElementById("profileReferralLink"),
+  referralRole: document.getElementById("profileReferralRole"),
   copyReferral: document.getElementById("btnCopyReferral"),
   adminPanel: document.getElementById("adminPanel"),
   messagesPanel: document.getElementById("teamMessagesPanel"),
@@ -243,6 +244,7 @@ els.leader.addEventListener("input", () => {
   render();
 });
 els.copyReferral?.addEventListener("click", copyReferralLink);
+els.referralRole?.addEventListener("input", () => renderReferralLink(user));
 els.editProfile?.addEventListener("click", () => openEditDialog(user, { self: true }));
 els.adminForm?.addEventListener("submit", createAdminUser);
 els.emailVisible?.addEventListener("click", () => emailUsers(filteredPoints));
@@ -405,10 +407,16 @@ function renderProfile(profile) {
   `;
 
   if (els.referralLink) {
-    const link = getPublicReferralUrl(profile);
-    els.referralLink.value = link;
-    els.referralLink.closest(".invite").style.display = link ? "block" : "none";
+    renderReferralLink(profile);
   }
+}
+
+function renderReferralLink(profile) {
+  if (!els.referralLink) return;
+  const targetRole = profile?.role === "EQUIPE" ? els.referralRole?.value : "";
+  const link = getPublicReferralUrl(profile, targetRole);
+  els.referralLink.value = link;
+  els.referralLink.closest(".invite").style.display = link ? "block" : "none";
 }
 
 function applyFilters(points) {
@@ -865,14 +873,19 @@ function renderReferralCell(point) {
   return `<small>${escapeHtml(point.referral_code || "")}</small><span class="linkCell">${escapeHtml(link)}</span>`;
 }
 
-function getPublicReferralUrl(point) {
+function getPublicReferralUrl(point, targetRole = "") {
   const code = point.referral_code || point.referralCode || extractReferralCode(point.referral_url || point.referralUrl);
   if (!code) return "";
 
   const currentOrigin = window.location.origin && !window.location.hostname.includes("localhost")
     ? window.location.origin
     : PUBLIC_APP_URL;
-  return `${currentOrigin.replace(/\/$/, "")}/?ref=${encodeURIComponent(code)}`;
+  const url = new URL(`${currentOrigin.replace(/\/$/, "")}/`);
+  url.searchParams.set("ref", code);
+  if (point.role === "EQUIPE" && ["COORDENADORES", "LIDERES", "CADASTRADOS"].includes(targetRole)) {
+    url.searchParams.set("tipo", targetRole);
+  }
+  return url.toString();
 }
 
 function extractReferralCode(url) {
