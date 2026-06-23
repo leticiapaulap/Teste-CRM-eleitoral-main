@@ -2525,3 +2525,23 @@ body.dashboardBody{
       "chat";
   }
 }
+
+/* Botao compacto de abrir/recolher menu */
+.sideMenuToggle,
+.menuCollapsed .sideMenuToggle{
+  width:34px !important;
+  height:34px !important;
+  min-width:34px !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px !important;
+  font-size:22px !important;
+  line-height:1 !important;
+}
+
+.menuCollapsed .sideMenuToggle::after{
+  content:"" !important;
+}

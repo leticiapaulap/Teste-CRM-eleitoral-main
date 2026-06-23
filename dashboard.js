@@ -350,7 +350,7 @@ function setDashboardView(view) {
 
 function updateMenuToggle(collapsed) {
   if (!els.menuToggle) return;
-  els.menuToggle.textContent = collapsed ? "Abrir" : "Recolher";
+  els.menuToggle.textContent = collapsed ? "›" : "‹";
   els.menuToggle.setAttribute("aria-label", collapsed ? "Abrir menu lateral" : "Recolher menu lateral");
 }
 
