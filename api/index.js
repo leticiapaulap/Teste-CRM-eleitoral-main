@@ -281,10 +281,20 @@ async function adminUsers(req, res) {
   const { ensureReferralLinksForAll, listUsers } = await import("../lib/admin-service.js");
   const { createUser } = await import("../lib/user-service.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
-  await requireAuth(req, [ROLES.EQUIPE]);
+  const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES]);
   if (req.method === "POST") {
     const input = await readJsonOrForm(req);
-    const result = await createUser(input, null, { allowAdminRole: true, appUrl: getPublicAppUrl(req) });
+    const internalInput = {
+      ...input,
+      consent_accepted: input.consent_accepted ?? true,
+    };
+    const parentUserId = internalInput.referralCode || internalInput.referral_code || internalInput.ref ? null : user.id;
+    const result = await createUser(internalInput, null, {
+      allowAdminRole: user.role === ROLES.EQUIPE,
+      appUrl: getPublicAppUrl(req),
+      parentUserId,
+      actorUserId: user.id,
+    });
     return sendJson(res, 201, { ok: true, user: result.user, leaderProfile: result.leaderProfile });
   }
   await ensureReferralLinksForAll(getPublicAppUrl(req));

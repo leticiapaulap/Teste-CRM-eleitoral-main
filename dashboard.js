@@ -806,6 +806,7 @@ async function createAdminUser(event) {
   showAdminMessage("", "");
   const formData = new FormData(els.adminForm);
   const body = Object.fromEntries(formData.entries());
+  body.consent_accepted = true;
   const photoFile = formData.get("photo");
   delete body.photo;
 
@@ -825,7 +826,8 @@ async function createAdminUser(event) {
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel adicionar.");
     els.adminForm.reset();
-    showAdminMessage("Cadastro adicionado.", "ok");
+    const generatedLink = data.leaderProfile?.referral_url || "";
+    showAdminMessage(generatedLink ? `Cadastro adicionado. Link gerado: ${generatedLink}` : "Cadastro adicionado.", "ok");
     allPoints = await loadMapPoints();
     fillFilters(allPoints);
     render();
