@@ -732,6 +732,11 @@ body:not(.isTeam) .adminOnlyColumn{
   font-size:11px;
 }
 
+.btnTinyDanger{
+  background:#c62828;
+  color:#fff;
+}
+
 .btnDanger{
   background:#c62828;
   color:#fff;
@@ -1296,14 +1301,16 @@ body:not(.isTeam) .adminOnlyColumn{
 .mapMarker{
   position:absolute;
   z-index:5;
-  width:18px;
-  height:18px;
-  margin:-9px 0 0 -9px;
+  width:26px;
+  height:30px;
+  margin:-15px 0 0 -13px;
   border-radius:999px;
   border:2px solid #fff;
   box-shadow:0 8px 16px rgba(0,0,0,.28);
   cursor:pointer;
   pointer-events:auto;
+  display:grid;
+  place-items:center;
 }
 
 .mapMarker::after{
@@ -1323,6 +1330,42 @@ body:not(.isTeam) .adminOnlyColumn{
 .personMarker{
   background:#0e3a73;
   color:#0e3a73;
+}
+
+.mapPersonIcon{
+  position:relative;
+  width:16px;
+  height:18px;
+  display:block;
+}
+
+.mapPersonIcon::before,
+.mapPersonIcon::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  background:#fff;
+}
+
+.mapPersonIcon::before{
+  top:1px;
+  width:7px;
+  height:7px;
+  border-radius:999px;
+}
+
+.mapPersonIcon::after{
+  bottom:1px;
+  width:14px;
+  height:9px;
+  border-radius:9px 9px 4px 4px;
+}
+
+.selectedMapMarker{
+  z-index:7;
+  transform:scale(1.15);
+  box-shadow:0 0 0 4px rgba(255,255,255,.72), 0 12px 20px rgba(0,0,0,.32);
 }
 
 .selectedPoint{
@@ -1345,6 +1388,95 @@ body:not(.isTeam) .adminOnlyColumn{
   color:#13233d;
   font-size:15px;
   margin-bottom:4px;
+}
+
+.selectedPointHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.selectedPointHeader a{
+  flex:0 0 auto;
+  color:#0e3a73;
+  font-size:12px;
+  font-weight:800;
+  text-decoration:none;
+}
+
+.selectedPointGrid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+
+.selectedPointGrid span{
+  border:1px solid #e4ebfb;
+  border-radius:10px;
+  background:#fff;
+  padding:9px;
+}
+
+.selectedPointGrid b{
+  display:block;
+  color:#667792;
+  font-size:11px;
+  margin-bottom:4px;
+  text-transform:uppercase;
+}
+
+.selectedTreeBlock{
+  margin-top:12px;
+  display:grid;
+  gap:10px;
+}
+
+.selectedTreeBlock h3{
+  margin:0;
+  color:#13233d;
+  font-size:14px;
+}
+
+.selectedTreePath{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+
+.selectedTreePath span{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  border-radius:999px;
+  background:#e5efff;
+  color:#0e3a73;
+  font-size:12px;
+  font-weight:800;
+  padding:6px 9px;
+}
+
+.selectedTreePath span:not(:last-child)::after{
+  content:">";
+  position:absolute;
+  right:-10px;
+  color:#667792;
+}
+
+.selectedTreeList{
+  display:grid;
+  gap:8px;
+}
+
+.selectedTreeList div{
+  border-left:3px solid #dbe6ff;
+  padding-left:10px;
+}
+
+.selectedTreeList strong{
+  font-size:13px;
 }
 
 .summaryTitle{
@@ -1530,6 +1662,14 @@ body:not(.isTeam) .adminOnlyColumn{
 
   .mapCanvas{
     min-height:340px;
+  }
+
+  .selectedPointHeader{
+    display:grid;
+  }
+
+  .selectedPointGrid{
+    grid-template-columns:1fr;
   }
 }
 
@@ -2544,4 +2684,87 @@ body.dashboardBody{
 
 .menuCollapsed .sideMenuToggle::after{
   content:"" !important;
+}
+
+/* Override final: o menu do cadastro e secundario, nao substitui o menu principal */
+.detailBody .dashboardShell{
+  width:100% !important;
+  max-width:none !important;
+  min-height:100vh;
+  display:block !important;
+}
+
+.detailBody .dashboardHeader{
+  grid-column:auto !important;
+  grid-row:auto !important;
+  padding:24px 28px 10px;
+}
+
+.detailBody .detailHero,
+.detailBody .detailWorkspace{
+  width:calc(100% - 56px);
+  max-width:1280px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+.detailBody .detailWorkspace{
+  display:grid !important;
+  grid-template-columns:220px minmax(0, 1fr);
+  gap:14px;
+  align-items:start;
+  padding:0 0 28px;
+}
+
+.detailBody .detailSideMenu,
+.detailBody.menuCollapsed .detailSideMenu{
+  grid-column:auto !important;
+  grid-row:auto !important;
+  position:sticky !important;
+  top:18px;
+  align-self:start;
+  width:220px !important;
+  max-width:220px !important;
+  min-height:auto !important;
+  border-radius:14px !important;
+  padding:10px !important;
+  background:rgba(255,255,255,.96);
+  box-shadow:var(--shadow);
+}
+
+.detailBody .dashboardContent{
+  grid-column:auto !important;
+  grid-row:auto !important;
+  padding:0 !important;
+}
+
+@media (max-width: 900px){
+  .detailBody .dashboardHeader{
+    padding:18px 14px 8px;
+  }
+
+  .detailBody .detailHero,
+  .detailBody .detailWorkspace{
+    width:calc(100% - 28px);
+  }
+
+  .detailBody .detailWorkspace{
+    grid-template-columns:1fr;
+  }
+
+  .detailBody .detailSideMenu,
+  .detailBody.menuCollapsed .detailSideMenu{
+    position:static !important;
+    width:100% !important;
+    max-width:none !important;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px){
+  .detailBody .detailSideMenu,
+  .detailBody.menuCollapsed .detailSideMenu{
+    grid-template-columns:1fr;
+  }
 }

@@ -12,6 +12,45 @@ const DF_BOUNDS = {
   maxLng: -47.28,
 };
 
+const REGION_COORDS = {
+  "agua quente": { latitude: -15.935, longitude: -48.11 },
+  "aguas claras": { latitude: -15.837, longitude: -48.023 },
+  arapoanga: { latitude: -15.632, longitude: -47.653 },
+  arniqueira: { latitude: -15.861, longitude: -48.018 },
+  brasilia: { latitude: -15.793, longitude: -47.882 },
+  brazlandia: { latitude: -15.67, longitude: -48.2 },
+  candangolandia: { latitude: -15.852, longitude: -47.95 },
+  ceilandia: { latitude: -15.819, longitude: -48.113 },
+  cruzeiro: { latitude: -15.79, longitude: -47.938 },
+  "estrutural (scia)": { latitude: -15.781, longitude: -47.997 },
+  fercal: { latitude: -15.6, longitude: -47.87 },
+  gama: { latitude: -16.018, longitude: -48.061 },
+  guara: { latitude: -15.823, longitude: -47.978 },
+  itapoa: { latitude: -15.745, longitude: -47.755 },
+  "jardim botanico": { latitude: -15.865, longitude: -47.8 },
+  "lago norte": { latitude: -15.725, longitude: -47.846 },
+  "lago sul": { latitude: -15.84, longitude: -47.872 },
+  "nucleo bandeirante": { latitude: -15.871, longitude: -47.965 },
+  paranoa: { latitude: -15.775, longitude: -47.779 },
+  "park way": { latitude: -15.898, longitude: -47.972 },
+  planaltina: { latitude: -15.617, longitude: -47.648 },
+  "plano piloto": { latitude: -15.793, longitude: -47.882 },
+  "recanto das emas": { latitude: -15.905, longitude: -48.062 },
+  "riacho fundo": { latitude: -15.88, longitude: -48.004 },
+  "riacho fundo ii": { latitude: -15.908, longitude: -48.051 },
+  samambaia: { latitude: -15.879, longitude: -48.089 },
+  "santa maria": { latitude: -16.0, longitude: -47.987 },
+  "sao sebastiao": { latitude: -15.9, longitude: -47.775 },
+  sia: { latitude: -15.802, longitude: -47.957 },
+  sobradinho: { latitude: -15.653, longitude: -47.792 },
+  "sobradinho ii": { latitude: -15.648, longitude: -47.833 },
+  "sol nascente e por do sol": { latitude: -15.823, longitude: -48.14 },
+  "sudoeste/octogonal": { latitude: -15.797, longitude: -47.925 },
+  taguatinga: { latitude: -15.835, longitude: -48.056 },
+  varjao: { latitude: -15.711, longitude: -47.88 },
+  "vicente pires": { latitude: -15.803, longitude: -48.02 },
+};
+
 const PUBLIC_APP_URL = "https://teste-crm-eleitoral-main.vercel.app";
 
 const fallbackPoints = [
@@ -171,6 +210,7 @@ let allPoints = [];
 let filteredPoints = [];
 let selectedRegion = "";
 let selectedLeaderId = "";
+let selectedPointId = "";
 let isTeam = user?.role === "EQUIPE";
 let activeView = "home";
 
@@ -358,7 +398,7 @@ async function loadMapPoints() {
   if (token === "local-test-token") return fallbackPoints;
 
   try {
-    const endpoint = isTeam ? "/api/admin/users?limit=200" : "/api/map/network";
+    const endpoint = isTeam ? "/api/admin/users?limit=200" : "/api/map/network?requireCoordinates=false";
     const response = await fetch(endpoint, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -448,7 +488,7 @@ function renderMetrics(points) {
   const leaders = points.filter((point) => point.role === "LIDERES").length;
   const people = points.filter((point) => point.role === "CADASTRADOS").length;
   const regions = new Set(points.map((point) => point.regiao_administrativa).filter(Boolean)).size;
-  const located = points.filter((point) => hasLocation(point)).length;
+  const located = points.filter((point) => hasMapPosition(point)).length;
 
   els.metricLeaders.textContent = leaders;
   els.metricUsers.textContent = people;
@@ -458,18 +498,21 @@ function renderMetrics(points) {
 
 function renderMap(points) {
   els.mapOverlay.innerHTML = "";
-  const locatedPoints = points.filter(hasLocation);
+  const locatedPoints = points.filter(hasMapPosition);
 
   renderRegionAreas(locatedPoints);
 
   for (const point of locatedPoints) {
+    const position = getPointPosition(point);
     const marker = document.createElement("button");
     marker.type = "button";
-    marker.className = `mapMarker ${point.role === "COORDENADORES" || point.role === "LIDERES" ? "leaderMarker" : "personMarker"}`;
-    marker.style.left = `${lngToX(point.longitude)}%`;
-    marker.style.top = `${latToY(point.latitude)}%`;
+    marker.className = `mapMarker ${point.role === "COORDENADORES" || point.role === "LIDERES" ? "leaderMarker" : "personMarker"}${String(point.id) === String(selectedPointId) ? " selectedMapMarker" : ""}`;
+    marker.style.left = `${lngToX(position.longitude)}%`;
+    marker.style.top = `${latToY(position.latitude)}%`;
     marker.title = `${point.localidade || point.regiao_administrativa || "Sem localidade"} - ${point.name}`;
     marker.setAttribute("aria-label", marker.title);
+    marker.dataset.pointId = point.id;
+    marker.innerHTML = `<span class="mapPersonIcon" aria-hidden="true"></span>`;
     marker.addEventListener("click", () => selectPoint(point));
     els.mapOverlay.appendChild(marker);
   }
@@ -482,11 +525,11 @@ function renderMap(points) {
 function renderRegionAreas(points) {
   const groups = groupBy(points, (point) => point.regiao_administrativa || "Sem regiao");
   for (const group of groups) {
-    const located = group.items.filter(hasLocation);
+    const located = group.items.filter(hasMapPosition);
     if (!located.length) continue;
 
-    const lat = average(located.map((point) => Number(point.latitude)));
-    const lng = average(located.map((point) => Number(point.longitude)));
+    const lat = average(located.map((point) => getPointPosition(point).latitude));
+    const lng = average(located.map((point) => getPointPosition(point).longitude));
     const leaders = located.filter((point) => point.role === "LIDERES").length;
     const people = located.filter((point) => point.role === "CADASTRADOS").length;
 
@@ -505,21 +548,114 @@ function renderRegionAreas(points) {
 }
 
 function selectPoint(point) {
+  selectedPointId = point.id;
   if (point.role === "COORDENADORES" || point.role === "LIDERES") {
     selectedLeaderId = point.id;
     els.leader.value = point.id;
     render();
+  } else {
+    updateSelectedMarkerState();
   }
 
   const locationLabel = point.localidade || point.regiao_administrativa || "Sem localidade";
+  const registeredBy = getRegisteredByLabel(point);
+  const rootLeader = point.root_leader_name || findPointName(point.root_leader_id) || "Nao informado";
+  const lineage = getLineage(point);
+  const descendants = getDescendants(point.id);
 
   els.selected.innerHTML = `
-    <strong>${escapeHtml(locationLabel)}</strong>
-    <span>Pessoa: ${escapeHtml(point.name || "Nao informado")}</span>
-    <span>${escapeHtml(point.role)} - ${escapeHtml(point.regiao_administrativa || "Sem regiao")}</span>
-    <span>Nivel ${point.level ?? "-"}</span>
-    <span>Responsavel: ${escapeHtml(point.root_leader_name || "Nao informado")}</span>
-    <span>Cadastro: ${formatDate(point.created_at)}</span>
+    <div class="selectedPointHeader">
+      <div>
+        <strong>${escapeHtml(point.name || "Nao informado")}</strong>
+        <span>${escapeHtml(point.role)} - nivel ${point.level ?? "-"}</span>
+      </div>
+      ${isTeam ? `<a href="/cadastro-detalhe.html?id=${encodeURIComponent(point.id)}">Abrir cadastro</a>` : ""}
+    </div>
+    <div class="selectedPointGrid">
+      <span><b>Regiao adm.</b>${escapeHtml(point.regiao_administrativa || "Sem regiao")}</span>
+      <span><b>Localidade</b>${escapeHtml(locationLabel)}</span>
+      <span><b>Por quem cadastrou</b>${escapeHtml(registeredBy)}</span>
+      <span><b>Responsavel raiz</b>${escapeHtml(rootLeader)}</span>
+      <span><b>Cadastro</b>${formatDate(point.created_at)}</span>
+      <span><b>Pessoas abaixo</b>${descendants.length}</span>
+    </div>
+    <div class="selectedTreeBlock">
+      <h3>Arvore da pessoa</h3>
+      ${renderSelectedLineage(lineage)}
+      ${renderSelectedDescendants(point, descendants)}
+    </div>
+  `;
+}
+
+function updateSelectedMarkerState() {
+  els.mapOverlay.querySelectorAll(".mapMarker").forEach((marker) => {
+    marker.classList.toggle("selectedMapMarker", String(marker.dataset.pointId) === String(selectedPointId));
+  });
+}
+
+function getRegisteredByLabel(point) {
+  if (!point.parent_user_id) return "Cadastro raiz";
+  return point.parent_user_name || findPointName(point.parent_user_id) || "Nao informado";
+}
+
+function findPointName(id) {
+  if (!id) return "";
+  return allPoints.find((item) => String(item.id) === String(id))?.name || "";
+}
+
+function getLineage(point) {
+  const lineage = [];
+  const visited = new Set();
+  let current = point;
+
+  while (current && !visited.has(String(current.id))) {
+    visited.add(String(current.id));
+    lineage.unshift(current);
+    current = allPoints.find((item) => String(item.id) === String(current.parent_user_id));
+  }
+
+  return lineage;
+}
+
+function getDescendants(id) {
+  const descendants = [];
+  const queue = allPoints.filter((point) => String(point.parent_user_id) === String(id));
+  const visited = new Set();
+
+  while (queue.length) {
+    const current = queue.shift();
+    if (!current || visited.has(String(current.id))) continue;
+    visited.add(String(current.id));
+    descendants.push(current);
+    queue.push(...allPoints.filter((point) => String(point.parent_user_id) === String(current.id)));
+  }
+
+  return descendants.sort((a, b) => Number(a.level || 0) - Number(b.level || 0));
+}
+
+function renderSelectedLineage(lineage) {
+  if (!lineage.length) return "";
+  return `
+    <div class="selectedTreePath">
+      ${lineage.map((item) => `<span>${escapeHtml(item.name || "Sem nome")}</span>`).join("")}
+    </div>
+  `;
+}
+
+function renderSelectedDescendants(point, descendants) {
+  if (!descendants.length) {
+    return `<div class="emptyState">Nenhuma pessoa cadastrada abaixo de ${escapeHtml(point.name || "este cadastro")}.</div>`;
+  }
+
+  return `
+    <div class="selectedTreeList">
+      ${descendants.map((item) => `
+        <div>
+          <strong>${escapeHtml(item.name || "Sem nome")}</strong>
+          <span>${escapeHtml(item.regiao_administrativa || "Sem regiao")} - cadastrado por ${escapeHtml(getRegisteredByLabel(item))}</span>
+        </div>
+      `).join("")}
+    </div>
   `;
 }
 
@@ -643,6 +779,7 @@ function renderTable(points) {
             <td>
               <div class="tableActions">
                 <button type="button" class="btnTiny" data-action="edit" data-id="${escapeHtml(point.id)}">Editar</button>
+                <button type="button" class="btnTiny btnTinyDanger" data-action="delete" data-id="${escapeHtml(point.id)}">Excluir</button>
               </div>
             </td>
           ` : ""}
@@ -1099,6 +1236,53 @@ function uniqueBy(items, key) {
 
 function hasLocation(point) {
   return Number.isFinite(Number(point.latitude)) && Number.isFinite(Number(point.longitude));
+}
+
+function hasMapPosition(point) {
+  return hasLocation(point) || Boolean(getRegionCoords(point.regiao_administrativa || point.localidade));
+}
+
+function getPointPosition(point) {
+  if (hasLocation(point)) {
+    return {
+      latitude: Number(point.latitude),
+      longitude: Number(point.longitude),
+    };
+  }
+
+  const coords = getRegionCoords(point.regiao_administrativa || point.localidade);
+  const offset = getMarkerOffset(point.id || point.name || "");
+  return {
+    latitude: coords.latitude + offset.latitude,
+    longitude: coords.longitude + offset.longitude,
+  };
+}
+
+function getRegionCoords(region) {
+  const key = normalizeRegion(region);
+  return REGION_COORDS[key] || null;
+}
+
+function normalizeRegion(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function getMarkerOffset(seed) {
+  const text = String(seed);
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
+  }
+  const angle = (hash % 360) * (Math.PI / 180);
+  const radius = ((hash % 5) + 1) * 0.0028;
+  return {
+    latitude: Math.sin(angle) * radius,
+    longitude: Math.cos(angle) * radius,
+  };
 }
 
 function lngToX(lng) {
