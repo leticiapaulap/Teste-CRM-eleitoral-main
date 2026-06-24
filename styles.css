@@ -2914,3 +2914,49 @@ body.dashboardBody{
     grid-template-columns:1fr;
   }
 }
+
+/* Menu principal sempre aberto, sem iniciais */
+.sideIcon,
+.sideMenuToggle{
+  display:none !important;
+}
+
+.sideMenuButton{
+  gap:0 !important;
+}
+
+.menuCollapsed .dashboardShell,
+.detailBody.menuCollapsed .dashboardShell{
+  grid-template-columns:250px minmax(0, 1fr) !important;
+}
+
+.menuCollapsed .sideMenu,
+.detailBody.menuCollapsed .detailMainMenu{
+  width:250px !important;
+  max-width:250px !important;
+}
+
+.menuCollapsed .sideMenuTitle,
+.menuCollapsed .sideText,
+.detailBody.menuCollapsed .sideMenuTitle,
+.detailBody.menuCollapsed .sideText{
+  display:inline !important;
+}
+
+.menuCollapsed .sideMenuButton{
+  justify-content:flex-start !important;
+  padding:11px 12px !important;
+}
+
+@media (max-width: 900px){
+  .menuCollapsed .dashboardShell,
+  .detailBody.menuCollapsed .dashboardShell{
+    grid-template-columns:1fr !important;
+  }
+
+  .menuCollapsed .sideMenu,
+  .detailBody.menuCollapsed .detailMainMenu{
+    width:100% !important;
+    max-width:none !important;
+  }
+}
