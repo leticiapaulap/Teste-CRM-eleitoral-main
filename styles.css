@@ -886,6 +886,87 @@ body:not(.isTeam) .adminOnlyColumn{
   opacity:.55;
 }
 
+.nativeDownSelect{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+}
+
+.downSelect{
+  position:relative;
+  z-index:1;
+}
+
+.downSelect.open{
+  z-index:30;
+}
+
+.downSelectButton{
+  width:100%;
+  min-height:44px;
+  margin:0;
+  padding:10px 38px 10px 12px;
+  border:1px solid #d7dfed;
+  border-radius:10px;
+  background:#fff;
+  color:#13233d;
+  box-shadow:none;
+  font:inherit;
+  text-align:left;
+  position:relative;
+}
+
+.downSelectButton::after{
+  content:"";
+  position:absolute;
+  right:13px;
+  top:50%;
+  width:8px;
+  height:8px;
+  border-right:2px solid #667792;
+  border-bottom:2px solid #667792;
+  transform:translateY(-70%) rotate(45deg);
+}
+
+.downSelectMenu{
+  position:absolute;
+  top:calc(100% + 4px);
+  left:0;
+  right:0;
+  display:none;
+  max-height:250px;
+  overflow:auto;
+  border:1px solid #b9c9e8;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 18px 34px rgba(19,35,61,.18);
+}
+
+.downSelect.open .downSelectMenu{
+  display:grid;
+}
+
+.downSelectOption{
+  width:100%;
+  margin:0;
+  padding:9px 12px;
+  border:0;
+  border-radius:0;
+  background:#fff;
+  color:#13233d;
+  box-shadow:none;
+  font:inherit;
+  text-align:left;
+}
+
+.downSelectOption:hover,
+.downSelectOption.active{
+  background:#e5efff;
+  color:#0e3a73;
+}
+
 .modalActions{
   display:flex;
   justify-content:flex-end;

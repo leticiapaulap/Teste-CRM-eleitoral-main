@@ -305,6 +305,7 @@ els.menuToggle?.addEventListener("click", () => {
   localStorage.setItem("siv_menu_collapsed", collapsed ? "1" : "0");
   updateMenuToggle(collapsed);
 });
+enhanceDownwardSelect(document.getElementById("editRegiao"));
 
 init();
 
@@ -923,7 +924,76 @@ function openEditDialog(person, { self = false } = {}) {
 
 function setEditValue(id, value) {
   const field = document.getElementById(id);
-  if (field) field.value = value;
+  if (!field) return;
+  field.value = value;
+  field.dispatchEvent(new Event("change"));
+}
+
+function enhanceDownwardSelect(select) {
+  if (!select || select.dataset.enhancedDownward === "true") return;
+  select.dataset.enhancedDownward = "true";
+  select.classList.add("nativeDownSelect");
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "downSelect";
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "downSelectButton";
+  button.setAttribute("aria-haspopup", "listbox");
+  button.setAttribute("aria-expanded", "false");
+
+  const menu = document.createElement("div");
+  menu.className = "downSelectMenu";
+  menu.setAttribute("role", "listbox");
+
+  const options = Array.from(select.options).filter((option) => !option.disabled && option.value !== "");
+  for (const option of options) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "downSelectOption";
+    item.setAttribute("role", "option");
+    item.dataset.value = option.value || option.textContent;
+    item.textContent = option.textContent;
+    item.addEventListener("click", () => {
+      select.value = item.dataset.value;
+      select.dispatchEvent(new Event("input", { bubbles: true }));
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      closeDownSelect(wrapper, button);
+    });
+    menu.appendChild(item);
+  }
+
+  select.parentNode.insertBefore(wrapper, select.nextSibling);
+  wrapper.append(button, menu);
+
+  button.addEventListener("click", () => {
+    const isOpen = wrapper.classList.toggle("open");
+    button.setAttribute("aria-expanded", String(isOpen));
+    updateDownSelect(select, wrapper, button);
+  });
+
+  select.addEventListener("change", () => updateDownSelect(select, wrapper, button));
+  document.addEventListener("click", (event) => {
+    if (!wrapper.contains(event.target) && event.target !== select) closeDownSelect(wrapper, button);
+  });
+
+  updateDownSelect(select, wrapper, button);
+}
+
+function updateDownSelect(select, wrapper, button) {
+  const selected = Array.from(select.options).find((option) => option.value === select.value);
+  button.textContent = selected?.textContent || "Selecione a RA";
+  wrapper.querySelectorAll(".downSelectOption").forEach((item) => {
+    const active = item.dataset.value === select.value;
+    item.classList.toggle("active", active);
+    item.setAttribute("aria-selected", String(active));
+  });
+}
+
+function closeDownSelect(wrapper, button) {
+  wrapper.classList.remove("open");
+  button.setAttribute("aria-expanded", "false");
 }
 
 function closeEditDialog() {
