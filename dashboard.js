@@ -251,6 +251,7 @@ const els = {
   editTitle: document.getElementById("editDialogTitle"),
   closeEdit: document.getElementById("btnCloseEdit"),
   cancelEdit: document.getElementById("btnCancelEdit"),
+  deleteEdit: document.getElementById("btnDeleteEdit"),
   menuToggle: document.getElementById("btnToggleMenu"),
   sideMessageBadge: document.getElementById("sideMessageBadge"),
   homePendingMessages: document.getElementById("homePendingMessages"),
@@ -292,6 +293,7 @@ els.refreshMessages?.addEventListener("click", loadContactMessages);
 els.editForm?.addEventListener("submit", saveEditForm);
 els.closeEdit?.addEventListener("click", closeEditDialog);
 els.cancelEdit?.addEventListener("click", closeEditDialog);
+els.deleteEdit?.addEventListener("click", deleteFromEditDialog);
 els.sideButtons.forEach((button) => {
   button.addEventListener("click", () => setDashboardView(button.dataset.viewTarget));
 });
@@ -878,10 +880,9 @@ async function handleTableAction(action, id) {
     }
 
     if (action === "delete") {
-      if (!confirm(`Excluir o cadastro de ${person.name}?`)) return;
-      await adminRequest(`/api/admin/users/${encodeURIComponent(id)}`, { method: "DELETE" });
-      allPoints = allPoints.filter((point) => String(point.id) !== String(id));
-      render();
+      if (!confirm(`Excluir o cadastro de ${person.name}? Esta acao remove o cadastro do banco.`)) return;
+      await deletePerson(id);
+      showAdminMessage("Cadastro excluido do banco.", "ok");
       return;
     }
 
@@ -896,6 +897,7 @@ async function handleTableAction(action, id) {
 function openEditDialog(person, { self = false } = {}) {
   if (!person || !els.editDialog || !els.editForm) return;
   els.editForm.dataset.self = self ? "true" : "false";
+  els.editForm.dataset.editingId = person.id || "";
   els.editTitle.textContent = self ? "Editar minhas informacoes" : `Editar ${person.name || "cadastro"}`;
   setEditValue("editId", person.id || "");
   setEditValue("editName", person.name || "");
@@ -912,6 +914,7 @@ function openEditDialog(person, { self = false } = {}) {
   if (role) role.disabled = self && !isTeam;
   if (active) active.disabled = self && !isTeam;
   if (activeBlock) activeBlock.classList.toggle("isDisabled", self && !isTeam);
+  if (els.deleteEdit) els.deleteEdit.hidden = self || !isTeam;
   const photo = document.getElementById("editPhoto");
   if (photo) photo.value = "";
   showEditMessage("", "");
@@ -925,6 +928,36 @@ function setEditValue(id, value) {
 
 function closeEditDialog() {
   els.editDialog?.close();
+}
+
+async function deleteFromEditDialog() {
+  const id = els.editForm?.dataset.editingId || document.getElementById("editId")?.value;
+  if (!id || String(id) === String(user.id)) return;
+
+  const person = allPoints.find((point) => String(point.id) === String(id));
+  if (!person) return;
+
+  if (!confirm(`Excluir o cadastro de ${person.name}? Esta acao remove o cadastro do banco.`)) return;
+
+  try {
+    await deletePerson(id);
+    closeEditDialog();
+    showAdminMessage("Cadastro excluido do banco.", "ok");
+  } catch (error) {
+    showEditMessage(`Erro: ${error.message || error}`, "err");
+  }
+}
+
+async function deletePerson(id) {
+  await adminRequest(`/api/admin/users/${encodeURIComponent(id)}`, { method: "DELETE" });
+  allPoints = allPoints.filter((point) => String(point.id) !== String(id));
+  if (String(selectedPointId) === String(id)) selectedPointId = "";
+  if (String(selectedLeaderId) === String(id)) {
+    selectedLeaderId = "";
+    els.leader.value = "";
+  }
+  fillFilters(allPoints);
+  render();
 }
 
 async function saveEditForm(event) {

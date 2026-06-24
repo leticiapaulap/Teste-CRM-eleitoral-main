@@ -334,6 +334,8 @@ body{
   .dashboardGrid{ grid-template-columns: 1fr; }
   .modalHeader,
   .modalActions{ flex-direction:column; }
+  .modalHeaderActions{ width:100%; }
+  .modalHeaderActions button{ flex:1; }
   .modalActions button{ width:100%; }
   .editGrid{ grid-template-columns:1fr; }
   .sideMenu{ grid-template-columns:1fr; }
@@ -846,6 +848,14 @@ body:not(.isTeam) .adminOnlyColumn{
   gap:12px;
   align-items:flex-start;
   margin-bottom:14px;
+}
+
+.modalHeaderActions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
 }
 
 .modalHeader h2{
