@@ -499,16 +499,19 @@ function renderMetrics(points) {
 function renderMap(points) {
   els.mapOverlay.innerHTML = "";
   const locatedPoints = points.filter(hasMapPosition);
+  const markerPositions = getSpreadMapPositions(locatedPoints);
 
   renderRegionAreas(locatedPoints);
 
   for (const point of locatedPoints) {
-    const position = getPointPosition(point);
+    const position = markerPositions.get(String(point.id));
+    if (!position) continue;
+
     const marker = document.createElement("button");
     marker.type = "button";
     marker.className = `mapMarker ${point.role === "COORDENADORES" || point.role === "LIDERES" ? "leaderMarker" : "personMarker"}${String(point.id) === String(selectedPointId) ? " selectedMapMarker" : ""}`;
-    marker.style.left = `${lngToX(position.longitude)}%`;
-    marker.style.top = `${latToY(position.latitude)}%`;
+    marker.style.left = `${position.x}%`;
+    marker.style.top = `${position.y}%`;
     marker.title = `${point.localidade || point.regiao_administrativa || "Sem localidade"} - ${point.name}`;
     marker.setAttribute("aria-label", marker.title);
     marker.dataset.pointId = point.id;
@@ -1251,10 +1254,64 @@ function getPointPosition(point) {
   }
 
   const coords = getRegionCoords(point.regiao_administrativa || point.localidade);
-  const offset = getMarkerOffset(point.id || point.name || "");
   return {
-    latitude: coords.latitude + offset.latitude,
-    longitude: coords.longitude + offset.longitude,
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+  };
+}
+
+function getSpreadMapPositions(points) {
+  const positions = new Map();
+  const groups = groupBy(points, getMapPositionKey);
+
+  for (const group of groups) {
+    const sorted = [...group.items].sort((a, b) => String(a.name || a.id).localeCompare(String(b.name || b.id)));
+
+    sorted.forEach((point, index) => {
+      const base = getPointPosition(point);
+      const baseX = lngToX(base.longitude);
+      const baseY = latToY(base.latitude);
+      const offset = getVisualMarkerOffset(index, sorted.length);
+
+      positions.set(String(point.id), {
+        x: clamp(baseX + offset.x, 4, 96),
+        y: clamp(baseY + offset.y, 4, 96),
+      });
+    });
+  }
+
+  return positions;
+}
+
+function getMapPositionKey(point) {
+  if (hasLocation(point)) {
+    const position = getPointPosition(point);
+    return `coords:${position.latitude.toFixed(3)}:${position.longitude.toFixed(3)}`;
+  }
+
+  return `region:${normalizeRegion(point.regiao_administrativa || point.localidade)}`;
+}
+
+function getVisualMarkerOffset(index, total) {
+  if (total <= 1) return { x: 0, y: 0 };
+
+  if (total <= 8) {
+    const angle = ((index / total) * 360 - 90) * (Math.PI / 180);
+    const radius = total <= 3 ? 3.1 : 4.3;
+    return {
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+    };
+  }
+
+  const ringIndex = Math.floor(index / 8);
+  const positionInRing = index % 8;
+  const angle = ((positionInRing / 8) * 360 + ringIndex * 22.5 - 90) * (Math.PI / 180);
+  const radius = 3.6 + ringIndex * 2.4;
+
+  return {
+    x: Math.cos(angle) * radius,
+    y: Math.sin(angle) * radius,
   };
 }
 
@@ -1269,20 +1326,6 @@ function normalizeRegion(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
-}
-
-function getMarkerOffset(seed) {
-  const text = String(seed);
-  let hash = 0;
-  for (let index = 0; index < text.length; index += 1) {
-    hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
-  }
-  const angle = (hash % 360) * (Math.PI / 180);
-  const radius = ((hash % 5) + 1) * 0.0028;
-  return {
-    latitude: Math.sin(angle) * radius,
-    longitude: Math.cos(angle) * radius,
-  };
 }
 
 function lngToX(lng) {
