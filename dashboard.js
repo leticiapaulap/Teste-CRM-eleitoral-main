@@ -518,7 +518,9 @@ function renderMap(points) {
     marker.title = `${point.localidade || point.regiao_administrativa || "Sem localidade"} - ${point.name}`;
     marker.setAttribute("aria-label", marker.title);
     marker.dataset.pointId = point.id;
-    marker.innerHTML = `<span class="mapPersonIcon" aria-hidden="true"></span>`;
+    marker.innerHTML = point.photo_url
+      ? `<img class="mapMarkerPhoto" src="${escapeHtml(point.photo_url)}" alt="" aria-hidden="true" />`
+      : `<span class="mapPersonIcon" aria-hidden="true"></span>`;
     marker.addEventListener("click", () => selectPoint(point));
     els.mapOverlay.appendChild(marker);
   }
