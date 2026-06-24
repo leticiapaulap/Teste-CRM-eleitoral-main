@@ -227,6 +227,7 @@ const els = {
   refreshMessages: document.getElementById("btnRefreshMessages"),
   adminForm: document.getElementById("adminCreateForm"),
   adminMsg: document.getElementById("adminMsg"),
+  adminCreatedSummary: document.getElementById("adminCreatedSummary"),
   emailVisible: document.getElementById("btnEmailVisible"),
   role: document.getElementById("filterRole"),
   leader: document.getElementById("filterLeader"),
@@ -807,14 +808,17 @@ function renderTable(points) {
 async function createAdminUser(event) {
   event.preventDefault();
   showAdminMessage("", "");
+  hideCreatedSummary();
   const formData = new FormData(els.adminForm);
   const body = Object.fromEntries(formData.entries());
   body.consent_accepted = true;
   const photoFile = formData.get("photo");
+  let photoPreviewUrl = "";
   delete body.photo;
 
   try {
     if (photoFile && photoFile.size) {
+      photoPreviewUrl = URL.createObjectURL(photoFile);
       body.photoUrl = await uploadPhoto(photoFile);
     }
 
@@ -828,9 +832,16 @@ async function createAdminUser(event) {
     });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel adicionar.");
+    const createdUser = {
+      ...data.user,
+      localidade: body.localidade,
+      regiao_administrativa: body.regiao_administrativa,
+      photo_url: body.photoUrl,
+    };
     els.adminForm.reset();
     document.getElementById("adminRegiao")?.dispatchEvent(new Event("change"));
     const generatedLink = data.leaderProfile?.referral_url || "";
+    renderCreatedSummary(createdUser, data.leaderProfile, photoPreviewUrl || body.photoUrl);
     showAdminMessage(generatedLink ? `Cadastro adicionado. Link gerado: ${generatedLink}` : "Cadastro adicionado.", "ok");
     allPoints = await loadMapPoints();
     fillFilters(allPoints);
@@ -838,6 +849,62 @@ async function createAdminUser(event) {
   } catch (error) {
     showAdminMessage(`Erro: ${error.message || error}`, "err");
   }
+}
+
+function hideCreatedSummary() {
+  if (!els.adminCreatedSummary) return;
+  els.adminCreatedSummary.hidden = true;
+  els.adminCreatedSummary.innerHTML = "";
+}
+
+function renderCreatedSummary(createdUser, leaderProfile, photoUrl = "") {
+  if (!els.adminCreatedSummary || !createdUser) return;
+  const link = leaderProfile?.referral_url || getPublicReferralUrl({ ...createdUser, ...leaderProfile });
+  const code = leaderProfile?.referral_code || createdUser.referral_code || "-";
+  const displayPhoto = photoUrl || createdUser.photo_url || "img/LOGO-SIV.png";
+
+  els.adminCreatedSummary.hidden = false;
+  els.adminCreatedSummary.innerHTML = `
+    <div class="createdSummaryHeader">
+      <div>
+        <span>Cadastro confirmado</span>
+        <h3>${escapeHtml(createdUser.name || "-")}</h3>
+      </div>
+      <span class="rolePill ${createdUser.role === "COORDENADORES" || createdUser.role === "LIDERES" ? "roleLeader" : "rolePerson"}">${escapeHtml(createdUser.role || "-")}</span>
+    </div>
+    <div class="createdSummaryBody">
+      <img class="createdSummaryPhoto" src="${escapeHtml(displayPhoto)}" alt="Foto de ${escapeHtml(createdUser.name || "cadastro")}" />
+      <div class="createdSummaryGrid">
+        ${createdSummaryItem("Nome", createdUser.name)}
+        ${createdSummaryItem("Email", createdUser.email)}
+        ${createdSummaryItem("Telefone", createdUser.phone)}
+        ${createdSummaryItem("Localidade", createdUser.localidade || "Brasilia")}
+        ${createdSummaryItem("Regiao administrativa", createdUser.regiao_administrativa)}
+        ${createdSummaryItem("Codigo de cadastro", code)}
+      </div>
+    </div>
+    <div class="createdSummaryInvite">
+      <label for="createdReferralLink">Link para enviar</label>
+      <div class="inviteRow">
+        <input id="createdReferralLink" readonly value="${escapeHtml(link)}" />
+        <button type="button" class="btnSecondary" data-copy-created-link>Copiar</button>
+      </div>
+    </div>
+  `;
+
+  els.adminCreatedSummary.querySelector("[data-copy-created-link]")?.addEventListener("click", async () => {
+    await copyText(link);
+    showAdminMessage("Link copiado.", "ok");
+  });
+}
+
+function createdSummaryItem(label, value) {
+  return `
+    <div>
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value || "-")}</strong>
+    </div>
+  `;
 }
 
 async function uploadPhoto(file) {

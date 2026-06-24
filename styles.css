@@ -671,6 +671,87 @@ body{
   margin-bottom:12px;
 }
 
+.createdSummary{
+  margin-top:14px;
+  border:1px solid #d7e6ff;
+  border-radius:14px;
+  padding:14px;
+  background:#f7f9ff;
+}
+
+.createdSummaryHeader{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.createdSummaryHeader span:first-child{
+  display:block;
+  color:var(--blue-700);
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+
+.createdSummaryHeader h3{
+  margin:0;
+  color:#13233d;
+  font-size:18px;
+}
+
+.createdSummaryBody{
+  display:grid;
+  grid-template-columns:96px minmax(0, 1fr);
+  gap:14px;
+  align-items:start;
+}
+
+.createdSummaryPhoto{
+  width:96px;
+  height:96px;
+  border-radius:14px;
+  object-fit:cover;
+  border:1px solid #d7dfed;
+  background:#fff;
+}
+
+.createdSummaryGrid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+
+.createdSummaryGrid div{
+  border:1px solid #e4ebfb;
+  border-radius:10px;
+  background:#fff;
+  padding:9px;
+}
+
+.createdSummaryGrid span,
+.createdSummaryInvite label{
+  display:block;
+  color:#667792;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+
+.createdSummaryGrid strong{
+  display:block;
+  color:#13233d;
+  font-size:13px;
+  word-break:break-word;
+}
+
+.createdSummaryInvite{
+  margin-top:12px;
+}
+
 .profileGrid{
   display:grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2423,8 +2504,13 @@ body.dashboardBody{
 
   .filterPanel,
   .dashboardGrid,
+  .createdSummaryBody,
   .adminForm,
   .profileGrid{
+    grid-template-columns:1fr;
+  }
+
+  .createdSummaryGrid{
     grid-template-columns:1fr;
   }
 }
