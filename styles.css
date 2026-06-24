@@ -3137,3 +3137,39 @@ body.dashboardBody{
     grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
   }
 }
+
+/* Mapa: manter mapa e cadastro visiveis ao abrir um marcador */
+.dashboardLayout[data-view="map"] .mapPanel{
+  height:min(720px, calc(100vh - 170px)) !important;
+  min-height:560px !important;
+}
+
+.dashboardLayout[data-view="map"] .mapCanvas{
+  flex:1 1 320px !important;
+  min-height:320px !important;
+}
+
+.dashboardLayout[data-view="map"] .selectedPoint{
+  flex:0 0 auto !important;
+  max-height:245px !important;
+  overflow:auto !important;
+}
+
+.dashboardLayout[data-view="map"] .selectedTreeBlock{
+  margin-top:10px;
+}
+
+@media (max-width: 900px){
+  .dashboardLayout[data-view="map"] .mapPanel{
+    height:auto !important;
+    min-height:0 !important;
+  }
+
+  .dashboardLayout[data-view="map"] .mapCanvas{
+    min-height:300px !important;
+  }
+
+  .dashboardLayout[data-view="map"] .selectedPoint{
+    max-height:none !important;
+  }
+}

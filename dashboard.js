@@ -211,6 +211,7 @@ let filteredPoints = [];
 let selectedRegion = "";
 let selectedLeaderId = "";
 let selectedPointId = "";
+let focusedMapPointId = "";
 let isTeam = user?.role === "EQUIPE";
 let activeView = "home";
 
@@ -235,6 +236,7 @@ const els = {
   level: document.getElementById("filterLevel"),
   search: document.getElementById("filterSearch"),
   map: document.getElementById("mapCanvas"),
+  mapFrame: document.querySelector(".satelliteFrame"),
   mapOverlay: document.getElementById("mapOverlay"),
   selected: document.getElementById("selectedPoint"),
   regionSummary: document.getElementById("regionSummary"),
@@ -278,7 +280,14 @@ els.search.addEventListener("input", render);
 els.region.addEventListener("input", () => {
   selectedRegion = els.region.value;
   selectedLeaderId = "";
+  selectedPointId = "";
   els.leader.value = "";
+  if (selectedRegion) {
+    focusedMapPointId = "";
+    setMapFrameQuery(`${selectedRegion}, Distrito Federal, Brasil`, 12);
+  } else {
+    resetMapFrame();
+  }
   render();
 });
 els.leader.addEventListener("input", () => {
@@ -504,9 +513,12 @@ function renderMetrics(points) {
 function renderMap(points) {
   els.mapOverlay.innerHTML = "";
   const locatedPoints = points.filter(hasMapPosition);
-  const markerPositions = getSpreadMapPositions(locatedPoints);
+  const isFocusedOnRegion = Boolean(focusedMapPointId && selectedRegion);
+  const markerPositions = isFocusedOnRegion ? getFocusedRegionMapPositions(locatedPoints) : getSpreadMapPositions(locatedPoints);
 
-  renderRegionAreas(locatedPoints);
+  if (!isFocusedOnRegion) {
+    renderRegionAreas(locatedPoints);
+  }
 
   for (const point of locatedPoints) {
     const position = markerPositions.get(String(point.id));
@@ -559,13 +571,15 @@ function renderRegionAreas(points) {
 
 function selectPoint(point) {
   selectedPointId = point.id;
+  focusedMapPointId = point.id;
+  focusMapOnPointRegion(point);
+
   if (point.role === "COORDENADORES" || point.role === "LIDERES") {
     selectedLeaderId = point.id;
     els.leader.value = point.id;
-    render();
-  } else {
-    updateSelectedMarkerState();
   }
+
+  render();
 
   const locationLabel = point.localidade || point.regiao_administrativa || "Sem localidade";
   const registeredBy = getRegisteredByLabel(point);
@@ -601,6 +615,29 @@ function updateSelectedMarkerState() {
   els.mapOverlay.querySelectorAll(".mapMarker").forEach((marker) => {
     marker.classList.toggle("selectedMapMarker", String(marker.dataset.pointId) === String(selectedPointId));
   });
+}
+
+function focusMapOnPointRegion(point) {
+  const region = point.regiao_administrativa || "";
+  const locationLabel = point.localidade || region;
+
+  if (region) {
+    selectedRegion = region;
+    els.region.value = region;
+  }
+
+  const query = [locationLabel, "Distrito Federal", "Brasil"].filter(Boolean).join(", ");
+  setMapFrameQuery(query || "Distrito Federal, Brasil", region ? 13 : 10);
+}
+
+function setMapFrameQuery(query, zoom) {
+  if (!els.mapFrame) return;
+  els.mapFrame.src = `https://www.google.com/maps?q=${encodeURIComponent(query)}&t=k&z=${zoom}&output=embed`;
+}
+
+function resetMapFrame() {
+  focusedMapPointId = "";
+  setMapFrameQuery("Distrito Federal, Brasil", 10);
 }
 
 function getRegisteredByLabel(point) {
@@ -1398,6 +1435,15 @@ function selectRegion(region) {
   els.region.value = selectedRegion;
   selectedLeaderId = "";
   els.leader.value = "";
+  selectedPointId = "";
+
+  if (selectedRegion) {
+    focusedMapPointId = "";
+    setMapFrameQuery(`${selectedRegion}, Distrito Federal, Brasil`, 12);
+  } else {
+    resetMapFrame();
+  }
+
   render();
 }
 
@@ -1455,6 +1501,30 @@ function getSpreadMapPositions(points) {
       });
     });
   }
+
+  return positions;
+}
+
+function getFocusedRegionMapPositions(points) {
+  const positions = new Map();
+  const sorted = [...points].sort((a, b) => {
+    if (String(a.id) === String(focusedMapPointId)) return -1;
+    if (String(b.id) === String(focusedMapPointId)) return 1;
+    return String(a.name || a.id).localeCompare(String(b.name || b.id));
+  });
+
+  sorted.forEach((point, index) => {
+    if (String(point.id) === String(focusedMapPointId)) {
+      positions.set(String(point.id), { x: 50, y: 50 });
+      return;
+    }
+
+    const offset = getVisualMarkerOffset(index, sorted.length);
+    positions.set(String(point.id), {
+      x: clamp(50 + offset.x * 1.35, 12, 88),
+      y: clamp(50 + offset.y * 1.35, 12, 88),
+    });
+  });
 
   return positions;
 }
