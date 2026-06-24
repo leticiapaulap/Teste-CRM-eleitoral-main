@@ -305,6 +305,7 @@ els.menuToggle?.addEventListener("click", () => {
   localStorage.setItem("siv_menu_collapsed", collapsed ? "1" : "0");
   updateMenuToggle(collapsed);
 });
+enhanceDownwardSelect(document.getElementById("adminRegiao"));
 enhanceDownwardSelect(document.getElementById("editRegiao"));
 
 init();
@@ -828,6 +829,7 @@ async function createAdminUser(event) {
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel adicionar.");
     els.adminForm.reset();
+    document.getElementById("adminRegiao")?.dispatchEvent(new Event("change"));
     const generatedLink = data.leaderProfile?.referral_url || "";
     showAdminMessage(generatedLink ? `Cadastro adicionado. Link gerado: ${generatedLink}` : "Cadastro adicionado.", "ok");
     allPoints = await loadMapPoints();
