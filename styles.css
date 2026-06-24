@@ -2691,24 +2691,52 @@ body.dashboardBody{
   width:100% !important;
   max-width:none !important;
   min-height:100vh;
-  display:block !important;
+  display:grid !important;
+  grid-template-columns:250px minmax(0, 1fr);
+  grid-template-rows:auto auto minmax(0, 1fr);
+}
+
+.detailBody .detailMainMenu{
+  grid-column:1 !important;
+  grid-row:1 / span 3 !important;
+  position:sticky !important;
+  top:0;
+  align-self:start;
+  width:250px !important;
+  max-width:250px !important;
+  min-height:100vh !important;
+  border-radius:0 !important;
+  padding:22px 14px !important;
+  background:rgba(255,255,255,.98);
+  box-shadow:8px 0 28px rgba(0,0,0,.18);
+}
+
+.detailBody .detailMainMenu .sideMenuButton{
+  text-decoration:none;
 }
 
 .detailBody .dashboardHeader{
-  grid-column:auto !important;
-  grid-row:auto !important;
+  grid-column:2 !important;
+  grid-row:1 !important;
   padding:24px 28px 10px;
 }
 
 .detailBody .detailHero,
 .detailBody .detailWorkspace{
-  width:calc(100% - 56px);
-  max-width:1280px;
-  margin-left:auto;
-  margin-right:auto;
+  width:auto;
+  max-width:none;
+  margin-left:28px;
+  margin-right:28px;
+}
+
+.detailBody .detailHero{
+  grid-column:2 !important;
+  grid-row:2 !important;
 }
 
 .detailBody .detailWorkspace{
+  grid-column:2 !important;
+  grid-row:3 !important;
   display:grid !important;
   grid-template-columns:220px minmax(0, 1fr);
   gap:14px;
@@ -2718,7 +2746,7 @@ body.dashboardBody{
 
 .detailBody .detailSideMenu,
 .detailBody.menuCollapsed .detailSideMenu{
-  grid-column:auto !important;
+  grid-column:1 !important;
   grid-row:auto !important;
   position:sticky !important;
   top:18px;
@@ -2733,22 +2761,49 @@ body.dashboardBody{
 }
 
 .detailBody .dashboardContent{
-  grid-column:auto !important;
+  grid-column:2 !important;
   grid-row:auto !important;
   padding:0 !important;
 }
 
 @media (max-width: 900px){
+  .detailBody .dashboardShell{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto auto auto;
+  }
+
+  .detailBody .detailMainMenu{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    position:static !important;
+    width:100% !important;
+    max-width:none !important;
+    min-height:auto !important;
+    border-radius:0 !important;
+    padding:12px !important;
+  }
+
   .detailBody .dashboardHeader{
+    grid-column:1 !important;
+    grid-row:2 !important;
     padding:18px 14px 8px;
   }
 
   .detailBody .detailHero,
   .detailBody .detailWorkspace{
-    width:calc(100% - 28px);
+    width:auto;
+    margin-left:14px;
+    margin-right:14px;
+  }
+
+  .detailBody .detailHero{
+    grid-column:1 !important;
+    grid-row:3 !important;
   }
 
   .detailBody .detailWorkspace{
+    grid-column:1 !important;
+    grid-row:4 !important;
     grid-template-columns:1fr;
   }
 
