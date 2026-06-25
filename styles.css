@@ -3738,10 +3738,46 @@ body.dashboardBody{
 }
 
 .dashboardLayout[data-view="map"] .selectedPointGrid{
-  grid-template-columns:repeat(3, minmax(160px, 1fr));
+  grid-template-columns:repeat(6, minmax(108px, 1fr));
+  gap:6px;
+  margin-top:8px;
+}
+
+.dashboardLayout[data-view="map"] .selectedPointGrid span{
+  min-height:54px;
+  padding:7px 8px;
+}
+
+.dashboardLayout[data-view="map"] .selectedTreeBlock{
+  margin-top:8px !important;
+  gap:6px;
+}
+
+.dashboardLayout[data-view="map"] .selectedTreeBlock h3{
+  margin:0 0 4px !important;
+}
+
+.dashboardLayout[data-view="map"] .selectedTreePath{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.dashboardLayout[data-view="map"] .selectedTreePath span{
+  padding:5px 8px;
+}
+
+.dashboardLayout[data-view="map"] .selectedTreeList{
+  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
 }
 
 @media (max-width: 760px){
+  .dashboardLayout[data-view="map"] .selectedPointGrid{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px){
   .dashboardLayout[data-view="map"] .selectedPointGrid{
     grid-template-columns:1fr;
   }
