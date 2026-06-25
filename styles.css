@@ -3814,3 +3814,145 @@ body.dashboardBody{
     grid-template-columns:1fr;
   }
 }
+
+/* Chat publico de contato */
+.chatContactBox{
+  margin-top:18px;
+  padding:14px;
+  border:1px solid #dbe5f2;
+  border-radius:14px;
+  background:#f8fbff;
+}
+
+.chatHeader{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.chatAvatar{
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:#0e3a73;
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+}
+
+.chatHeader h3{
+  margin:0;
+  color:#13233d;
+  font-size:16px;
+}
+
+.chatHeader p{
+  margin:3px 0 0;
+  color:#60708e;
+  font-size:12px;
+}
+
+.chatForm{
+  display:grid;
+  gap:10px;
+}
+
+.chatMessages{
+  min-height:140px;
+  max-height:220px;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:10px;
+  border:1px solid #dbe5f2;
+  border-radius:12px;
+  background:#fff;
+}
+
+.chatBubble{
+  width:fit-content;
+  max-width:min(84%, 420px);
+  padding:9px 11px;
+  border-radius:14px;
+  font-size:13px;
+  line-height:1.35;
+}
+
+.botBubble{
+  align-self:flex-start;
+  border-bottom-left-radius:5px;
+  background:#eaf1fb;
+  color:#18345c;
+}
+
+.userBubble{
+  align-self:flex-end;
+  border-bottom-right-radius:5px;
+  background:#f3c316;
+  color:#1d2533;
+}
+
+.errorBubble{
+  background:#ffe8ea;
+  color:#b4232c;
+}
+
+.chatIdentity{
+  display:grid;
+  grid-template-columns:1fr 1fr 1.2fr;
+  gap:8px;
+}
+
+.chatIdentity input,
+.chatComposer textarea{
+  width:100%;
+  border:1px solid #cfdaf0;
+  border-radius:10px;
+  background:#fff;
+  font:inherit;
+}
+
+.chatIdentity input{
+  min-height:40px;
+  padding:9px 10px;
+}
+
+.chatComposer{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  gap:8px;
+  align-items:end;
+}
+
+.chatComposer textarea{
+  min-height:54px;
+  max-height:120px;
+  padding:10px 12px;
+  resize:vertical;
+}
+
+.chatComposer button{
+  min-width:92px;
+  min-height:54px;
+  margin:0;
+  border-radius:12px;
+}
+
+@media (max-width: 720px){
+  .chatIdentity{
+    grid-template-columns:1fr;
+  }
+
+  .chatComposer{
+    grid-template-columns:1fr;
+  }
+
+  .chatComposer button{
+    width:100%;
+  }
+}

@@ -23,6 +23,7 @@ const btnCopySuccess = document.getElementById("btnCopySuccess");       // botã
 const contactForm = document.getElementById("contactForm");
 const contactMsg = document.getElementById("contactMsg");
 const btnContact = document.getElementById("btnContact");
+const chatMessages = document.getElementById("chatMessages");
 const coordinatorAccess = document.getElementById("coordinatorAccess");
 const coordinatorEmail = document.getElementById("email");
 const coordinatorPassword = document.getElementById("password");
@@ -333,8 +334,9 @@ contactForm?.addEventListener("submit", async (event) => {
   };
 
   try {
+    appendChatBubble(body.message, "user");
     btnContact.disabled = true;
-    btnContact.textContent = "Enviando...";
+    btnContact.textContent = "...";
     const response = await fetch("/api/contact/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -342,16 +344,21 @@ contactForm?.addEventListener("submit", async (event) => {
     });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel enviar.");
-    contactMsg.className = "msg ok";
-    contactMsg.textContent = "Mensagem enviada. A equipe vai visualizar no painel.";
-    contactMsg.style.display = "block";
+    appendChatBubble("Mensagem enviada. A equipe recebeu seu contato no painel.", "bot");
     contactForm.reset();
   } catch (error) {
-    contactMsg.className = "msg err";
-    contactMsg.textContent = `Erro: ${error.message || error}`;
-    contactMsg.style.display = "block";
+    appendChatBubble(`Nao consegui enviar agora: ${error.message || error}`, "bot error");
   } finally {
     btnContact.disabled = false;
-    btnContact.textContent = "Enviar mensagem";
+    btnContact.textContent = "Enviar";
   }
 });
+
+function appendChatBubble(text, type) {
+  if (!chatMessages) return;
+  const bubble = document.createElement("div");
+  bubble.className = `chatBubble ${type.includes("user") ? "userBubble" : "botBubble"}${type.includes("error") ? " errorBubble" : ""}`;
+  bubble.textContent = text;
+  chatMessages.appendChild(bubble);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}

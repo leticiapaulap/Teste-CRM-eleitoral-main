@@ -7,7 +7,7 @@
   <title>SIV — Cadastro</title>
   <meta name="description" content="SIV - Sistema de Inteligência Valdelino. Cadastro voluntário." />
   <link rel="icon" href="img/LOGO-SIV.png" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=20260625-3" />
   <script type="module" src="script.js" defer></script>
 </head>
 
@@ -184,15 +184,27 @@
           </p>
         </form>
 
-        <section class="contactBox" aria-label="Entrar em contato">
-          <h3>Entrar em contato</h3>
-          <p>Envie uma mensagem para a equipe pelo chat online.</p>
-          <form id="contactForm" class="contactForm">
-            <input id="contactName" name="name" placeholder="Seu nome" required />
-            <input id="contactPhone" name="phone" placeholder="WhatsApp" />
-            <input id="contactEmail" name="email" type="email" placeholder="Email" />
-            <textarea id="contactMessage" name="message" placeholder="Digite sua mensagem" required></textarea>
-            <button id="btnContact" type="submit">Enviar mensagem</button>
+        <section class="contactBox chatContactBox" aria-label="Chat com a equipe">
+          <div class="chatHeader">
+            <div class="chatAvatar" aria-hidden="true">SIV</div>
+            <div>
+              <h3>Chat com a equipe</h3>
+              <p>Envie sua duvida. A equipe recebe no painel e responde por contato.</p>
+            </div>
+          </div>
+          <form id="contactForm" class="contactForm chatForm">
+            <div id="chatMessages" class="chatMessages" aria-live="polite">
+              <div class="chatBubble botBubble">Ola! Informe seus dados e escreva sua mensagem para a equipe.</div>
+            </div>
+            <div class="chatIdentity">
+              <input id="contactName" name="name" placeholder="Seu nome" required />
+              <input id="contactPhone" name="phone" placeholder="WhatsApp" />
+              <input id="contactEmail" name="email" type="email" placeholder="Email" />
+            </div>
+            <div class="chatComposer">
+              <textarea id="contactMessage" name="message" placeholder="Digite sua mensagem" required></textarea>
+              <button id="btnContact" type="submit">Enviar</button>
+            </div>
             <div id="contactMsg" class="msg"></div>
           </form>
         </section>
