@@ -333,6 +333,11 @@ contactForm?.addEventListener("submit", async (event) => {
     message: document.getElementById("contactMessage").value.trim(),
   };
 
+  if (body.message.length < 2) {
+    appendChatBubble("Digite uma mensagem antes de enviar.", "bot error");
+    return;
+  }
+
   try {
     appendChatBubble(body.message, "user");
     btnContact.disabled = true;
