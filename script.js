@@ -24,6 +24,9 @@ const contactForm = document.getElementById("contactForm");
 const contactMsg = document.getElementById("contactMsg");
 const btnContact = document.getElementById("btnContact");
 const chatMessages = document.getElementById("chatMessages");
+const chatBox = document.querySelector(".chatContactBox");
+const chatLauncher = document.getElementById("chatLauncher");
+const chatClose = document.getElementById("chatClose");
 const coordinatorAccess = document.getElementById("coordinatorAccess");
 const coordinatorEmail = document.getElementById("email");
 const coordinatorPassword = document.getElementById("password");
@@ -361,6 +364,14 @@ contactForm?.addEventListener("submit", async (event) => {
     btnContact.disabled = false;
     btnContact.textContent = "Enviar";
   }
+});
+
+chatLauncher?.addEventListener("click", () => {
+  chatBox?.classList.remove("chatMinimized");
+});
+
+chatClose?.addEventListener("click", () => {
+  chatBox?.classList.add("chatMinimized");
 });
 
 function appendChatBubble(text, type) {

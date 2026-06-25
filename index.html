@@ -7,8 +7,8 @@
   <title>SIV — Cadastro</title>
   <meta name="description" content="SIV - Sistema de Inteligência Valdelino. Cadastro voluntário." />
   <link rel="icon" href="img/LOGO-SIV.png" />
-  <link rel="stylesheet" href="styles.css?v=20260625-3" />
-  <script type="module" src="script.js?v=20260625-4" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260625-5" />
+  <script type="module" src="script.js?v=20260625-5" defer></script>
 </head>
 
 <body>
@@ -188,9 +188,10 @@
           <div class="chatHeader">
             <div class="chatAvatar" aria-hidden="true">SIV</div>
             <div>
-              <h3>Chat com a equipe</h3>
-              <p>Envie sua duvida. A equipe recebe no painel e responde por contato.</p>
+              <h3>Ola, como vai?</h3>
+              <p>Voce precisa de ajuda?</p>
             </div>
+            <button id="chatClose" class="chatClose" type="button" aria-label="Minimizar chat">x</button>
           </div>
           <form id="contactForm" class="contactForm chatForm">
             <div id="chatMessages" class="chatMessages" aria-live="polite">
@@ -208,6 +209,7 @@
             <div id="contactMsg" class="msg"></div>
           </form>
         </section>
+        <button id="chatLauncher" class="chatLauncher" type="button" aria-label="Abrir chat">SIV</button>
       </div>
 
       <!-- TELA SUCESSO (inicia escondida) -->
