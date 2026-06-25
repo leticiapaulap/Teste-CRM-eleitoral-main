@@ -356,7 +356,7 @@ contactForm?.addEventListener("submit", async (event) => {
     });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel enviar.");
-    appendChatBubble("Mensagem enviada. A equipe recebeu seu contato no painel.", "bot");
+    appendChatBubble("Mensagem enviada. Um responsavel vai responder em ate 4 horas.", "bot");
     contactForm.reset();
   } catch (error) {
     appendChatBubble(`Nao consegui enviar agora: ${error.message || error}`, "bot error");
