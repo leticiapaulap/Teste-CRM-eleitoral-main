@@ -342,10 +342,14 @@ contactForm?.addEventListener("submit", async (event) => {
     appendChatBubble(body.message, "user");
     btnContact.disabled = true;
     btnContact.textContent = "...";
+    const requestBody = {
+      ...body,
+      message: body.message.length < 5 ? `${body.message} ...` : body.message,
+    };
     const response = await fetch("/api/contact/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(requestBody),
     });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel enviar.");
