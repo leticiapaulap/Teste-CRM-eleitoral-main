@@ -3721,16 +3721,20 @@ body.dashboardBody{
 
 /* Detalhes do marcador: evitar corte do conteudo abaixo do mapa */
 .dashboardLayout[data-view="map"] .mapPanel{
-  overflow:auto !important;
+  height:auto !important;
+  min-height:0 !important;
+  overflow:visible !important;
 }
 
 .dashboardLayout[data-view="map"] .mapCanvas{
-  flex:0 0 clamp(300px, 44vh, 420px) !important;
+  flex:0 0 320px !important;
+  min-height:320px !important;
 }
 
 .dashboardLayout[data-view="map"] .selectedPoint{
   max-height:none !important;
   overflow:visible !important;
+  flex:0 0 auto !important;
 }
 
 .dashboardLayout[data-view="map"] .selectedPointGrid{
