@@ -256,6 +256,9 @@ const els = {
   cancelEdit: document.getElementById("btnCancelEdit"),
   deleteEdit: document.getElementById("btnDeleteEdit"),
   menuToggle: document.getElementById("btnToggleMenu"),
+  exportLeader: document.getElementById("btnExportLeader"),
+  exportAll: document.getElementById("btnExportAll"),
+  exportStatus: document.getElementById("exportStatus"),
   sideMessageBadge: document.getElementById("sideMessageBadge"),
   homePendingMessages: document.getElementById("homePendingMessages"),
   homeMessageAlert: document.getElementById("homeMessageAlert"),
@@ -299,6 +302,8 @@ els.referralRole?.addEventListener("input", () => renderReferralLink(user));
 els.editProfile?.addEventListener("click", () => openEditDialog(user, { self: true }));
 els.adminForm?.addEventListener("submit", createAdminUser);
 els.emailVisible?.addEventListener("click", () => emailUsers(filteredPoints));
+els.exportLeader?.addEventListener("click", exportSelectedLeaderNetwork);
+els.exportAll?.addEventListener("click", exportAllPeople);
 els.refreshMessages?.addEventListener("click", loadContactMessages);
 els.editForm?.addEventListener("submit", saveEditForm);
 els.closeEdit?.addEventListener("click", closeEditDialog);
@@ -619,14 +624,13 @@ function updateSelectedMarkerState() {
 
 function focusMapOnPointRegion(point) {
   const region = point.regiao_administrativa || "";
-  const locationLabel = point.localidade || region;
 
   if (region) {
     selectedRegion = region;
     els.region.value = region;
   }
 
-  const query = [locationLabel, "Distrito Federal", "Brasil"].filter(Boolean).join(", ");
+  const query = [region || point.localidade, "Distrito Federal", "Brasil"].filter(Boolean).join(", ");
   setMapFrameQuery(query || "Distrito Federal, Brasil", region ? 13 : 10);
 }
 
@@ -1218,6 +1222,146 @@ function emailUsers(points) {
     return;
   }
   window.location.href = `mailto:?bcc=${encodeURIComponent(emails.join(","))}`;
+}
+
+async function exportSelectedLeaderNetwork() {
+  const points = await getPeopleForExport();
+  if (!points) return;
+  const leader = getSelectedLeaderForExport(points);
+  if (!leader) {
+    notifyExport("Pesquise ou selecione um lider/coordenador antes de exportar a rede.", "err");
+    return;
+  }
+
+  const network = points
+    .filter((point) => String(point.root_leader_id) === String(leader.id) || String(point.id) === String(leader.id))
+    .sort((a, b) => Number(a.level || 0) - Number(b.level || 0) || String(a.name || "").localeCompare(String(b.name || "")));
+
+  exportPeopleCsv(network, `rede-${slugify(leader.name || "lider")}`);
+}
+
+async function exportAllPeople() {
+  const points = await getPeopleForExport();
+  if (!points) return;
+  exportPeopleCsv(points, "lista-geral-cadastros");
+}
+
+async function getPeopleForExport() {
+  if (!isTeam || token === "local-test-token") return allPoints;
+
+  try {
+    const items = [];
+    let page = 1;
+    let total = Infinity;
+    while (items.length < total) {
+      const response = await fetch(`/api/admin/users?limit=200&page=${page}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel carregar todos os cadastros.");
+      items.push(...(data.items || []));
+      total = Number(data.total || items.length);
+      if (!data.items?.length) break;
+      page += 1;
+    }
+    return items;
+  } catch (error) {
+    notifyExport(`Erro ao carregar exportacao completa: ${error.message || error}`, "err");
+    return null;
+  }
+}
+
+function getSelectedLeaderForExport(points = allPoints) {
+  const directId = selectedLeaderId || els.leader?.value;
+  if (directId) {
+    const directLeader = points.find((point) => String(point.id) === String(directId));
+    if (directLeader) return directLeader;
+  }
+
+  const selectedPoint = points.find((point) => String(point.id) === String(selectedPointId));
+  if (selectedPoint && isLeaderRole(selectedPoint.role)) return selectedPoint;
+
+  const search = els.search?.value?.trim().toLowerCase();
+  if (!search) return null;
+
+  const leaders = points.filter((point) => isLeaderRole(point.role));
+  return leaders.find((point) => String(point.name || "").toLowerCase() === search)
+    || leaders.find((point) => String(point.name || "").toLowerCase().includes(search))
+    || null;
+}
+
+function exportPeopleCsv(points, baseName) {
+  if (!points.length) {
+    notifyExport("Nenhum cadastro encontrado para exportar.", "err");
+    return;
+  }
+
+  const columns = [
+    ["Nome", "name"],
+    ["Tipo", "role"],
+    ["Email", "email"],
+    ["Telefone", "phone"],
+    ["Localidade", "localidade"],
+    ["Regiao administrativa", "regiao_administrativa"],
+    ["Responsavel raiz", "root_leader_name"],
+    ["Cadastrado por", (point) => getRegisteredByLabel(point)],
+    ["Nivel", "level"],
+    ["Data do cadastro", (point) => formatDate(point.created_at)],
+    ["Codigo do link", "referral_code"],
+    ["Link de cadastro", (point) => getPublicReferralUrl(point)],
+  ];
+
+  const csv = [
+    columns.map(([label]) => csvEscape(label)).join(";"),
+    ...points.map((point) => columns
+      .map(([, accessor]) => csvEscape(typeof accessor === "function" ? accessor(point) : point[accessor]))
+      .join(";")),
+  ].join("\r\n");
+
+  const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${baseName}-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  notifyExport(`${points.length} cadastro${points.length === 1 ? "" : "s"} exportado${points.length === 1 ? "" : "s"}.`, "ok");
+}
+
+function notifyExport(message, type) {
+  if (els.exportStatus) {
+    els.exportStatus.textContent = message;
+    els.exportStatus.hidden = false;
+    els.exportStatus.className = `sideMenuStatus ${type === "err" ? "err" : "ok"}`;
+    window.clearTimeout(els.exportStatus.dataset.timer);
+    const timer = window.setTimeout(() => {
+      els.exportStatus.hidden = true;
+      els.exportStatus.textContent = "";
+    }, 4200);
+    els.exportStatus.dataset.timer = String(timer);
+  }
+  if (els.adminMsg) showAdminMessage(message, type);
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+function slugify(value) {
+  return String(value || "exportacao")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60) || "exportacao";
+}
+
+function isLeaderRole(role) {
+  return role === "COORDENADORES" || role === "LIDERES";
 }
 
 function renderReferralCell(point) {
