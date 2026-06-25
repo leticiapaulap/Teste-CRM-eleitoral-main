@@ -3671,6 +3671,38 @@ body.dashboardBody{
   font-size:13px !important;
 }
 
+.sideSearchLabel{
+  display:block;
+  margin:2px 2px 4px;
+  color:#aebbd0;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+
+.sideSearchInput{
+  width:100%;
+  min-height:36px;
+  margin:0 0 4px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:8px;
+  background:rgba(255,255,255,.08);
+  color:#f8fafc;
+  font:inherit;
+  font-size:13px;
+  outline:none;
+}
+
+.sideSearchInput::placeholder{
+  color:#93a4bd;
+}
+
+.sideSearchInput:focus{
+  border-color:#f3c316;
+  background:rgba(255,255,255,.12);
+}
+
 .detailBody .detailSideMenu{
   padding:8px !important;
 }

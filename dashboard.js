@@ -256,6 +256,7 @@ const els = {
   cancelEdit: document.getElementById("btnCancelEdit"),
   deleteEdit: document.getElementById("btnDeleteEdit"),
   menuToggle: document.getElementById("btnToggleMenu"),
+  exportLeaderSearch: document.getElementById("exportLeaderSearch"),
   exportLeader: document.getElementById("btnExportLeader"),
   exportAll: document.getElementById("btnExportAll"),
   exportStatus: document.getElementById("exportStatus"),
@@ -1281,7 +1282,7 @@ function getSelectedLeaderForExport(points = allPoints) {
   const selectedPoint = points.find((point) => String(point.id) === String(selectedPointId));
   if (selectedPoint && isLeaderRole(selectedPoint.role)) return selectedPoint;
 
-  const search = els.search?.value?.trim().toLowerCase();
+  const search = (els.exportLeaderSearch?.value || els.search?.value || "").trim().toLowerCase();
   if (!search) return null;
 
   const leaders = points.filter((point) => isLeaderRole(point.role));
