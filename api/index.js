@@ -161,10 +161,14 @@ async function contactMessages(req, res) {
 }
 
 async function contactMessageById(req, res, id) {
-  if (req.method !== "PATCH") return methodNotAllowed(res, ["PATCH"]);
+  if (!["PATCH", "DELETE"].includes(req.method)) return methodNotAllowed(res, ["PATCH", "DELETE"]);
   const { requireAuth, ROLES } = await import("../lib/security.js");
-  const { replyContactMessage } = await import("../lib/admin-service.js");
+  const { deleteContactMessage, replyContactMessage } = await import("../lib/admin-service.js");
   await requireAuth(req, [ROLES.EQUIPE]);
+  if (req.method === "DELETE") {
+    await deleteContactMessage(id);
+    return sendJson(res, 200, { ok: true });
+  }
   const input = await readJsonOrForm(req);
   const message = await replyContactMessage(id, input);
   return sendJson(res, 200, { ok: true, message });

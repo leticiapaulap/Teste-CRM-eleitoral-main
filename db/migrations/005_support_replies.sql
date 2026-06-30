@@ -12,6 +12,6 @@ alter table contact_messages
 
 alter table contact_messages
   add constraint contact_messages_status_check
-  check (status in ('NOVO', 'LIDO', 'RESPONDIDO'));
+  check (status in ('NOVO', 'LIDO', 'RESPONDIDO', 'RESOLVIDO'));
 
 create index if not exists contact_messages_user_id_idx on contact_messages (user_id);

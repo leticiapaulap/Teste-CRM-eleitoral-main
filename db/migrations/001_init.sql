@@ -91,7 +91,7 @@ create table if not exists contact_messages (
   message text not null,
   reply text,
   replied_at timestamptz,
-  status text not null default 'NOVO' check (status in ('NOVO', 'LIDO', 'RESPONDIDO')),
+  status text not null default 'NOVO' check (status in ('NOVO', 'LIDO', 'RESPONDIDO', 'RESOLVIDO')),
   created_at timestamptz not null default now()
 );
 

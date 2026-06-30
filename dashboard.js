@@ -214,6 +214,8 @@ let selectedPointId = "";
 let focusedMapPointId = "";
 let isTeam = user?.role === "EQUIPE";
 let activeView = "home";
+let contactMessages = [];
+let activeMessageFilter = "pending";
 
 const els = {
   userLabel: document.getElementById("dashboardUser"),
@@ -263,6 +265,7 @@ const els = {
   sideMessageBadge: document.getElementById("sideMessageBadge"),
   homePendingMessages: document.getElementById("homePendingMessages"),
   homeMessageAlert: document.getElementById("homeMessageAlert"),
+  messageStatusFilters: document.getElementById("messageStatusFilters"),
   sideButtons: document.querySelectorAll("[data-view-target]"),
   viewLinks: document.querySelectorAll("[data-go-view]"),
   views: document.querySelectorAll(".dashboardView"),
@@ -310,6 +313,12 @@ els.editForm?.addEventListener("submit", saveEditForm);
 els.closeEdit?.addEventListener("click", closeEditDialog);
 els.cancelEdit?.addEventListener("click", closeEditDialog);
 els.deleteEdit?.addEventListener("click", deleteFromEditDialog);
+els.messageStatusFilters?.querySelectorAll("[data-message-filter]").forEach((button) => {
+  button.addEventListener("click", () => {
+    activeMessageFilter = button.dataset.messageFilter || "pending";
+    renderContactMessages(contactMessages);
+  });
+});
 els.sideButtons.forEach((button) => {
   button.addEventListener("click", () => setDashboardView(button.dataset.viewTarget));
 });
@@ -1404,16 +1413,16 @@ async function loadContactMessages() {
     });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel carregar mensagens.");
-    const items = data.items || [];
-    updateMessageBadge(items);
-    renderContactMessages(items);
+    contactMessages = data.items || [];
+    updateMessageBadge(contactMessages);
+    renderContactMessages(contactMessages);
   } catch (error) {
     els.messagesList.innerHTML = `<div class="emptyState">Erro ao carregar mensagens: ${escapeHtml(error.message || error)}</div>`;
   }
 }
 
 function updateMessageBadge(messages) {
-  const pending = messages.filter((message) => !message.reply && message.status !== "RESPONDIDO").length;
+  const pending = messages.filter(isPendingMessage).length;
   if (els.sideMessageBadge) {
     els.sideMessageBadge.textContent = pending > 99 ? "99+" : String(pending);
     els.sideMessageBadge.hidden = pending <= 0;
@@ -1423,16 +1432,24 @@ function updateMessageBadge(messages) {
 }
 
 function renderContactMessages(messages) {
-  if (!messages.length) {
-    els.messagesList.innerHTML = `<div class="emptyState">Nenhuma mensagem recebida.</div>`;
+  updateMessageStatusFilters(messages);
+  const filteredMessages = filterContactMessages(messages);
+  if (!filteredMessages.length) {
+    els.messagesList.innerHTML = `<div class="emptyState">Nenhuma mensagem neste filtro.</div>`;
     return;
   }
 
-  els.messagesList.innerHTML = messages.map((message) => `
+  els.messagesList.innerHTML = filteredMessages.map((message) => `
     <article class="messageItem" data-message-id="${escapeHtml(message.id)}">
-      <div>
-        <strong>${escapeHtml(message.user_name || message.name)}</strong>
-        <span>${escapeHtml(message.status || "NOVO")} - ${formatDate(message.created_at)}</span>
+      <div class="messageHeader">
+        <div>
+          <strong>${escapeHtml(message.user_name || message.name)}</strong>
+          <span>${escapeHtml(getMessageStatusLabel(message))} - ${formatDate(message.created_at)}</span>
+        </div>
+        <div class="messageActions">
+          ${message.status !== "RESOLVIDO" ? `<button type="button" class="btnTiny" data-action="resolve-message" data-id="${escapeHtml(message.id)}">Resolvido</button>` : ""}
+          <button type="button" class="btnTiny btnTinyDanger" data-action="delete-message" data-id="${escapeHtml(message.id)}">Excluir</button>
+        </div>
       </div>
       <p>${escapeHtml(message.message)}</p>
       <small>${escapeHtml(message.email || "-")} ${escapeHtml(message.phone || "")}</small>
@@ -1445,7 +1462,9 @@ function renderContactMessages(messages) {
       ` : `
         <label for="reply-${escapeHtml(message.id)}">Responder</label>
         <textarea id="reply-${escapeHtml(message.id)}" class="replyTextarea" placeholder="Digite a resposta da equipe"></textarea>
-        <button type="button" class="btnTiny" data-action="reply-message" data-id="${escapeHtml(message.id)}">Salvar resposta</button>
+        <div class="messageActions">
+          <button type="button" class="btnTiny" data-action="reply-message" data-id="${escapeHtml(message.id)}">Salvar resposta</button>
+        </div>
       `}
     </article>
   `).join("");
@@ -1453,6 +1472,43 @@ function renderContactMessages(messages) {
   els.messagesList.querySelectorAll('[data-action="reply-message"]').forEach((button) => {
     button.addEventListener("click", () => replyContactMessage(button.dataset.id));
   });
+  els.messagesList.querySelectorAll('[data-action="resolve-message"]').forEach((button) => {
+    button.addEventListener("click", () => updateContactMessageStatus(button.dataset.id, "RESOLVIDO"));
+  });
+  els.messagesList.querySelectorAll('[data-action="delete-message"]').forEach((button) => {
+    button.addEventListener("click", () => deleteContactMessage(button.dataset.id));
+  });
+}
+
+function updateMessageStatusFilters(messages) {
+  const counts = {
+    pending: messages.filter(isPendingMessage).length,
+    answered: messages.filter((message) => message.status === "RESPONDIDO").length,
+    resolved: messages.filter((message) => message.status === "RESOLVIDO").length,
+  };
+
+  els.messageStatusFilters?.querySelectorAll("[data-message-filter]").forEach((button) => {
+    const filter = button.dataset.messageFilter || "pending";
+    button.classList.toggle("active", filter === activeMessageFilter);
+    const counter = button.querySelector("span");
+    if (counter) counter.textContent = String(counts[filter] ?? 0);
+  });
+}
+
+function filterContactMessages(messages) {
+  if (activeMessageFilter === "answered") return messages.filter((message) => message.status === "RESPONDIDO");
+  if (activeMessageFilter === "resolved") return messages.filter((message) => message.status === "RESOLVIDO");
+  return messages.filter(isPendingMessage);
+}
+
+function isPendingMessage(message) {
+  return message.status !== "RESPONDIDO" && message.status !== "RESOLVIDO";
+}
+
+function getMessageStatusLabel(message) {
+  if (message.status === "RESPONDIDO") return "Respondido";
+  if (message.status === "RESOLVIDO") return "Resolvido";
+  return "Pra responder";
 }
 
 async function replyContactMessage(id) {
@@ -1471,6 +1527,41 @@ async function replyContactMessage(id) {
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel responder.");
     showAdminMessage("Resposta salva.", "ok");
+    await loadContactMessages();
+  } catch (error) {
+    showAdminMessage(`Erro: ${error.message || error}`, "err");
+  }
+}
+
+async function updateContactMessageStatus(id, status) {
+  try {
+    const response = await fetch(`/api/contact/messages/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel atualizar a mensagem.");
+    showAdminMessage("Mensagem atualizada.", "ok");
+    await loadContactMessages();
+  } catch (error) {
+    showAdminMessage(`Erro: ${error.message || error}`, "err");
+  }
+}
+
+async function deleteContactMessage(id) {
+  if (!confirm("Excluir esta mensagem?")) return;
+  try {
+    const response = await fetch(`/api/contact/messages/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Nao foi possivel excluir a mensagem.");
+    showAdminMessage("Mensagem excluida.", "ok");
     await loadContactMessages();
   } catch (error) {
     showAdminMessage(`Erro: ${error.message || error}`, "err");

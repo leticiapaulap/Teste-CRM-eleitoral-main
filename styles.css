@@ -856,6 +856,51 @@ body:not(.isTeam) .adminOnlyColumn{
   gap:10px;
 }
 
+.messageStatusFilters{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:0 0 12px;
+}
+
+.messageStatusButton{
+  width:auto;
+  margin:0;
+  padding:9px 12px;
+  border-radius:10px;
+  border:1px solid #d7e6ff;
+  background:#fff;
+  color:#13233d;
+  box-shadow:none;
+  font-size:12px;
+  font-weight:800;
+}
+
+.messageStatusButton.active{
+  background:var(--blue-700);
+  border-color:var(--blue-700);
+  color:#fff;
+}
+
+.messageStatusButton span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:20px;
+  height:20px;
+  margin-left:6px;
+  padding:0 6px;
+  border-radius:999px;
+  background:#eef5ff;
+  color:var(--blue-700);
+  font-size:11px;
+}
+
+.messageStatusButton.active span{
+  background:rgba(255,255,255,.18);
+  color:#fff;
+}
+
 .messageItem{
   border:1px solid #e4ebfb;
   border-radius:10px;
@@ -863,10 +908,18 @@ body:not(.isTeam) .adminOnlyColumn{
   padding:10px;
 }
 
-.messageItem div{
+.messageHeader{
   display:flex;
   justify-content:space-between;
+  align-items:flex-start;
   gap:10px;
+}
+
+.messageActions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
 }
 
 .messageItem strong,
