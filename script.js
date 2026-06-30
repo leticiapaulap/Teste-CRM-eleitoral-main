@@ -30,6 +30,7 @@ const chatClose = document.getElementById("chatClose");
 const coordinatorAccess = document.getElementById("coordinatorAccess");
 const coordinatorEmail = document.getElementById("email");
 const coordinatorPassword = document.getElementById("password");
+const FORMAL_CHAT_GREETING = "Olá. Envie sua mensagem e nossa equipe retornará em até 4 horas.";
 
 function showError(text) {
   msg.className = "msg err";
@@ -128,6 +129,9 @@ function setupCoordinatorAccess() {
 
 // init ref
 (function init() {
+  const initialChatBubble = chatMessages?.querySelector(".botBubble");
+  if (initialChatBubble) initialChatBubble.textContent = FORMAL_CHAT_GREETING;
+
   const ref = getRefFromURL();
   if (ref) lockRef(ref);
   else unlockRef();
