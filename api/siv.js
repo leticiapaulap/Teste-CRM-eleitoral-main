@@ -64,7 +64,7 @@ export default async function handler(req, res) {
 
     const name = getValue(bodyObj, ["name", "nome"]);
     const phone = onlyDigits(getValue(bodyObj, ["phone", "whatsapp", "telefone"]));
-    const localidade = getValue(bodyObj, ["localidade"], "Brasilia");
+    const localidade = getValue(bodyObj, ["localidade", "bairro"], "Brasilia");
     const regiaoAdministrativa = getValue(bodyObj, ["ra", "regiao_administrativa", "regiaoAdministrativa"]);
     const referralCodeUsed = normalizeReferralCode(getValue(bodyObj, ["referral_code", "referencia", "ref"]));
     const consentAccepted = ["true", "on", "1", "sim"].includes(
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "Consentimento obrigatorio." });
     }
 
-    const syntheticEmail = `${phone}.${Date.now()}@siv.local`;
+    const syntheticEmail = `${phone}.${Date.now()}@cadastro.siv.local`;
     const passwordHash = await bcrypt.hash(randomUUID(), 12);
     const newReferralCode = makeReferralCode();
     const newReferralUrl = makeReferralUrl(getPublicAppUrl(req), newReferralCode);
