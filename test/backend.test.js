@@ -35,8 +35,8 @@ test("valida foto segura quando enviada", () => {
   assert.throws(() => assertValidPhotoUrl("javascript:alert(1)", { required: false }), ApiError);
 });
 
-test("cadastro exige foto para coordenadores, lideres e cadastrados", () => {
-  assert.throws(() => normalizeRegisterInput({
+test("cadastro aceita foto opcional para coordenadores, lideres e cadastrados", () => {
+  assert.equal(normalizeRegisterInput({
     name: "Maria Souza",
     email: "maria@example.com",
     phone: "(61) 99999-0000",
@@ -45,9 +45,9 @@ test("cadastro exige foto para coordenadores, lideres e cadastrados", () => {
     localidade: "Taguatinga",
     regiao_administrativa: "Taguatinga",
     consent_accepted: true,
-  }), ApiError);
+  }).photoUrl, "/img/LOGO-SIV.png");
 
-  assert.throws(() => normalizeRegisterInput({
+  assert.equal(normalizeRegisterInput({
     name: "Lider Souza",
     email: "lider@example.com",
     phone: "(61) 98888-0000",
@@ -56,9 +56,9 @@ test("cadastro exige foto para coordenadores, lideres e cadastrados", () => {
     localidade: "Ceilandia",
     regiao_administrativa: "Ceilandia",
     consent_accepted: true,
-  }), ApiError);
+  }).photoUrl, "/img/LOGO-SIV.png");
 
-  assert.throws(() => normalizeRegisterInput({
+  assert.equal(normalizeRegisterInput({
     name: "Joao Souza",
     email: "joao@example.com",
     phone: "(61) 97777-0000",
@@ -67,7 +67,7 @@ test("cadastro exige foto para coordenadores, lideres e cadastrados", () => {
     localidade: "Ceilandia",
     regiao_administrativa: "Ceilandia",
     consent_accepted: true,
-  }), ApiError);
+  }).photoUrl, "/img/LOGO-SIV.png");
 });
 
 test("cadastro de admin aceita foto opcional", () => {
@@ -82,7 +82,7 @@ test("cadastro de admin aceita foto opcional", () => {
     consent_accepted: true,
   });
 
-  assert.equal(input.photoUrl, null);
+  assert.equal(input.photoUrl, "/img/LOGO-SIV.png");
 });
 
 test("gera link de indicacao usando APP_URL sem dominio fixo", () => {

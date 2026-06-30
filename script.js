@@ -181,7 +181,6 @@ form.addEventListener("submit", async (e) => {
   if (!nome || nome.length < 3) return showError("Informe seu nome completo.");
   if (!whatsapp || whatsapp.length < 10) return showError("Informe um WhatsApp válido (com DDD).");
   if (!bairro || bairro.length < 2) return showError("Selecione a localidade.");
-  if (!foto) return showError("Tire ou selecione uma foto para concluir o cadastro.");
   if (!ra) return showError("Selecione a Região Administrativa (RA).");
   if (inviteRole === "COORDENADORES" && !email) return showError("Informe o email de login do coordenador.");
   if (inviteRole === "COORDENADORES" && password.length < 8) return showError("Informe uma senha com pelo menos 8 caracteres.");
@@ -190,8 +189,8 @@ form.addEventListener("submit", async (e) => {
 
   try {
     btn.disabled = true;
-    btn.textContent = "Enviando foto...";
-    const photoUrl = await uploadPhoto(foto);
+    btn.textContent = foto ? "Enviando foto..." : "Enviando cadastro...";
+    const photoUrl = foto ? await uploadPhoto(foto) : "/img/LOGO-SIV.png";
     btn.textContent = "Enviando cadastro...";
 
     const body = new URLSearchParams({

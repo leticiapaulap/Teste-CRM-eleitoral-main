@@ -1887,6 +1887,11 @@ label{
   font-weight:600;
 }
 
+.optionalField{
+  font-weight:600;
+  color:#7a8798;
+}
+
 input, select{
   width:100%;
   padding: 12px 12px;
