@@ -94,9 +94,15 @@ body{
 }
 
 .badge .dot{
+  display:inline-block;
   width:10px; height:10px; border-radius:999px;
   background: var(--yellow);
   box-shadow: 0 0 0 4px rgba(243,195,22,.15);
+}
+
+.badge .internalAccess{
+  flex: 0 0 auto;
+  text-decoration: none;
 }
 
 .title{
