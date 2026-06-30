@@ -24,7 +24,7 @@ function canUseLocalTestLogin(email, password) {
 function saveTestLogin() {
   const user = {
     id: "local-test-user",
-    name: "Leticia Paula",
+    name: "Leticia De Paula",
     email: TEST_LOGIN.email,
     role: "EQUIPE",
   };
