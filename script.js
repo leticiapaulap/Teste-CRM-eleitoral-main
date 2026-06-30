@@ -46,7 +46,7 @@ function showOk(text) {
 function getRefFromURL() {
   const url = new URL(window.location.href);
   const r = url.searchParams.get("ref");
-  return (r && r.trim()) ? r.trim() : "";
+  return normalizeReferralCode(r);
 }
 
 function getInviteRoleFromURL() {
@@ -64,6 +64,10 @@ function isValidRef(ref) {
   return /^AG\d{3,}$/i.test(ref) || /^SIV[A-Z0-9]{6,}$/i.test(ref);
 }
 
+function normalizeReferralCode(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
 function lockRef(value) {
   const refInput = document.getElementById("ref");
   const hint = document.getElementById("refHint");
@@ -72,7 +76,7 @@ function lockRef(value) {
   if (!refInput || !container) return;
 
   container.style.display = "block";
-  refInput.value = value;
+  refInput.value = normalizeReferralCode(value);
 
   refInput.setAttribute("readonly", "readonly");
   refInput.setAttribute("required", "required");
@@ -158,7 +162,7 @@ form.addEventListener("submit", async (e) => {
   const veioPorLink = !!urlRef;
 
   const refEl = document.getElementById("ref");
-  const ref = refEl ? refEl.value.trim() : "";
+  const ref = refEl ? normalizeReferralCode(refEl.value) : "";
 
   if (veioPorLink) {
     if (!ref || ref.length < 3) return showError("Referência inválida.");

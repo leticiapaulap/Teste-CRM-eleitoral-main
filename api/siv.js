@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { withTransaction } from "../lib/db.js";
+import { makeReferralUrl } from "../lib/referrals.js";
 
 function onlyDigits(value = "") {
   return String(value).replace(/\D/g, "");
@@ -17,6 +18,26 @@ function getValue(obj, keys, fallback = "") {
 
 function makeReferralCode() {
   return `SIV${randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+}
+
+function getPublicAppUrl(req) {
+  const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim();
+  const forwardedHost = String(req.headers["x-forwarded-host"] || "").split(",")[0].trim();
+  const host = forwardedHost || req.headers.host;
+  const proto = forwardedProto || (host?.includes("localhost") ? "http" : "https");
+  if (host && !String(host).includes("localhost")) return `${proto}://${host}`;
+  return (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
+}
+
+function normalizeReferralCode(value) {
+  const code = String(value || "").trim().toUpperCase();
+  if (!code) return "";
+  if (!/^(AG\d{3,}|SIV[A-Z0-9]{6,})$/.test(code)) {
+    const error = new Error("Codigo de indicacao invalido.");
+    error.status = 400;
+    throw error;
+  }
+  return code;
 }
 
 export default async function handler(req, res) {
@@ -45,7 +66,7 @@ export default async function handler(req, res) {
     const phone = onlyDigits(getValue(bodyObj, ["phone", "whatsapp", "telefone"]));
     const localidade = getValue(bodyObj, ["localidade"], "Brasilia");
     const regiaoAdministrativa = getValue(bodyObj, ["ra", "regiao_administrativa", "regiaoAdministrativa"]);
-    const referralCodeUsed = getValue(bodyObj, ["referral_code", "referencia", "ref"]);
+    const referralCodeUsed = normalizeReferralCode(getValue(bodyObj, ["referral_code", "referencia", "ref"]));
     const consentAccepted = ["true", "on", "1", "sim"].includes(
         getValue(bodyObj, ["consent_accepted", "consentimento"], "true").toLowerCase()
     );
@@ -61,48 +82,57 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "Consentimento obrigatorio." });
     }
 
-    const syntheticEmail = `${phone}@siv.local`;
+    const syntheticEmail = `${phone}.${Date.now()}@siv.local`;
     const passwordHash = await bcrypt.hash(randomUUID(), 12);
     const newReferralCode = makeReferralCode();
+    const newReferralUrl = makeReferralUrl(getPublicAppUrl(req), newReferralCode);
 
     const saved = await withTransaction(async (client) => {
       const parentResult = referralCodeUsed
           ? await client.query(
-              `select u.id, n.root_leader_id, n.level
-               from users u
-               left join network_nodes n on n.user_id = u.id
-              where u.referral_code = $1
-              limit 1`,
+              `select lp.user_id as id, n.root_leader_id, n.level
+                 from leader_profiles lp
+                 left join network_nodes n on n.user_id = lp.user_id
+                where lp.referral_code = $1 and lp.active = true
+                limit 1`,
               [referralCodeUsed]
           )
           : { rows: [] };
 
       const parent = parentResult.rows[0] || null;
+      if (referralCodeUsed && !parent) {
+        const error = new Error("Codigo de indicacao invalido.");
+        error.status = 400;
+        throw error;
+      }
       const level = parent ? Number(parent.level || 0) + 1 : 0;
       const rootLeaderId = parent?.root_leader_id || parent?.id || null;
 
       const userResult = await client.query(
           `insert into users
           (name, email, phone, password_hash, role, photo_url, active,
-           consent_accepted, consent_accepted_at, referral_code,
-           localidade, regiao_administrativa)
+           consent_accepted, consent_accepted_at)
          values
           ($1, $2, $3, $4, 'CADASTRADOS', $5, true,
-           true, now(), $6, $7, $8)
-         returning id, name, email, phone, role, referral_code`,
+           true, now())
+         returning id, name, email, phone, role`,
           [
             name,
             syntheticEmail,
             phone,
             passwordHash,
-            bodyObj.photo_url || "",
-            newReferralCode,
-            localidade,
-            regiaoAdministrativa,
+            bodyObj.photoUrl || bodyObj.photo_url || "/img/LOGO-SIV.png",
           ]
       );
 
       const user = userResult.rows[0];
+
+      await client.query(
+          `insert into user_locations
+          (user_id, localidade, regiao_administrativa)
+         values ($1, $2, $3)`,
+          [user.id, localidade, regiaoAdministrativa]
+      );
 
       await client.query(
           `insert into network_nodes
@@ -111,13 +141,19 @@ export default async function handler(req, res) {
           [
             user.id,
             parent?.id || null,
-            rootLeaderId,
+            rootLeaderId || user.id,
             referralCodeUsed || null,
             level,
           ]
       );
 
-      return user;
+      await client.query(
+          `insert into leader_profiles (user_id, referral_code, referral_url)
+         values ($1, $2, $3)`,
+          [user.id, newReferralCode, newReferralUrl]
+      );
+
+      return { ...user, referral_code: newReferralCode, referral_url: newReferralUrl };
     });
 
     let sheetResult = null;
@@ -142,9 +178,11 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       user: saved,
+      codigo_pessoa: saved.referral_code,
+      invite_link: saved.referral_url,
       sheet: sheetResult,
     });
   } catch (e) {
-    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(e?.status || 500).json({ ok: false, error: e?.message || String(e) });
   }
 }
