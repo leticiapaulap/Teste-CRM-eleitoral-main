@@ -20,6 +20,7 @@
     crossorigin=""
     defer
   ></script>
+  <script src="df-localidades.js?v=20260701-1" defer></script>
   <script type="module" src="dashboard.js?v=20260630-6" defer></script>
 </head>
 
@@ -188,9 +189,9 @@
           </select>
         </div>
         <div>
-          <label for="adminLocalidade">Localidade</label>
+          <label for="adminLocalidade">Bairro/localidade</label>
           <select id="adminLocalidade" name="localidade" required>
-            <option value="Brasilia">Brasilia</option>
+            <option value="" selected disabled>Selecione a RA primeiro</option>
           </select>
         </div>
         <div>
@@ -282,9 +283,9 @@
             </select>
           </div>
           <div>
-            <label for="editLocalidade">Localidade</label>
+            <label for="editLocalidade">Bairro/localidade</label>
             <select id="editLocalidade" name="localidade" required>
-              <option value="Brasilia">Brasilia</option>
+              <option value="" selected disabled>Selecione a RA primeiro</option>
             </select>
           </div>
           <div>

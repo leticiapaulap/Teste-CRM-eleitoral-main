@@ -8,6 +8,7 @@
   <meta name="description" content="SIV - Sistema de Inteligência Valdelino. Cadastro voluntário." />
   <link rel="icon" href="img/LOGO-SIV.png" />
   <link rel="stylesheet" href="styles.css?v=20260625-6" />
+  <script src="df-localidades.js?v=20260701-1" defer></script>
   <script type="module" src="script.js?v=20260630-3" defer></script>
 </head>
 
@@ -71,9 +72,9 @@
               <input id="whatsapp" name="whatsapp" placeholder="Ex.: (61) 9xxxx-xxxx" autocomplete="tel" required />
             </div>
             <div>
-              <label for="bairro">Localidade</label>
+              <label for="bairro">Bairro/localidade</label>
               <select id="bairro" name="bairro" required>
-                <option value="Brasilia">Brasilia</option>
+                <option value="" selected disabled>Selecione a RA primeiro</option>
               </select>
             </div>
           </div>

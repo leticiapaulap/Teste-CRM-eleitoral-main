@@ -51,6 +51,7 @@ const REGION_COORDS = {
   "vicente pires": { latitude: -15.803, longitude: -48.02 },
 };
 
+const localidadesDF = window.DF_LOCALIDADES || {};
 const PUBLIC_APP_URL = "https://teste-crm-eleitoral-main.vercel.app";
 
 const fallbackPoints = [
@@ -212,6 +213,7 @@ let selectedRegion = "";
 let selectedLeaderId = "";
 let selectedPointId = "";
 let focusedMapPointId = "";
+let stableMapPositions = new Map();
 let isTeam = user?.role === "EQUIPE";
 let activeView = "home";
 let contactMessages = [];
@@ -330,6 +332,8 @@ els.menuToggle?.addEventListener("click", () => {
   localStorage.setItem("siv_menu_collapsed", collapsed ? "1" : "0");
   updateMenuToggle(collapsed);
 });
+setupLocalidadeSelector("adminRegiao", "adminLocalidade");
+setupLocalidadeSelector("editRegiao", "editLocalidade");
 enhanceDownwardSelect(document.getElementById("adminRegiao"));
 enhanceDownwardSelect(document.getElementById("editRegiao"));
 
@@ -343,6 +347,7 @@ async function init() {
   configureAccess();
   setDashboardView(activeView);
   allPoints = await loadMapPoints();
+  stableMapPositions = buildStableMapPositions(allPoints);
 
   fillFilters(allPoints);
   render();
@@ -439,6 +444,60 @@ async function loadMapPoints() {
   }
 }
 
+function normalizeLocalidadeKey(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getLocalidadesByRegiao(regiao) {
+  const target = normalizeLocalidadeKey(regiao);
+  const key = Object.keys(localidadesDF).find((item) => normalizeLocalidadeKey(item) === target);
+  return key ? localidadesDF[key] : [];
+}
+
+function fillLocalidadeSelect(select, regiao, selectedValue = "") {
+  if (!select) return;
+  const localidades = getLocalidadesByRegiao(regiao);
+  select.innerHTML = "";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = localidades.length ? "Selecione o bairro/localidade" : "Selecione a RA primeiro";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+
+  for (const localidade of localidades) {
+    const option = document.createElement("option");
+    option.value = localidade;
+    option.textContent = localidade;
+    select.appendChild(option);
+  }
+
+  if (selectedValue && !localidades.includes(selectedValue)) {
+    const option = document.createElement("option");
+    option.value = selectedValue;
+    option.textContent = selectedValue;
+    select.appendChild(option);
+  }
+
+  select.value = selectedValue || "";
+  select.disabled = !localidades.length && !selectedValue;
+}
+
+function setupLocalidadeSelector(regiaoId, localidadeId) {
+  const regiao = document.getElementById(regiaoId);
+  const localidade = document.getElementById(localidadeId);
+  if (!regiao || !localidade) return;
+
+  fillLocalidadeSelect(localidade, regiao.value, localidade.value);
+  regiao.addEventListener("change", () => fillLocalidadeSelect(localidade, regiao.value));
+}
+
 function fillFilters(points) {
   const leaders = uniqueBy(
     points.filter((point) => point.role === "COORDENADORES" || point.role === "LIDERES"),
@@ -528,15 +587,11 @@ function renderMetrics(points) {
 function renderMap(points) {
   els.mapOverlay.innerHTML = "";
   const locatedPoints = points.filter(hasMapPosition);
-  const isFocusedOnRegion = Boolean(focusedMapPointId && selectedRegion);
-  const markerPositions = isFocusedOnRegion ? getFocusedRegionMapPositions(locatedPoints) : getSpreadMapPositions(locatedPoints);
 
-  if (!isFocusedOnRegion) {
-    renderRegionAreas(locatedPoints);
-  }
+  renderRegionAreas(locatedPoints);
 
   for (const point of locatedPoints) {
-    const position = markerPositions.get(String(point.id));
+    const position = stableMapPositions.get(String(point.id)) || getSingleMapPosition(point);
     if (!position) continue;
 
     const marker = document.createElement("button");
@@ -895,6 +950,7 @@ async function createAdminUser(event) {
     renderCreatedSummary(createdUser, data.leaderProfile, photoPreviewUrl || body.photoUrl);
     showAdminMessage(generatedLink ? `Cadastro adicionado. Link gerado: ${generatedLink}` : "Cadastro adicionado.", "ok");
     allPoints = await loadMapPoints();
+    stableMapPositions = buildStableMapPositions(allPoints);
     fillFilters(allPoints);
     render();
   } catch (error) {
@@ -1029,8 +1085,8 @@ function openEditDialog(person, { self = false } = {}) {
   setEditValue("editEmail", person.email || "");
   setEditValue("editPhone", person.phone || "");
   setEditValue("editRole", person.role || "CADASTRADOS");
-  setEditValue("editLocalidade", person.localidade || "");
   setEditValue("editRegiao", person.regiao_administrativa || "");
+  fillLocalidadeSelect(document.getElementById("editLocalidade"), person.regiao_administrativa || "", person.localidade || "");
   setEditValue("editPassword", "");
   const active = document.getElementById("editActive");
   if (active) active.checked = person.active !== false;
@@ -1145,6 +1201,7 @@ async function deleteFromEditDialog() {
 async function deletePerson(id) {
   await adminRequest(`/api/admin/users/${encodeURIComponent(id)}`, { method: "DELETE" });
   allPoints = allPoints.filter((point) => String(point.id) !== String(id));
+  stableMapPositions = buildStableMapPositions(allPoints);
   if (String(selectedPointId) === String(id)) selectedPointId = "";
   if (String(selectedLeaderId) === String(id)) {
     selectedLeaderId = "";
@@ -1195,6 +1252,7 @@ async function saveEditForm(event) {
     allPoints = updated.user.active === false
       ? allPoints.filter((point) => String(point.id) !== String(id))
       : allPoints.map((point) => String(point.id) === String(id) ? updated.user : point);
+    stableMapPositions = buildStableMapPositions(allPoints);
     fillFilters(allPoints);
     render();
     closeEditDialog();
@@ -1739,6 +1797,19 @@ function getSpreadMapPositions(points) {
   }
 
   return positions;
+}
+
+function buildStableMapPositions(points) {
+  return getSpreadMapPositions(points.filter(hasMapPosition));
+}
+
+function getSingleMapPosition(point) {
+  const position = getPointPosition(point);
+  if (!position) return null;
+  return {
+    x: lngToX(position.longitude),
+    y: latToY(position.latitude),
+  };
 }
 
 function getFocusedRegionMapPositions(points) {

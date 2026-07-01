@@ -1453,6 +1453,7 @@ body:not(.isTeam) .adminOnlyColumn{
   height:100%;
   border:0;
   z-index:1;
+  pointer-events:none;
 }
 
 .mapOverlay{
@@ -4201,4 +4202,69 @@ body.dashboardBody{
     right:14px;
     bottom:14px;
   }
+}
+
+/* Bloco de pesquisa/exportacao no menu lateral */
+.sideMenu .sideSearchLabel{
+  margin:10px 2px 6px !important;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.10);
+  color:#d9e3f4 !important;
+  font-size:10px !important;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+
+.sideMenu .sideSearchInput{
+  min-height:42px !important;
+  margin:0 0 8px !important;
+  padding:10px 12px !important;
+  border:1px solid rgba(184,202,229,.28) !important;
+  border-radius:10px !important;
+  background:#16243a !important;
+  color:#f8fafc !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 1px 2px rgba(0,0,0,.12);
+}
+
+.sideMenu .sideSearchInput::placeholder{
+  color:#a9b7cb !important;
+}
+
+.sideMenu .sideSearchInput:focus{
+  outline:3px solid rgba(243,195,22,.16);
+  border-color:#f3c316 !important;
+  background:#1a2a43 !important;
+}
+
+.sideMenu .sideMenuButtonSubtle{
+  min-height:42px !important;
+  margin-top:6px !important;
+  padding:10px 12px !important;
+  border:1px solid rgba(184,202,229,.14) !important;
+  border-radius:10px !important;
+  background:#17263d !important;
+  color:#f1f5fb !important;
+  font-size:12px !important;
+  font-weight:850;
+  justify-content:space-between !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.04), 0 8px 18px rgba(0,0,0,.08) !important;
+}
+
+.sideMenu .sideMenuButtonSubtle::after{
+  content:"";
+  flex:0 0 7px;
+  width:7px;
+  height:7px;
+  border-right:2px solid rgba(243,195,22,.9);
+  border-bottom:2px solid rgba(243,195,22,.9);
+  transform:rotate(-45deg);
+  opacity:.9;
+}
+
+.sideMenu .sideMenuButtonSubtle:hover,
+.sideMenu .sideMenuButtonSubtle:focus{
+  background:#203552 !important;
+  border-color:rgba(243,195,22,.42) !important;
+  color:#fff !important;
 }

@@ -1,6 +1,7 @@
 const token = localStorage.getItem("siv_token");
 const loggedUser = JSON.parse(localStorage.getItem("siv_user") || "null");
 const PUBLIC_APP_URL = "https://teste-crm-eleitoral-main.vercel.app";
+const localidadesDF = window.DF_LOCALIDADES || {};
 const MESSAGE_TEMPLATES = {
   boasVindas: "Ola, {nome}! Seu cadastro no SIV foi confirmado. Qualquer duvida, pode falar comigo por aqui.",
   linkCadastro: "Ola, {nome}! Este e seu link de cadastro para enviar para novas pessoas: {link}\n\nGuarde esse link para acompanhar sua rede.",
@@ -66,6 +67,7 @@ els.copyMessage.addEventListener("click", copyMessageText);
 els.detailNavButtons.forEach((button) => {
   button.addEventListener("click", () => setDetailView(button.dataset.detailViewTarget));
 });
+setupLocalidadeSelector("editRegiao", "editLocalidade");
 enhanceDownwardSelect(document.getElementById("editRegiao"));
 
 init();
@@ -87,6 +89,60 @@ function setDetailView(view) {
   els.detailViews.forEach((section) => {
     section.classList.toggle("isHiddenView", section.dataset.detailView !== activeDetailView);
   });
+}
+
+function normalizeLocalidadeKey(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getLocalidadesByRegiao(regiao) {
+  const target = normalizeLocalidadeKey(regiao);
+  const key = Object.keys(localidadesDF).find((item) => normalizeLocalidadeKey(item) === target);
+  return key ? localidadesDF[key] : [];
+}
+
+function fillLocalidadeSelect(select, regiao, selectedValue = "") {
+  if (!select) return;
+  const localidades = getLocalidadesByRegiao(regiao);
+  select.innerHTML = "";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = localidades.length ? "Selecione o bairro/localidade" : "Selecione a RA primeiro";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+
+  for (const localidade of localidades) {
+    const option = document.createElement("option");
+    option.value = localidade;
+    option.textContent = localidade;
+    select.appendChild(option);
+  }
+
+  if (selectedValue && !localidades.includes(selectedValue)) {
+    const option = document.createElement("option");
+    option.value = selectedValue;
+    option.textContent = selectedValue;
+    select.appendChild(option);
+  }
+
+  select.value = selectedValue || "";
+  select.disabled = !localidades.length && !selectedValue;
+}
+
+function setupLocalidadeSelector(regiaoId, localidadeId) {
+  const regiao = document.getElementById(regiaoId);
+  const localidade = document.getElementById(localidadeId);
+  if (!regiao || !localidade) return;
+
+  fillLocalidadeSelect(localidade, regiao.value, localidade.value);
+  regiao.addEventListener("change", () => fillLocalidadeSelect(localidade, regiao.value));
 }
 
 async function loadUser() {
@@ -157,8 +213,8 @@ function renderUser() {
   setValue("editEmail", user.email || "");
   setValue("editPhone", user.phone || "");
   setValue("editRole", user.role || "CADASTRADOS");
-  setValue("editLocalidade", user.localidade || "");
   setValue("editRegiao", user.regiao_administrativa || "");
+  fillLocalidadeSelect(document.getElementById("editLocalidade"), user.regiao_administrativa || "", user.localidade || "");
   setValue("editPassword", "");
   document.getElementById("editActive").checked = user.active !== false;
   document.getElementById("editPhoto").value = "";

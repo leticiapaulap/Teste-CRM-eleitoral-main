@@ -31,6 +31,7 @@ const coordinatorAccess = document.getElementById("coordinatorAccess");
 const coordinatorEmail = document.getElementById("email");
 const coordinatorPassword = document.getElementById("password");
 const FORMAL_CHAT_GREETING = "Olá. Envie sua mensagem e nossa equipe retornará em até 4 horas.";
+const localidadesDF = window.DF_LOCALIDADES || {};
 
 function showError(text) {
   msg.className = "msg err";
@@ -67,6 +68,136 @@ function isValidRef(ref) {
 
 function normalizeReferralCode(value) {
   return String(value || "").trim().toUpperCase();
+}
+
+function normalizeLocalidadeKey(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getLocalidadesByRegiao(regiao) {
+  const target = normalizeLocalidadeKey(regiao);
+  const key = Object.keys(localidadesDF).find((item) => normalizeLocalidadeKey(item) === target);
+  return key ? localidadesDF[key] : [];
+}
+
+function fillLocalidadeSelect(select, regiao, selectedValue = "") {
+  if (!select) return;
+  const localidades = getLocalidadesByRegiao(regiao);
+  select.innerHTML = "";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = localidades.length ? "Selecione o bairro/localidade" : "Selecione a RA primeiro";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+
+  for (const localidade of localidades) {
+    const option = document.createElement("option");
+    option.value = localidade;
+    option.textContent = localidade;
+    select.appendChild(option);
+  }
+
+  if (selectedValue && !localidades.includes(selectedValue)) {
+    const option = document.createElement("option");
+    option.value = selectedValue;
+    option.textContent = selectedValue;
+    select.appendChild(option);
+  }
+
+  select.value = selectedValue || "";
+  select.disabled = !localidades.length && !selectedValue;
+  syncEnhancedSelect(select);
+}
+
+function setupLocalidadeSelector(regiaoId, localidadeId) {
+  const regiao = document.getElementById(regiaoId);
+  const localidade = document.getElementById(localidadeId);
+  if (!regiao || !localidade) return;
+
+  fillLocalidadeSelect(localidade, regiao.value, localidade.value);
+  regiao.addEventListener("change", () => fillLocalidadeSelect(localidade, regiao.value));
+}
+
+function enhanceDownwardSelect(select) {
+  if (!select || select.dataset.enhancedDownward === "true") return;
+  select.dataset.enhancedDownward = "true";
+  select.classList.add("nativeDownSelect");
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "downSelect";
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "downSelectButton";
+  button.setAttribute("aria-haspopup", "listbox");
+  button.setAttribute("aria-expanded", "false");
+
+  const menu = document.createElement("div");
+  menu.className = "downSelectMenu";
+  menu.setAttribute("role", "listbox");
+
+  select.parentNode.insertBefore(wrapper, select.nextSibling);
+  wrapper.append(button, menu);
+  select._downSelect = { wrapper, button, menu };
+
+  button.addEventListener("click", () => {
+    if (select.disabled) return;
+    const isOpen = wrapper.classList.toggle("open");
+    button.setAttribute("aria-expanded", String(isOpen));
+    syncEnhancedSelect(select);
+  });
+
+  select.addEventListener("change", () => syncEnhancedSelect(select));
+  document.addEventListener("click", (event) => {
+    if (!wrapper.contains(event.target) && event.target !== select) closeDownSelect(wrapper, button);
+  });
+
+  syncEnhancedSelect(select);
+}
+
+function syncEnhancedSelect(select) {
+  const state = select?._downSelect;
+  if (!state) return;
+
+  const { wrapper, button, menu } = state;
+  const selected = Array.from(select.options).find((option) => option.value === select.value);
+  button.textContent = selected?.textContent || select.options[0]?.textContent || "Selecione";
+  button.disabled = select.disabled;
+  wrapper.classList.toggle("isDisabled", select.disabled);
+  menu.innerHTML = "";
+
+  Array.from(select.options)
+    .filter((option) => !option.disabled && option.value !== "")
+    .forEach((option) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "downSelectOption";
+      item.setAttribute("role", "option");
+      item.dataset.value = option.value || option.textContent;
+      item.textContent = option.textContent;
+      const active = item.dataset.value === select.value;
+      item.classList.toggle("active", active);
+      item.setAttribute("aria-selected", String(active));
+      item.addEventListener("click", () => {
+        select.value = item.dataset.value;
+        select.dispatchEvent(new Event("input", { bubbles: true }));
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        closeDownSelect(wrapper, button);
+      });
+      menu.appendChild(item);
+    });
+}
+
+function closeDownSelect(wrapper, button) {
+  wrapper.classList.remove("open");
+  button.setAttribute("aria-expanded", "false");
 }
 
 function lockRef(value) {
@@ -137,6 +268,9 @@ function setupCoordinatorAccess() {
   else unlockRef();
 
   setupCoordinatorAccess();
+  setupLocalidadeSelector("ra", "bairro");
+  enhanceDownwardSelect(document.getElementById("ra"));
+  enhanceDownwardSelect(document.getElementById("bairro"));
 
   // inicia bloco de convite escondido no form
   if (inviteBox) inviteBox.style.display = "none";
@@ -248,6 +382,7 @@ form.addEventListener("submit", async (e) => {
     }
 
     form.reset();
+    document.getElementById("ra")?.dispatchEvent(new Event("change"));
     if (window.grecaptcha) grecaptcha.reset();
 
     // mantém ref travado se veio por link
