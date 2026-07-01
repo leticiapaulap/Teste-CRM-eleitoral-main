@@ -125,6 +125,15 @@ function setupLocalidadeSelector(regiaoId, localidadeId) {
   regiao.addEventListener("change", () => fillLocalidadeSelect(localidade, regiao.value));
 }
 
+function positionLocationFields() {
+  const whatsapp = document.getElementById("whatsapp");
+  const regiao = document.getElementById("ra");
+  const firstRow = whatsapp?.closest(".row");
+  const regiaoField = regiao?.closest("div");
+  if (!firstRow || !regiaoField || firstRow.contains(regiaoField)) return;
+  firstRow.appendChild(regiaoField);
+}
+
 function enhanceDownwardSelect(select) {
   if (!select || select.dataset.enhancedDownward === "true") return;
   select.dataset.enhancedDownward = "true";
@@ -268,6 +277,7 @@ function setupCoordinatorAccess() {
   else unlockRef();
 
   setupCoordinatorAccess();
+  positionLocationFields();
   setupLocalidadeSelector("ra", "bairro");
   enhanceDownwardSelect(document.getElementById("ra"));
   enhanceDownwardSelect(document.getElementById("bairro"));

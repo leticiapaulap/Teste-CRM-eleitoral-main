@@ -1,7 +1,7 @@
 const DF_LOCALIDADES = {
   "Agua Quente": ["Agua Quente", "Residencial Agua Quente", "Setor Habitacional Agua Quente"],
   "Aguas Claras": ["Aguas Claras", "Areal", "Areal Norte", "Areal Sul", "Areal Qs", "Areal Qe", "Areal Qs 6", "Areal Qs 8", "Areal Qs 10", "Areal Qs 11", "Areal Qs 12"],
-  Arapoanga: ["Arapoanga", "Arapoanga Centro", "Arapoanga Oeste", "Arapoanga Leste", "Vale do Amanhecer"],
+  Arapoanga: ["Arapoanga", "Arapoanga Centro", "Arapoanga Oeste", "Arapoanga Leste"],
   Arniqueira: ["Arniqueira", "Arniqueira ADE", "Setor Habitacional Arniqueira", "Vereda da Cruz", "Vereda Grande"],
   Brazlandia: ["Brazlandia", "Brazlandia Centro", "Setor Norte", "Setor Sul", "Vila Sao Jose", "Incra 6", "Incra 7", "Incra 8", "Chapadinha", "Alexandre Gusmao"],
   Candangolandia: ["Candangolandia", "Candangolandia Centro", "Setor de Mansoes Park Way Quadra 1", "Vila dos Pioneiros"],
