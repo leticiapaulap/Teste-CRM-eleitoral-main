@@ -438,6 +438,8 @@ els.editForm?.addEventListener("submit", saveEditForm);
 els.closeEdit?.addEventListener("click", closeEditDialog);
 els.cancelEdit?.addEventListener("click", closeEditDialog);
 els.deleteEdit?.addEventListener("click", deleteFromEditDialog);
+setupPhoneMask(document.getElementById("adminPhone"));
+setupPhoneMask(document.getElementById("editPhone"));
 els.messageStatusFilters?.querySelectorAll("[data-message-filter]").forEach((button) => {
   button.addEventListener("click", () => {
     activeMessageFilter = button.dataset.messageFilter || "pending";
@@ -594,6 +596,30 @@ function updateMenuToggle(collapsed) {
   if (!els.menuToggle) return;
   els.menuToggle.textContent = collapsed ? "›" : "‹";
   els.menuToggle.setAttribute("aria-label", collapsed ? "Abrir menu lateral" : "Recolher menu lateral");
+}
+
+function normalizeWhatsApp(input) {
+  let digits = String(input || "").replace(/\D/g, "");
+  if (digits.startsWith("55") && digits.length > 11) digits = digits.slice(2);
+  return digits.slice(0, 11);
+}
+
+function formatWhatsApp(input) {
+  const digits = normalizeWhatsApp(input);
+  if (digits.length <= 2) return digits ? `(${digits}` : "";
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function setupPhoneMask(input) {
+  if (!input) return;
+  const applyMask = () => {
+    input.value = formatWhatsApp(input.value);
+  };
+  input.addEventListener("input", applyMask);
+  input.addEventListener("blur", applyMask);
+  applyMask();
 }
 
 async function loadMapPoints() {
@@ -1198,6 +1224,7 @@ async function createAdminUser(event) {
   hideCreatedSummary();
   const formData = new FormData(els.adminForm);
   const body = Object.fromEntries(formData.entries());
+  body.phone = normalizeWhatsApp(body.phone);
   body.consent_accepted = true;
   if (!canRoleLogin(body.role)) delete body.password;
   const photoFile = formData.get("photo");
@@ -1504,7 +1531,7 @@ async function saveEditForm(event) {
   const payload = {
     name: formData.get("name"),
     email: formData.get("email"),
-    phone: formData.get("phone"),
+    phone: normalizeWhatsApp(formData.get("phone")),
     localidade: formData.get("localidade"),
     regiao_administrativa: formData.get("regiao_administrativa"),
   };

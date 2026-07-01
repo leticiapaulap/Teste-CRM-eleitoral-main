@@ -4,7 +4,9 @@ import { withTransaction } from "../lib/db.js";
 import { makeReferralUrl } from "../lib/referrals.js";
 
 function onlyDigits(value = "") {
-  return String(value).replace(/\D/g, "");
+  let digits = String(value).replace(/\D/g, "");
+  if (digits.startsWith("55") && digits.length > 11) digits = digits.slice(2);
+  return digits.slice(0, 11);
 }
 
 function getValue(obj, keys, fallback = "") {

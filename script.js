@@ -58,7 +58,27 @@ function getInviteRoleFromURL() {
 }
 
 function normalizeWhatsApp(input) {
-  return (input || "").replace(/\D/g, "");
+  let digits = (input || "").replace(/\D/g, "");
+  if (digits.startsWith("55") && digits.length > 11) digits = digits.slice(2);
+  return digits.slice(0, 11);
+}
+
+function formatWhatsApp(input) {
+  const digits = normalizeWhatsApp(input);
+  if (digits.length <= 2) return digits ? `(${digits}` : "";
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function setupPhoneMask(input) {
+  if (!input) return;
+  const applyMask = () => {
+    input.value = formatWhatsApp(input.value);
+  };
+  input.addEventListener("input", applyMask);
+  input.addEventListener("blur", applyMask);
+  applyMask();
 }
 
 function isValidRef(ref) {
@@ -279,6 +299,7 @@ function setupCoordinatorAccess() {
   else unlockRef();
 
   setupCoordinatorAccess();
+  setupPhoneMask(document.getElementById("whatsapp"));
   positionLocationFields();
   setupLocalidadeSelector("ra", "bairro");
   enhanceDownwardSelect(document.getElementById("ra"));
