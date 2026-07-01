@@ -33,7 +33,7 @@ const REGION_COORDS = {
   "nucleo bandeirante": { latitude: -15.871, longitude: -47.965 },
   paranoa: { latitude: -15.775, longitude: -47.779 },
   "park way": { latitude: -15.898, longitude: -47.972 },
-  planaltina: { latitude: -15.617, longitude: -47.648 },
+  planaltina: { latitude: -15.62, longitude: -47.73 },
   "plano piloto": { latitude: -15.793, longitude: -47.882 },
   "recanto das emas": { latitude: -15.905, longitude: -48.062 },
   "riacho fundo": { latitude: -15.88, longitude: -48.004 },
@@ -49,6 +49,98 @@ const REGION_COORDS = {
   taguatinga: { latitude: -15.835, longitude: -48.056 },
   varjao: { latitude: -15.711, longitude: -47.88 },
   "vicente pires": { latitude: -15.803, longitude: -48.02 },
+};
+
+const LOCALIDADE_COORDS = {
+  "aguas claras": { latitude: -15.837, longitude: -48.023 },
+  "areal": { latitude: -15.843, longitude: -48.033 },
+  "arapoanga": { latitude: -15.632, longitude: -47.653 },
+  "arapoanga centro": { latitude: -15.632, longitude: -47.653 },
+  "arapoanga oeste": { latitude: -15.63, longitude: -47.668 },
+  "arapoanga leste": { latitude: -15.633, longitude: -47.638 },
+  "asa norte": { latitude: -15.765, longitude: -47.882 },
+  "asa sul": { latitude: -15.815, longitude: -47.899 },
+  "brazlandia centro": { latitude: -15.67, longitude: -48.2 },
+  "buritis i": { latitude: -15.62, longitude: -47.665 },
+  "buritis ii": { latitude: -15.615, longitude: -47.67 },
+  "buritis iii": { latitude: -15.61, longitude: -47.675 },
+  "buritis iv": { latitude: -15.606, longitude: -47.68 },
+  "ceilandia centro": { latitude: -15.818, longitude: -48.106 },
+  "ceilandia norte": { latitude: -15.79, longitude: -48.113 },
+  "ceilandia sul": { latitude: -15.84, longitude: -48.115 },
+  "condominio prive": { latitude: -15.816, longitude: -48.158 },
+  "condominio sol nascente": { latitude: -15.822, longitude: -48.158 },
+  "cruzeiro novo": { latitude: -15.79, longitude: -47.936 },
+  "cruzeiro velho": { latitude: -15.786, longitude: -47.944 },
+  "expansao do setor o": { latitude: -15.807, longitude: -48.17 },
+  "gama centro": { latitude: -16.018, longitude: -48.061 },
+  "gama leste": { latitude: -16.018, longitude: -48.044 },
+  "gama norte": { latitude: -16.004, longitude: -48.064 },
+  "gama oeste": { latitude: -16.02, longitude: -48.08 },
+  "gama sul": { latitude: -16.035, longitude: -48.062 },
+  "guara i": { latitude: -15.817, longitude: -47.98 },
+  "guara ii": { latitude: -15.834, longitude: -47.985 },
+  "guariroba": { latitude: -15.825, longitude: -48.118 },
+  "itapoa i": { latitude: -15.746, longitude: -47.752 },
+  "itapoa ii": { latitude: -15.742, longitude: -47.763 },
+  "itapoa iii": { latitude: -15.738, longitude: -47.771 },
+  "jardim roriz": { latitude: -15.625, longitude: -47.666 },
+  "lago norte": { latitude: -15.725, longitude: -47.846 },
+  "lago sul": { latitude: -15.84, longitude: -47.872 },
+  "lucio costa": { latitude: -15.808, longitude: -47.984 },
+  "m norte": { latitude: -15.807, longitude: -48.08 },
+  "mestre d'armas": { latitude: -15.595, longitude: -47.661 },
+  "noroeste": { latitude: -15.75, longitude: -47.9 },
+  "nucleo bandeirante": { latitude: -15.871, longitude: -47.965 },
+  "p norte": { latitude: -15.792, longitude: -48.135 },
+  "p sul": { latitude: -15.846, longitude: -48.135 },
+  "paranoa centro": { latitude: -15.775, longitude: -47.779 },
+  "paranoa parque": { latitude: -15.77, longitude: -47.797 },
+  "planaltina centro": { latitude: -15.62, longitude: -47.73 },
+  "por do sol": { latitude: -15.822, longitude: -48.135 },
+  "qna": { latitude: -15.831, longitude: -48.052 },
+  "qnb": { latitude: -15.834, longitude: -48.058 },
+  "qnc": { latitude: -15.838, longitude: -48.064 },
+  "qnd": { latitude: -15.842, longitude: -48.07 },
+  "qne": { latitude: -15.83, longitude: -48.066 },
+  "qnf": { latitude: -15.826, longitude: -48.072 },
+  "qng": { latitude: -15.822, longitude: -48.078 },
+  "qnh": { latitude: -15.818, longitude: -48.084 },
+  "qnl": { latitude: -15.81, longitude: -48.095 },
+  "qn 5": { latitude: -15.901, longitude: -48.036 },
+  "qn 7": { latitude: -15.906, longitude: -48.041 },
+  "qn 8": { latitude: -15.91, longitude: -48.045 },
+  "qn 10": { latitude: -15.914, longitude: -48.05 },
+  "qn 12": { latitude: -15.918, longitude: -48.055 },
+  "qnm": { latitude: -15.81, longitude: -48.11 },
+  "qnn": { latitude: -15.818, longitude: -48.12 },
+  "qno": { latitude: -15.804, longitude: -48.15 },
+  "qnp": { latitude: -15.83, longitude: -48.145 },
+  "qnr": { latitude: -15.82, longitude: -48.17 },
+  "recanto das emas centro": { latitude: -15.905, longitude: -48.062 },
+  "riacho fundo i": { latitude: -15.88, longitude: -48.004 },
+  "riacho fundo ii": { latitude: -15.908, longitude: -48.051 },
+  "samambaia centro": { latitude: -15.872, longitude: -48.085 },
+  "samambaia norte": { latitude: -15.858, longitude: -48.09 },
+  "samambaia sul": { latitude: -15.894, longitude: -48.09 },
+  "santa maria centro": { latitude: -16.0, longitude: -47.987 },
+  "santa maria norte": { latitude: -15.984, longitude: -47.99 },
+  "santa maria sul": { latitude: -16.018, longitude: -47.986 },
+  "setor c norte": { latitude: -15.815, longitude: -48.066 },
+  "setor c sul": { latitude: -15.846, longitude: -48.06 },
+  "setor o": { latitude: -15.805, longitude: -48.153 },
+  "setor tradicional|planaltina": { latitude: -15.62, longitude: -47.73 },
+  "setor tradicional|sobradinho": { latitude: -15.651, longitude: -47.795 },
+  "sobradinho centro": { latitude: -15.653, longitude: -47.792 },
+  "sol nascente": { latitude: -15.815, longitude: -48.155 },
+  "taguatinga centro": { latitude: -15.835, longitude: -48.056 },
+  "taguatinga norte": { latitude: -15.818, longitude: -48.06 },
+  "taguatinga sul": { latitude: -15.852, longitude: -48.055 },
+  "vale do amanhecer": { latitude: -15.604, longitude: -47.69 },
+  "varjao centro": { latitude: -15.711, longitude: -47.88 },
+  "vicente pires": { latitude: -15.803, longitude: -48.02 },
+  "vila buritis": { latitude: -15.618, longitude: -47.662 },
+  "vila planalto": { latitude: -15.79, longitude: -47.855 },
 };
 
 const localidadesDF = window.DF_LOCALIDADES || {};
@@ -233,6 +325,8 @@ const els = {
   adminForm: document.getElementById("adminCreateForm"),
   adminMsg: document.getElementById("adminMsg"),
   adminCreatedSummary: document.getElementById("adminCreatedSummary"),
+  adminPeopleSearch: document.getElementById("adminPeopleSearch"),
+  adminPeopleResults: document.getElementById("adminPeopleResults"),
   emailVisible: document.getElementById("btnEmailVisible"),
   role: document.getElementById("filterRole"),
   leader: document.getElementById("filterLeader"),
@@ -291,12 +385,7 @@ els.region.addEventListener("input", () => {
   selectedLeaderId = "";
   selectedPointId = "";
   els.leader.value = "";
-  if (selectedRegion) {
-    focusedMapPointId = "";
-    setMapFrameQuery(`${selectedRegion}, Distrito Federal, Brasil`, 12);
-  } else {
-    resetMapFrame();
-  }
+  resetMapFrame();
   render();
 });
 els.leader.addEventListener("input", () => {
@@ -307,6 +396,8 @@ els.copyReferral?.addEventListener("click", copyReferralLink);
 els.referralRole?.addEventListener("input", () => renderReferralLink(user));
 els.editProfile?.addEventListener("click", () => openEditDialog(user, { self: true }));
 els.adminForm?.addEventListener("submit", createAdminUser);
+document.getElementById("adminRole")?.addEventListener("change", updateAdminPasswordVisibility);
+els.adminPeopleSearch?.addEventListener("input", renderAdminPeopleSearch);
 els.emailVisible?.addEventListener("click", () => emailUsers(filteredPoints));
 els.exportLeader?.addEventListener("click", exportSelectedLeaderNetwork);
 els.exportAll?.addEventListener("click", exportAllPeople);
@@ -336,6 +427,7 @@ setupLocalidadeSelector("adminRegiao", "adminLocalidade");
 setupLocalidadeSelector("editRegiao", "editLocalidade");
 enhanceDownwardSelect(document.getElementById("adminRegiao"));
 enhanceDownwardSelect(document.getElementById("editRegiao"));
+updateAdminPasswordVisibility();
 
 init();
 
@@ -405,6 +497,22 @@ function configureAccess() {
   });
   document.body.classList.toggle("isTeam", isTeam);
   if (isTeam) loadContactMessages();
+}
+
+function canRoleLogin(role) {
+  return role === "EQUIPE" || role === "COORDENADORES";
+}
+
+function updateAdminPasswordVisibility() {
+  const role = document.getElementById("adminRole")?.value || "";
+  const field = document.getElementById("adminPasswordField");
+  const password = document.getElementById("adminPassword");
+  const needsPassword = canRoleLogin(role);
+  if (field) field.hidden = !needsPassword;
+  if (password) {
+    password.required = needsPassword;
+    if (!needsPassword) password.value = "";
+  }
 }
 
 function setDashboardView(view) {
@@ -521,6 +629,38 @@ function render() {
   renderSummaries(filteredPoints);
   renderTable(filteredPoints);
   renderTree(filteredPoints);
+  renderAdminPeopleSearch();
+}
+
+function renderAdminPeopleSearch() {
+  if (!els.adminPeopleResults) return;
+  const search = String(els.adminPeopleSearch?.value || "").trim().toLowerCase();
+  const matches = (search ? allPoints.filter((point) => {
+    const haystack = `${point.name || ""} ${point.email || ""} ${point.phone || ""} ${point.localidade || ""} ${point.regiao_administrativa || ""} ${point.role || ""}`.toLowerCase();
+    return haystack.includes(search);
+  }) : allPoints.slice(0, 6))
+    .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+    .slice(0, 8);
+
+  if (!matches.length) {
+    els.adminPeopleResults.innerHTML = `<div class="emptyState">Nenhum cadastro encontrado.</div>`;
+    return;
+  }
+
+  els.adminPeopleResults.innerHTML = matches.map((person) => `
+    <button type="button" class="adminPeopleResult" data-person-id="${escapeHtml(person.id)}">
+      <strong>${escapeHtml(person.name || "-")}</strong>
+      <span>${escapeHtml(person.role || "-")} - ${escapeHtml(person.localidade || person.regiao_administrativa || "-")}</span>
+      <small>${escapeHtml(person.email || person.phone || "")}</small>
+    </button>
+  `).join("");
+
+  els.adminPeopleResults.querySelectorAll("[data-person-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const person = allPoints.find((point) => String(point.id) === String(button.dataset.personId));
+      if (person) openEditDialog(person);
+    });
+  });
 }
 
 function renderProfile(profile) {
@@ -695,8 +835,7 @@ function focusMapOnPointRegion(point) {
     els.region.value = region;
   }
 
-  const query = [region || point.localidade, "Distrito Federal", "Brasil"].filter(Boolean).join(", ");
-  setMapFrameQuery(query || "Distrito Federal, Brasil", region ? 13 : 10);
+  resetMapFrame();
 }
 
 function setMapFrameQuery(query, zoom) {
@@ -791,33 +930,43 @@ function renderRegionSummary() {
 
 function renderRegionLeaders() {
   const region = selectedRegion || els.region.value;
-  const leaders = allPoints.filter(
-    (point) => (point.role === "COORDENADORES" || point.role === "LIDERES") && (!region || point.regiao_administrativa === region)
-  );
+  const people = allPoints
+    .filter((point) => !region || point.regiao_administrativa === region)
+    .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
 
-  if (!leaders.length) {
-    els.regionLeaders.innerHTML = `<div class="emptyState">Clique em uma regiao para ver os responsaveis.</div>`;
+  if (!people.length) {
+    els.regionLeaders.innerHTML = `<div class="emptyState">Clique em uma regiao para ver os cadastros.</div>`;
     return;
   }
 
-  els.regionLeaders.innerHTML = leaders
-    .map((leader) => {
-      const total = allPoints.filter((point) => point.root_leader_id === leader.id || point.id === leader.id).length;
-      const active = selectedLeaderId === leader.id ? " activeSummary" : "";
+  els.regionLeaders.innerHTML = people
+    .map((person) => {
+      const total = allPoints.filter((point) => point.root_leader_id === person.id || point.id === person.id).length;
+      const isResponsible = isLeaderRole(person.role);
+      const active = selectedLeaderId === person.id ? " activeSummary" : "";
       return `
-        <button class="summaryRow summaryButton${active}" type="button" data-leader-id="${escapeHtml(leader.id)}">
+        <button class="summaryRow summaryButton${active}" type="button" data-person-id="${escapeHtml(person.id)}" ${isResponsible ? `data-leader-id="${escapeHtml(person.id)}"` : ""}>
           <div>
-            <strong>${escapeHtml(leader.name)}</strong>
-            <span>${total} cadastro${total === 1 ? "" : "s"} na rede</span>
+            <strong>${escapeHtml(person.name)}</strong>
+            <span>${escapeHtml(person.role || "-")} - ${escapeHtml(person.localidade || person.regiao_administrativa || "-")}</span>
           </div>
-          <div class="summaryBar"><i style="width:100%"></i></div>
+          <div class="summaryBar"><i style="width:${isResponsible ? "100" : "35"}%"></i></div>
+          ${isResponsible ? `<small>${total} cadastro${total === 1 ? "" : "s"} na rede</small>` : ""}
         </button>
       `;
     })
     .join("");
 
-  els.regionLeaders.querySelectorAll("[data-leader-id]").forEach((button) => {
-    button.addEventListener("click", () => selectLeader(button.dataset.leaderId));
+  els.regionLeaders.querySelectorAll("[data-person-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const person = allPoints.find((point) => String(point.id) === String(button.dataset.personId));
+      if (!person) return;
+      if (button.dataset.leaderId) {
+        selectLeader(button.dataset.leaderId);
+        return;
+      }
+      selectPoint(person);
+    });
   });
 }
 
@@ -918,6 +1067,7 @@ async function createAdminUser(event) {
   const formData = new FormData(els.adminForm);
   const body = Object.fromEntries(formData.entries());
   body.consent_accepted = true;
+  if (!canRoleLogin(body.role)) delete body.password;
   const photoFile = formData.get("photo");
   let photoPreviewUrl = "";
   delete body.photo;
@@ -1730,13 +1880,7 @@ function selectRegion(region) {
   selectedLeaderId = "";
   els.leader.value = "";
   selectedPointId = "";
-
-  if (selectedRegion) {
-    focusedMapPointId = "";
-    setMapFrameQuery(`${selectedRegion}, Distrito Federal, Brasil`, 12);
-  } else {
-    resetMapFrame();
-  }
+  resetMapFrame();
 
   render();
 }
@@ -1758,7 +1902,7 @@ function hasLocation(point) {
 }
 
 function hasMapPosition(point) {
-  return hasLocation(point) || Boolean(getRegionCoords(point.regiao_administrativa || point.localidade));
+  return Boolean(getPointPosition(point));
 }
 
 function getPointPosition(point) {
@@ -1769,11 +1913,9 @@ function getPointPosition(point) {
     };
   }
 
-  const coords = getRegionCoords(point.regiao_administrativa || point.localidade);
-  return {
-    latitude: coords.latitude,
-    longitude: coords.longitude,
-  };
+  return getLocalidadeCoords(point.localidade, point.regiao_administrativa)
+    || getEstimatedLocalidadeCoords(point.localidade, point.regiao_administrativa)
+    || getRegionCoords(point.regiao_administrativa || point.localidade);
 }
 
 function getSpreadMapPositions(points) {
@@ -1790,8 +1932,8 @@ function getSpreadMapPositions(points) {
       const offset = getVisualMarkerOffset(index, sorted.length);
 
       positions.set(String(point.id), {
-        x: clamp(baseX + offset.x, 4, 96),
-        y: clamp(baseY + offset.y, 4, 96),
+        x: clamp(baseX + offset.x, 7, 93),
+        y: clamp(baseY + offset.y, 7, 93),
       });
     });
   }
@@ -1842,6 +1984,11 @@ function getMapPositionKey(point) {
     return `coords:${position.latitude.toFixed(3)}:${position.longitude.toFixed(3)}`;
   }
 
+  const position = getPointPosition(point);
+  if (position) {
+    return `fallback:${normalizeRegion(point.localidade || point.regiao_administrativa)}:${position.latitude.toFixed(3)}:${position.longitude.toFixed(3)}`;
+  }
+
   return `region:${normalizeRegion(point.regiao_administrativa || point.localidade)}`;
 }
 
@@ -1873,6 +2020,34 @@ function getRegionCoords(region) {
   return REGION_COORDS[key] || null;
 }
 
+function getLocalidadeCoords(localidade, regiao) {
+  const key = normalizeRegion(localidade);
+  const scopedKey = regiao ? `${key}|${normalizeRegion(regiao)}` : "";
+  return LOCALIDADE_COORDS[scopedKey] || LOCALIDADE_COORDS[key] || null;
+}
+
+function getEstimatedLocalidadeCoords(localidade, regiao) {
+  if (!localidade || !regiao) return null;
+  const base = getRegionCoords(regiao);
+  if (!base) return null;
+
+  const hash = hashString(`${regiao}:${localidade}`);
+  const angle = (hash % 360) * (Math.PI / 180);
+  const distance = 0.008 + ((hash % 9) * 0.002);
+  return {
+    latitude: clamp(base.latitude + Math.sin(angle) * distance, DF_BOUNDS.minLat, DF_BOUNDS.maxLat),
+    longitude: clamp(base.longitude + Math.cos(angle) * distance, DF_BOUNDS.minLng, DF_BOUNDS.maxLng),
+  };
+}
+
+function hashString(value) {
+  let hash = 0;
+  for (const char of normalizeRegion(value)) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  }
+  return hash;
+}
+
 function normalizeRegion(value) {
   return String(value || "")
     .normalize("NFD")
@@ -1882,11 +2057,11 @@ function normalizeRegion(value) {
 }
 
 function lngToX(lng) {
-  return clamp(((Number(lng) - DF_BOUNDS.minLng) / (DF_BOUNDS.maxLng - DF_BOUNDS.minLng)) * 100, 3, 97);
+  return clamp(((Number(lng) - DF_BOUNDS.minLng) / (DF_BOUNDS.maxLng - DF_BOUNDS.minLng)) * 100, 7, 93);
 }
 
 function latToY(lat) {
-  return clamp(((DF_BOUNDS.maxLat - Number(lat)) / (DF_BOUNDS.maxLat - DF_BOUNDS.minLat)) * 100, 3, 97);
+  return clamp(((DF_BOUNDS.maxLat - Number(lat)) / (DF_BOUNDS.maxLat - DF_BOUNDS.minLat)) * 100, 7, 93);
 }
 
 function clamp(value, min, max) {

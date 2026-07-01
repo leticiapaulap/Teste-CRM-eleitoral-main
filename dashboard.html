@@ -76,12 +76,13 @@
           placeholder="Nome da pessoa"
           autocomplete="off"
         />
-        <button type="button" id="btnExportLeader" class="sideMenuButton sideMenuButtonSubtle">
-          <span class="sideText">Exportar lider pesquisado</span>
-        </button>
-        <button type="button" id="btnExportAll" class="sideMenuButton sideMenuButtonSubtle">
-          <span class="sideText">Exportar lista geral</span>
-        </button>
+        <div class="sideExportActions" aria-label="Exportar dados">
+          <span>Exportar</span>
+          <div>
+            <button type="button" id="btnExportLeader">Lider</button>
+            <button type="button" id="btnExportAll">Geral</button>
+          </div>
+        </div>
         <div id="exportStatus" class="sideMenuStatus" hidden></div>
       </aside>
 
@@ -175,9 +176,9 @@
           <label for="adminPhone">Telefone</label>
           <input id="adminPhone" name="phone" required />
         </div>
-        <div>
+        <div id="adminPasswordField">
           <label for="adminPassword">Senha</label>
-          <input id="adminPassword" name="password" type="password" required />
+          <input id="adminPassword" name="password" type="password" />
         </div>
         <div>
           <label for="adminRole">Tipo</label>
@@ -186,12 +187,6 @@
             <option value="LIDERES">Lider</option>
             <option value="CADASTRADOS">Cadastrado</option>
             <option value="EQUIPE">Equipe</option>
-          </select>
-        </div>
-        <div>
-          <label for="adminLocalidade">Bairro/localidade</label>
-          <select id="adminLocalidade" name="localidade" required>
-            <option value="" selected disabled>Selecione a RA primeiro</option>
           </select>
         </div>
         <div>
@@ -236,6 +231,12 @@
           </select>
         </div>
         <div>
+          <label for="adminLocalidade">Bairro/localidade</label>
+          <select id="adminLocalidade" name="localidade" required>
+            <option value="" selected disabled>Selecione a RA primeiro</option>
+          </select>
+        </div>
+        <div>
           <label for="adminPhoto">Foto</label>
           <input id="adminPhoto" name="photo" type="file" accept="image/*" capture="user" />
         </div>
@@ -243,6 +244,16 @@
       </form>
       <div id="adminMsg" class="msg"></div>
       <section id="adminCreatedSummary" class="createdSummary" hidden aria-label="Cadastro confirmado"></section>
+      <section class="adminSearchPanel" aria-label="Pesquisar cadastros">
+        <div class="adminSearchHeader">
+          <div>
+            <h3>Pesquisar cadastros</h3>
+            <p>Busque por nome, telefone, email, RA ou bairro.</p>
+          </div>
+          <input id="adminPeopleSearch" type="search" placeholder="Nome da pessoa" autocomplete="off" />
+        </div>
+        <div id="adminPeopleResults" class="adminPeopleResults"></div>
+      </section>
     </section>
 
     <dialog id="editDialog" class="editDialog">
@@ -469,7 +480,7 @@
         <h3 class="summaryTitle">Por regiao</h3>
         <div id="regionSummary" class="summaryList"></div>
 
-        <h3 class="summaryTitle">Responsaveis da regiao</h3>
+        <h3 class="summaryTitle">Cadastros da regiao</h3>
         <div id="regionLeaders" class="summaryList"></div>
 
         <h3 class="summaryTitle">Rede do responsavel</h3>

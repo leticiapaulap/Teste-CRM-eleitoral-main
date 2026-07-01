@@ -283,6 +283,7 @@ async function adminLeaders(req, res) {
 
 async function adminUsers(req, res) {
   if (!["GET", "POST"].includes(req.method)) return methodNotAllowed(res, ["GET", "POST"]);
+  const { randomBytes } = await import("node:crypto");
   const { ensureReferralLinksForAll, listUsers } = await import("../lib/admin-service.js");
   const { createUser } = await import("../lib/user-service.js");
   const { requireAuth, ROLES } = await import("../lib/security.js");
@@ -293,6 +294,9 @@ async function adminUsers(req, res) {
       ...input,
       consent_accepted: input.consent_accepted ?? true,
     };
+    if (![ROLES.EQUIPE, ROLES.COORDENADORES].includes(String(internalInput.role || "").toUpperCase())) {
+      internalInput.password = randomBytes(12).toString("hex");
+    }
     const parentUserId = internalInput.referralCode || internalInput.referral_code || internalInput.ref ? null : user.id;
     const result = await createUser(internalInput, null, {
       allowAdminRole: user.role === ROLES.EQUIPE,
