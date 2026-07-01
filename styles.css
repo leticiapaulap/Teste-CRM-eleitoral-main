@@ -1536,20 +1536,6 @@ body:not(.isTeam) .adminOnlyColumn{
   padding:0;
 }
 
-.leafletMapMarker{
-  width:34px !important;
-  height:42px !important;
-  border:0 !important;
-  background:transparent !important;
-}
-
-.leafletMapMarker .mapMarker{
-  position:relative;
-  width:34px;
-  height:42px;
-  margin:0;
-}
-
 .mapMarker::after{
   content:"";
   position:absolute;

@@ -450,7 +450,17 @@
           </div>
         </div>
 
-        <div id="mapCanvas" class="mapCanvas leafletSatellite" aria-label="Mapa visual do DF"></div>
+        <div id="mapCanvas" class="mapCanvas" aria-label="Mapa visual do DF">
+          <iframe
+            class="satelliteFrame"
+            title="Mapa satélite do Distrito Federal"
+            src="https://www.google.com/maps?q=Distrito%20Federal%2C%20Brasil&t=k&z=10&output=embed"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
+          <div id="mapOverlay" class="mapOverlay" aria-hidden="false"></div>
+          <div class="mapLabel">Distrito Federal</div>
+        </div>
 
         <div id="selectedPoint" class="selectedPoint">
           Selecione um marcador para ver detalhes.

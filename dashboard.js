@@ -103,7 +103,30 @@ const LOCALIDADE_COORDS = {
   "p sul": { latitude: -15.846, longitude: -48.135 },
   "paranoa centro": { latitude: -15.775, longitude: -47.779 },
   "paranoa parque": { latitude: -15.77, longitude: -47.797 },
+  "area central": { latitude: -15.617, longitude: -47.648 },
   "planaltina centro": { latitude: -15.62, longitude: -47.73 },
+  "srtc": { latitude: -15.617, longitude: -47.649 },
+  "srtn": { latitude: -15.607, longitude: -47.649 },
+  "srts": { latitude: -15.627, longitude: -47.649 },
+  "setor residencial leste": { latitude: -15.62, longitude: -47.665 },
+  "srl": { latitude: -15.62, longitude: -47.665 },
+  "setor residencial norte": { latitude: -15.625, longitude: -47.666 },
+  "srn": { latitude: -15.625, longitude: -47.666 },
+  "setor residencial oeste": { latitude: -15.619, longitude: -47.683 },
+  "sro": { latitude: -15.619, longitude: -47.683 },
+  "vila nossa senhora de fatima": { latitude: -15.619, longitude: -47.683 },
+  "vila vicentina": { latitude: -15.621, longitude: -47.655 },
+  "estancia i": { latitude: -15.64, longitude: -47.67 },
+  "estancia ii": { latitude: -15.642, longitude: -47.675 },
+  "estancia iii": { latitude: -15.646, longitude: -47.68 },
+  "estancia iv": { latitude: -15.65, longitude: -47.685 },
+  "estancia v": { latitude: -15.654, longitude: -47.69 },
+  "vale do amanhecer": { latitude: -15.675, longitude: -47.655 },
+  "rajadinha": { latitude: -15.665, longitude: -47.61 },
+  "rio preto": { latitude: -15.73, longitude: -47.48 },
+  "tabatinga": { latitude: -15.78, longitude: -47.56 },
+  "nucleo rural pipiripau": { latitude: -15.55, longitude: -47.56 },
+  "nucleo rural taquara": { latitude: -15.57, longitude: -47.51 },
   "por do sol": { latitude: -15.822, longitude: -48.135 },
   "qna": { latitude: -15.831, longitude: -48.052 },
   "qnb": { latitude: -15.834, longitude: -48.058 },
@@ -313,8 +336,6 @@ let selectedLeaderId = "";
 let selectedPointId = "";
 let focusedMapPointId = "";
 let stableMapPositions = new Map();
-let leafletMap = null;
-let leafletMarkers = null;
 let isTeam = user?.role === "EQUIPE";
 let canViewFullMap = user?.role === "EQUIPE" || user?.role === "COORDENADORES";
 let activeView = "home";
@@ -344,6 +365,8 @@ const els = {
   level: document.getElementById("filterLevel"),
   search: document.getElementById("filterSearch"),
   map: document.getElementById("mapCanvas"),
+  mapFrame: document.querySelector(".satelliteFrame"),
+  mapOverlay: document.getElementById("mapOverlay"),
   selected: document.getElementById("selectedPoint"),
   regionSummary: document.getElementById("regionSummary"),
   regionLeaders: document.getElementById("regionLeaders"),
@@ -565,9 +588,6 @@ function setDashboardView(view) {
   });
 
   if (activeView === "messages") loadContactMessages();
-  if (activeView === "map" && leafletMap) {
-    window.setTimeout(() => leafletMap.invalidateSize(), 0);
-  }
 }
 
 function updateMenuToggle(collapsed) {
@@ -597,6 +617,8 @@ function normalizeLocalidadeKey(value) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/\s*-\s*df$/, "")
+    .replace(/\s+df$/, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -804,33 +826,27 @@ function renderMetrics(points) {
 }
 
 function renderMap(points) {
-  ensureLeafletMap();
+  els.mapOverlay.innerHTML = "";
   const locatedPoints = points.filter(hasMapPosition);
-  const visiblePositions = getSpreadLeafletPositions(locatedPoints);
+  const visiblePositions = getSpreadMapPositions(locatedPoints);
   const positionCounts = getMapPositionCounts(locatedPoints);
 
-  if (!leafletMap || !leafletMarkers || !window.L) {
-    els.selected.textContent = "Mapa indisponivel no momento.";
-    return;
-  }
-
-  if (leafletMarkers) leafletMarkers.clearLayers();
-
   for (const point of locatedPoints) {
-    const position = visiblePositions.get(String(point.id)) || getSingleLeafletPosition(point);
+    const position = visiblePositions.get(String(point.id)) || getSingleMapPosition(point);
     if (!position) continue;
     const samePositionCount = positionCounts.get(getMapPositionKey(point)) || 1;
-    const marker = window.L.marker([position.latitude, position.longitude], {
-      title: `${getDisplayLocalidade(point)} - ${point.name}`,
-      icon: window.L.divIcon({
-        className: "leafletMapMarker",
-        iconSize: [34, 42],
-        iconAnchor: [17, 40],
-        html: getMapMarkerHtml(point, samePositionCount),
-      }),
-    });
-    marker.on("click", () => selectPoint(point));
-    marker.addTo(leafletMarkers);
+
+    const marker = document.createElement("button");
+    marker.type = "button";
+    marker.className = `mapMarker ${point.role === "COORDENADORES" || point.role === "LIDERES" ? "leaderMarker" : "personMarker"}${String(point.id) === String(selectedPointId) ? " selectedMapMarker" : ""}`;
+    marker.style.left = `${position.x}%`;
+    marker.style.top = `${position.y}%`;
+    marker.title = `${getDisplayLocalidade(point)} - ${point.name}`;
+    marker.setAttribute("aria-label", marker.title);
+    marker.dataset.pointId = point.id;
+    marker.innerHTML = getMapMarkerHtml(point, samePositionCount);
+    marker.addEventListener("click", () => selectPoint(point));
+    els.mapOverlay.appendChild(marker);
   }
 
   if (!locatedPoints.length) {
@@ -838,35 +854,14 @@ function renderMap(points) {
   }
 }
 
-function ensureLeafletMap() {
-  if (leafletMap || !els.map || !window.L) return;
-  els.map.classList.add("leafletSatellite");
-  leafletMap = window.L.map(els.map, {
-    center: [-15.79, -47.88],
-    zoom: 10,
-    minZoom: 8,
-    maxZoom: 18,
-  });
-  window.L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-    attribution: "Tiles &copy; Esri",
-    maxZoom: 18,
-  }).addTo(leafletMap);
-  leafletMarkers = window.L.layerGroup().addTo(leafletMap);
-  window.setTimeout(() => leafletMap.invalidateSize(), 0);
-}
-
 function getMapMarkerHtml(point, samePositionCount) {
-  const markerClass = point.role === "COORDENADORES" || point.role === "LIDERES" ? "leaderMarker" : "personMarker";
-  const selectedClass = String(point.id) === String(selectedPointId) ? " selectedMapMarker" : "";
   return `
-    <span class="mapMarker ${markerClass}${selectedClass}" data-point-id="${escapeHtml(point.id)}">
-      <span class="mapMarkerPin" aria-hidden="true">
-        ${point.photo_url
-          ? `<img class="mapMarkerPhoto" src="${escapeHtml(point.photo_url)}" alt="" aria-hidden="true" />`
-          : `<span class="mapPersonIcon" aria-hidden="true"></span>`}
-      </span>
-      ${samePositionCount > 1 ? `<span class="mapMarkerCount" aria-hidden="true">${samePositionCount}</span>` : ""}
+    <span class="mapMarkerPin" aria-hidden="true">
+      ${point.photo_url
+        ? `<img class="mapMarkerPhoto" src="${escapeHtml(point.photo_url)}" alt="" aria-hidden="true" />`
+        : `<span class="mapPersonIcon" aria-hidden="true"></span>`}
     </span>
+    ${samePositionCount > 1 ? `<span class="mapMarkerCount" aria-hidden="true">${samePositionCount}</span>` : ""}
   `;
 }
 
@@ -923,18 +918,10 @@ function updateSelectedMarkerState() {
 }
 
 function focusMapOnPointLocation(point) {
-  if (!leafletMap) return;
-  const position = getSpreadLeafletPositions(filteredPoints.filter(hasMapPosition)).get(String(point.id))
-    || getSingleLeafletPosition(point);
-  if (!position) return;
-  leafletMap.panTo([position.latitude, position.longitude], { animate: true });
+  updateSelectedMarkerState();
 }
 
 function setMapFrameQuery(query, zoom) {
-  if (leafletMap) {
-    leafletMap.setView([-15.79, -47.88], zoom || 10);
-    return;
-  }
   if (!els.mapFrame) return;
   els.mapFrame.src = `https://www.google.com/maps?q=${encodeURIComponent(query)}&t=k&z=${zoom}&output=embed`;
 }
@@ -1056,8 +1043,8 @@ function getEffectiveLocalidade(point) {
 }
 
 function isGenericBrasiliaLocalidade(localidade, regiao) {
-  const normalizedLocalidade = normalizeRegion(localidade);
-  const normalizedRegiao = normalizeRegion(regiao);
+  const normalizedLocalidade = stripDfSuffix(normalizeRegion(localidade));
+  const normalizedRegiao = stripDfSuffix(normalizeRegion(regiao));
   return normalizedLocalidade === "brasilia"
     && normalizedRegiao
     && normalizedRegiao !== "brasilia"
@@ -2049,30 +2036,6 @@ function getSpreadMapPositions(points) {
   return positions;
 }
 
-function getSpreadLeafletPositions(points) {
-  const positions = new Map();
-  const groups = groupBy(points, getMapPositionKey);
-  const latRange = DF_BOUNDS.maxLat - DF_BOUNDS.minLat;
-  const lngRange = DF_BOUNDS.maxLng - DF_BOUNDS.minLng;
-
-  for (const group of groups) {
-    const sorted = [...group.items].sort(sortPeopleByName);
-
-    sorted.forEach((point, index) => {
-      const base = getPointPosition(point);
-      if (!base) return;
-      const offset = getVisualMarkerOffset(index, sorted.length);
-
-      positions.set(String(point.id), {
-        latitude: clamp(base.latitude - (offset.y * latRange) / 100, DF_BOUNDS.minLat, DF_BOUNDS.maxLat),
-        longitude: clamp(base.longitude + (offset.x * lngRange) / 100, DF_BOUNDS.minLng, DF_BOUNDS.maxLng),
-      });
-    });
-  }
-
-  return positions;
-}
-
 function getMapPositionCounts(points) {
   const counts = new Map();
   for (const group of groupBy(points, getMapPositionKey)) {
@@ -2091,15 +2054,6 @@ function getSingleMapPosition(point) {
   return {
     x: lngToX(position.longitude),
     y: latToY(position.latitude),
-  };
-}
-
-function getSingleLeafletPosition(point) {
-  const position = getPointPosition(point);
-  if (!position) return null;
-  return {
-    latitude: position.latitude,
-    longitude: position.longitude,
   };
 }
 
@@ -2169,7 +2123,7 @@ function getVisualMarkerOffset(index, total) {
 
 function getRegionCoords(region) {
   const key = normalizeRegion(region);
-  return REGION_COORDS[key] || null;
+  return REGION_COORDS[key] || REGION_COORDS[stripDfSuffix(key)] || null;
 }
 
 function getLocalidadeCoords(localidade, regiao) {
@@ -2206,6 +2160,13 @@ function normalizeRegion(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
+}
+
+function stripDfSuffix(value) {
+  return String(value || "")
+    .replace(/\s*-\s*df$/, "")
+    .replace(/\s+df$/, "")
+    .trim();
 }
 
 function lngToX(lng) {

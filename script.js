@@ -75,6 +75,8 @@ function normalizeLocalidadeKey(value) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/\s*-\s*df$/, "")
+    .replace(/\s+df$/, "")
     .replace(/\s+/g, " ")
     .trim();
 }
