@@ -1599,6 +1599,25 @@ body:not(.isTeam) .adminOnlyColumn{
   border:1px solid rgba(255,255,255,.75);
 }
 
+.mapMarkerCount{
+  position:absolute;
+  right:-7px;
+  top:-9px;
+  z-index:3;
+  min-width:20px;
+  height:20px;
+  padding:0 5px;
+  border:2px solid #fff;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:#17345f;
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+  line-height:1;
+}
+
 .mapPersonIcon::before,
 .mapPersonIcon::after{
   content:"";
@@ -3613,6 +3632,49 @@ body.dashboardBody{
   margin-top:3px;
   color:#66758d;
   font-size:11px;
+}
+
+.sameLocationList{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:7px;
+}
+
+.sameLocationItem{
+  width:100%;
+  margin:0;
+  padding:8px;
+  border:1px solid #e3e9f2;
+  border-radius:9px;
+  background:#fff;
+  color:#172033;
+  text-align:left;
+  box-shadow:none;
+}
+
+.sameLocationItem strong,
+.sameLocationItem span{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.sameLocationItem strong{
+  font-size:12px;
+}
+
+.sameLocationItem span{
+  margin-top:3px;
+  color:#66758d;
+  font-size:11px;
+}
+
+.sameLocationItem:hover,
+.sameLocationItem:focus,
+.sameLocationItem.isActive{
+  border-color:#f3c316;
+  background:#fff8d8;
 }
 
 .summaryRow,

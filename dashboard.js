@@ -693,16 +693,17 @@ function renderExportPeopleResults() {
   }
 
   els.exportNameResults.innerHTML = matches.map((person) => `
-    <button type="button" data-export-name="${escapeHtml(person.name || "")}">
+    <button type="button" data-export-person-id="${escapeHtml(person.id)}" data-export-name="${escapeHtml(person.name || "")}">
       <strong>${escapeHtml(person.name || "-")}</strong>
       <span>${escapeHtml(person.localidade || person.regiao_administrativa || "")}</span>
     </button>
   `).join("");
 
-  els.exportNameResults.querySelectorAll("[data-export-name]").forEach((button) => {
+  els.exportNameResults.querySelectorAll("[data-export-person-id]").forEach((button) => {
     button.addEventListener("click", () => {
       if (els.exportLeaderSearch) els.exportLeaderSearch.value = button.dataset.exportName || "";
-      renderExportPeopleResults();
+      const person = allPoints.find((point) => String(point.id) === String(button.dataset.exportPersonId));
+      if (person) selectPoint(person);
     });
   });
 }
@@ -803,12 +804,14 @@ function renderMap(points) {
   els.mapOverlay.innerHTML = "";
   const locatedPoints = points.filter(hasMapPosition);
   const visiblePositions = getSpreadMapPositions(locatedPoints);
+  const positionCounts = getMapPositionCounts(locatedPoints);
 
   renderRegionAreas(locatedPoints);
 
   for (const point of locatedPoints) {
     const position = visiblePositions.get(String(point.id)) || stableMapPositions.get(String(point.id)) || getSingleMapPosition(point);
     if (!position) continue;
+    const samePositionCount = positionCounts.get(getMapPositionKey(point)) || 1;
 
     const marker = document.createElement("button");
     marker.type = "button";
@@ -824,6 +827,7 @@ function renderMap(points) {
           ? `<img class="mapMarkerPhoto" src="${escapeHtml(point.photo_url)}" alt="" aria-hidden="true" />`
           : `<span class="mapPersonIcon" aria-hidden="true"></span>`}
       </span>
+      ${samePositionCount > 1 ? `<span class="mapMarkerCount" aria-hidden="true">${samePositionCount}</span>` : ""}
     `;
     marker.addEventListener("click", () => selectPoint(point));
     els.mapOverlay.appendChild(marker);
@@ -871,6 +875,7 @@ function selectPoint(point) {
   const rootLeader = point.root_leader_name || findPointName(point.root_leader_id) || "Nao informado";
   const lineage = getLineage(point);
   const descendants = getDescendants(point.id);
+  const sameLocation = getPeopleAtSameMapPosition(point);
 
   els.selected.innerHTML = `
     <div class="selectedPointHeader">
@@ -892,8 +897,16 @@ function selectPoint(point) {
       <h3>Arvore da pessoa</h3>
       ${renderSelectedLineage(lineage)}
       ${renderSelectedDescendants(point, descendants)}
+      ${renderSameLocationChoices(point, sameLocation)}
     </div>
   `;
+
+  els.selected.querySelectorAll("[data-same-location-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextPoint = allPoints.find((item) => String(item.id) === String(button.dataset.sameLocationId));
+      if (nextPoint) selectPoint(nextPoint);
+    });
+  });
 }
 
 function updateSelectedMarkerState() {
@@ -984,6 +997,32 @@ function renderSelectedDescendants(point, descendants) {
       `).join("")}
     </div>
   `;
+}
+
+function renderSameLocationChoices(point, people) {
+  if (people.length <= 1) return "";
+  return `
+    <h3>Pessoas nesta localidade</h3>
+    <div class="sameLocationList">
+      ${people.map((item) => {
+        const active = String(item.id) === String(point.id) ? " isActive" : "";
+        return `
+          <button type="button" class="sameLocationItem${active}" data-same-location-id="${escapeHtml(item.id)}">
+            <strong>${escapeHtml(item.name || "Sem nome")}</strong>
+            <span>${escapeHtml(formatLocationDetails(item))}</span>
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function getPeopleAtSameMapPosition(point) {
+  if (!hasMapPosition(point)) return [];
+  const key = getMapPositionKey(point);
+  return allPoints
+    .filter((item) => hasMapPosition(item) && getMapPositionKey(item) === key)
+    .sort(sortPeopleByName);
 }
 
 function formatLocationDetails(point) {
@@ -1975,6 +2014,14 @@ function getSpreadMapPositions(points) {
   return positions;
 }
 
+function getMapPositionCounts(points) {
+  const counts = new Map();
+  for (const group of groupBy(points, getMapPositionKey)) {
+    counts.set(group.label, group.items.length);
+  }
+  return counts;
+}
+
 function buildStableMapPositions(points) {
   return getSpreadMapPositions(points.filter(hasMapPosition));
 }
@@ -2031,17 +2078,18 @@ function getVisualMarkerOffset(index, total) {
 
   if (total <= 8) {
     const angle = ((index / total) * 360 - 90) * (Math.PI / 180);
-    const radius = total <= 3 ? 3.1 : 4.3;
+    const radius = total <= 3 ? 4.4 : 6.2;
     return {
       x: Math.cos(angle) * radius,
       y: Math.sin(angle) * radius,
     };
   }
 
-  const ringIndex = Math.floor(index / 8);
-  const positionInRing = index % 8;
-  const angle = ((positionInRing / 8) * 360 + ringIndex * 22.5 - 90) * (Math.PI / 180);
-  const radius = 3.6 + ringIndex * 2.4;
+  const itemsPerRing = 10;
+  const ringIndex = Math.floor(index / itemsPerRing);
+  const positionInRing = index % itemsPerRing;
+  const angle = ((positionInRing / itemsPerRing) * 360 + ringIndex * 18 - 90) * (Math.PI / 180);
+  const radius = 5.4 + ringIndex * 3.2;
 
   return {
     x: Math.cos(angle) * radius,
