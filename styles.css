@@ -2549,11 +2549,39 @@ body.dashboardBody{
 .summaryPanel{
   display:grid;
   grid-template-rows:auto auto auto auto minmax(0, 1fr);
+  align-content:stretch;
 }
 
 .summaryList{
   overflow:auto;
   padding-right:4px;
+}
+
+.summaryPanel #regionSummary{
+  overflow:visible;
+  padding-right:0;
+}
+
+.summaryPanel #regionLeaders{
+  min-height:0;
+  height:100%;
+  overflow:auto;
+  padding-right:4px;
+}
+
+.dashboardLayout[data-view="map"] .summaryPanel{
+  grid-template-rows:auto auto auto auto minmax(260px, 1fr) !important;
+}
+
+.dashboardLayout[data-view="map"] #regionSummary{
+  max-height:none !important;
+  overflow:visible !important;
+}
+
+.dashboardLayout[data-view="map"] #regionLeaders{
+  min-height:260px !important;
+  max-height:none !important;
+  overflow:auto !important;
 }
 
 .tableWrap{
