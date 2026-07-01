@@ -64,8 +64,8 @@ export default async function handler(req, res) {
 
     const name = getValue(bodyObj, ["name", "nome"]);
     const phone = onlyDigits(getValue(bodyObj, ["phone", "whatsapp", "telefone"]));
-    const localidade = getValue(bodyObj, ["localidade", "bairro"], "Brasilia");
     const regiaoAdministrativa = getValue(bodyObj, ["ra", "regiao_administrativa", "regiaoAdministrativa"]);
+    const localidade = getValue(bodyObj, ["localidade", "bairro"]) || regiaoAdministrativa;
     const referralCodeUsed = normalizeReferralCode(getValue(bodyObj, ["referral_code", "referencia", "ref"]));
     const consentAccepted = ["true", "on", "1", "sim"].includes(
         getValue(bodyObj, ["consent_accepted", "consentimento"], "true").toLowerCase()

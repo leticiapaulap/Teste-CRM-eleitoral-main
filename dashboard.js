@@ -313,6 +313,8 @@ let selectedLeaderId = "";
 let selectedPointId = "";
 let focusedMapPointId = "";
 let stableMapPositions = new Map();
+let leafletMap = null;
+let leafletMarkers = null;
 let isTeam = user?.role === "EQUIPE";
 let canViewFullMap = user?.role === "EQUIPE" || user?.role === "COORDENADORES";
 let activeView = "home";
@@ -342,8 +344,6 @@ const els = {
   level: document.getElementById("filterLevel"),
   search: document.getElementById("filterSearch"),
   map: document.getElementById("mapCanvas"),
-  mapFrame: document.querySelector(".satelliteFrame"),
-  mapOverlay: document.getElementById("mapOverlay"),
   selected: document.getElementById("selectedPoint"),
   regionSummary: document.getElementById("regionSummary"),
   regionLeaders: document.getElementById("regionLeaders"),
@@ -541,7 +541,7 @@ function updateLoginFields({ roleId, emailId, passwordId, passwordFieldId, passw
 
   if (email) {
     email.required = needsPassword;
-    email.placeholder = needsPassword ? "email@exemplo.com" : "Opcional para lider/cadastrado";
+    email.placeholder = needsPassword ? "email@exemplo.com" : "Opcional para líder/cadastrado";
     if (!needsPassword) email.value = "";
   }
 
@@ -565,6 +565,9 @@ function setDashboardView(view) {
   });
 
   if (activeView === "messages") loadContactMessages();
+  if (activeView === "map" && leafletMap) {
+    window.setTimeout(() => leafletMap.invalidateSize(), 0);
+  }
 }
 
 function updateMenuToggle(collapsed) {
@@ -695,7 +698,7 @@ function renderExportPeopleResults() {
   els.exportNameResults.innerHTML = matches.map((person) => `
     <button type="button" data-export-person-id="${escapeHtml(person.id)}" data-export-name="${escapeHtml(person.name || "")}">
       <strong>${escapeHtml(person.name || "-")}</strong>
-      <span>${escapeHtml(person.localidade || person.regiao_administrativa || "")}</span>
+      <span>${escapeHtml(getDisplayLocalidade(person))}</span>
     </button>
   `).join("");
 
@@ -726,7 +729,7 @@ function renderAdminPeopleSearch() {
   els.adminPeopleResults.innerHTML = matches.map((person) => `
     <button type="button" class="adminPeopleResult" data-person-id="${escapeHtml(person.id)}">
       <strong>${escapeHtml(person.name || "-")}</strong>
-      <span>${escapeHtml(person.role || "-")} - ${escapeHtml(person.localidade || person.regiao_administrativa || "-")}</span>
+      <span>${escapeHtml(person.role || "-")} - ${escapeHtml(getDisplayLocalidade(person))}</span>
       <small>${escapeHtml(person.email || person.phone || "")}</small>
     </button>
   `).join("");
@@ -747,7 +750,7 @@ function renderProfile(profile) {
     <div><span>Telefone</span><strong>${escapeHtml(profile.phone || "-")}</strong></div>
     <div><span>Tipo</span><strong>${escapeHtml(profile.role || "-")}</strong></div>
     <div><span>Localidade</span><strong>${escapeHtml(profile.localidade || "-")}</strong></div>
-    <div><span>Regiao</span><strong>${escapeHtml(profile.regiao_administrativa || "-")}</strong></div>
+    <div><span>Região</span><strong>${escapeHtml(profile.regiao_administrativa || "-")}</strong></div>
   `;
 
   if (els.referralLink) {
@@ -801,36 +804,33 @@ function renderMetrics(points) {
 }
 
 function renderMap(points) {
-  els.mapOverlay.innerHTML = "";
+  ensureLeafletMap();
   const locatedPoints = points.filter(hasMapPosition);
-  const visiblePositions = getSpreadMapPositions(locatedPoints);
+  const visiblePositions = getSpreadLeafletPositions(locatedPoints);
   const positionCounts = getMapPositionCounts(locatedPoints);
 
-  renderRegionAreas(locatedPoints);
+  if (!leafletMap || !leafletMarkers || !window.L) {
+    els.selected.textContent = "Mapa indisponivel no momento.";
+    return;
+  }
+
+  if (leafletMarkers) leafletMarkers.clearLayers();
 
   for (const point of locatedPoints) {
-    const position = visiblePositions.get(String(point.id)) || stableMapPositions.get(String(point.id)) || getSingleMapPosition(point);
+    const position = visiblePositions.get(String(point.id)) || getSingleLeafletPosition(point);
     if (!position) continue;
     const samePositionCount = positionCounts.get(getMapPositionKey(point)) || 1;
-
-    const marker = document.createElement("button");
-    marker.type = "button";
-    marker.className = `mapMarker ${point.role === "COORDENADORES" || point.role === "LIDERES" ? "leaderMarker" : "personMarker"}${String(point.id) === String(selectedPointId) ? " selectedMapMarker" : ""}`;
-    marker.style.left = `${position.x}%`;
-    marker.style.top = `${position.y}%`;
-    marker.title = `${point.localidade || point.regiao_administrativa || "Sem localidade"} - ${point.name}`;
-    marker.setAttribute("aria-label", marker.title);
-    marker.dataset.pointId = point.id;
-    marker.innerHTML = `
-      <span class="mapMarkerPin" aria-hidden="true">
-        ${point.photo_url
-          ? `<img class="mapMarkerPhoto" src="${escapeHtml(point.photo_url)}" alt="" aria-hidden="true" />`
-          : `<span class="mapPersonIcon" aria-hidden="true"></span>`}
-      </span>
-      ${samePositionCount > 1 ? `<span class="mapMarkerCount" aria-hidden="true">${samePositionCount}</span>` : ""}
-    `;
-    marker.addEventListener("click", () => selectPoint(point));
-    els.mapOverlay.appendChild(marker);
+    const marker = window.L.marker([position.latitude, position.longitude], {
+      title: `${getDisplayLocalidade(point)} - ${point.name}`,
+      icon: window.L.divIcon({
+        className: "leafletMapMarker",
+        iconSize: [34, 42],
+        iconAnchor: [17, 40],
+        html: getMapMarkerHtml(point, samePositionCount),
+      }),
+    });
+    marker.on("click", () => selectPoint(point));
+    marker.addTo(leafletMarkers);
   }
 
   if (!locatedPoints.length) {
@@ -838,39 +838,46 @@ function renderMap(points) {
   }
 }
 
-function renderRegionAreas(points) {
-  const groups = groupBy(points, (point) => point.regiao_administrativa || "Sem regiao");
-  for (const group of groups) {
-    const located = group.items.filter(hasMapPosition);
-    if (!located.length) continue;
+function ensureLeafletMap() {
+  if (leafletMap || !els.map || !window.L) return;
+  els.map.classList.add("leafletSatellite");
+  leafletMap = window.L.map(els.map, {
+    center: [-15.79, -47.88],
+    zoom: 10,
+    minZoom: 8,
+    maxZoom: 18,
+  });
+  window.L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+    attribution: "Tiles &copy; Esri",
+    maxZoom: 18,
+  }).addTo(leafletMap);
+  leafletMarkers = window.L.layerGroup().addTo(leafletMap);
+  window.setTimeout(() => leafletMap.invalidateSize(), 0);
+}
 
-    const lat = average(located.map((point) => getPointPosition(point).latitude));
-    const lng = average(located.map((point) => getPointPosition(point).longitude));
-    const leaders = located.filter((point) => point.role === "LIDERES").length;
-    const people = located.filter((point) => point.role === "CADASTRADOS").length;
-
-    const area = document.createElement("button");
-    area.type = "button";
-    area.className = `regionArea${selectedRegion === group.label ? " activeRegionArea" : ""}`;
-    area.style.left = `${lngToX(lng)}%`;
-    area.style.top = `${latToY(lat)}%`;
-    area.style.width = `${Math.max(70, Math.min(150, located.length * 26))}px`;
-    area.style.height = area.style.width;
-    area.title = `${group.label}: ${leaders} lider(es), ${people} cadastrado(s)`;
-    area.setAttribute("aria-label", area.title);
-    area.addEventListener("click", () => selectRegion(group.label));
-    els.mapOverlay.appendChild(area);
-  }
+function getMapMarkerHtml(point, samePositionCount) {
+  const markerClass = point.role === "COORDENADORES" || point.role === "LIDERES" ? "leaderMarker" : "personMarker";
+  const selectedClass = String(point.id) === String(selectedPointId) ? " selectedMapMarker" : "";
+  return `
+    <span class="mapMarker ${markerClass}${selectedClass}" data-point-id="${escapeHtml(point.id)}">
+      <span class="mapMarkerPin" aria-hidden="true">
+        ${point.photo_url
+          ? `<img class="mapMarkerPhoto" src="${escapeHtml(point.photo_url)}" alt="" aria-hidden="true" />`
+          : `<span class="mapPersonIcon" aria-hidden="true"></span>`}
+      </span>
+      ${samePositionCount > 1 ? `<span class="mapMarkerCount" aria-hidden="true">${samePositionCount}</span>` : ""}
+    </span>
+  `;
 }
 
 function selectPoint(point) {
   selectedPointId = point.id;
   focusedMapPointId = point.id;
-  focusMapOnPointLocation(point);
 
   render();
+  focusMapOnPointLocation(point);
 
-  const locationLabel = point.localidade || "Sem localidade";
+  const locationLabel = getDisplayLocalidade(point);
   const registeredBy = getRegisteredByLabel(point);
   const rootLeader = point.root_leader_name || findPointName(point.root_leader_id) || "Nao informado";
   const lineage = getLineage(point);
@@ -886,15 +893,15 @@ function selectPoint(point) {
       ${isTeam ? `<a href="/cadastro-detalhe.html?id=${encodeURIComponent(point.id)}">Abrir cadastro</a>` : ""}
     </div>
     <div class="selectedPointGrid">
-      <span><b>Regiao adm.</b>${escapeHtml(point.regiao_administrativa || "Sem regiao")}</span>
+      <span><b>Região adm.</b>${escapeHtml(point.regiao_administrativa || "Sem região")}</span>
       <span><b>Bairro/localidade</b>${escapeHtml(locationLabel)}</span>
       <span><b>Por quem cadastrou</b>${escapeHtml(registeredBy)}</span>
-      <span><b>Responsavel raiz</b>${escapeHtml(rootLeader)}</span>
+      <span><b>Responsável raiz</b>${escapeHtml(rootLeader)}</span>
       <span><b>Cadastro</b>${formatDate(point.created_at)}</span>
       <span><b>Pessoas abaixo</b>${descendants.length}</span>
     </div>
     <div class="selectedTreeBlock">
-      <h3>Arvore da pessoa</h3>
+      <h3>Árvore da pessoa</h3>
       ${renderSelectedLineage(lineage)}
       ${renderSelectedDescendants(point, descendants)}
       ${renderSameLocationChoices(point, sameLocation)}
@@ -910,20 +917,24 @@ function selectPoint(point) {
 }
 
 function updateSelectedMarkerState() {
-  els.mapOverlay.querySelectorAll(".mapMarker").forEach((marker) => {
+  els.map?.querySelectorAll(".mapMarker").forEach((marker) => {
     marker.classList.toggle("selectedMapMarker", String(marker.dataset.pointId) === String(selectedPointId));
   });
 }
 
 function focusMapOnPointLocation(point) {
-  const region = point.regiao_administrativa || "";
-  const localidade = point.localidade || "";
-
-  const query = [localidade, region, "Distrito Federal", "Brasil"].filter(Boolean).join(", ");
-  setMapFrameQuery(query || "Distrito Federal, Brasil", localidade ? 14 : 12);
+  if (!leafletMap) return;
+  const position = getSpreadLeafletPositions(filteredPoints.filter(hasMapPosition)).get(String(point.id))
+    || getSingleLeafletPosition(point);
+  if (!position) return;
+  leafletMap.panTo([position.latitude, position.longitude], { animate: true });
 }
 
 function setMapFrameQuery(query, zoom) {
+  if (leafletMap) {
+    leafletMap.setView([-15.79, -47.88], zoom || 10);
+    return;
+  }
   if (!els.mapFrame) return;
   els.mapFrame.src = `https://www.google.com/maps?q=${encodeURIComponent(query)}&t=k&z=${zoom}&output=embed`;
 }
@@ -1026,10 +1037,31 @@ function getPeopleAtSameMapPosition(point) {
 }
 
 function formatLocationDetails(point) {
-  const localidade = point?.localidade || "";
+  const localidade = getDisplayLocalidade(point);
   const regiao = point?.regiao_administrativa || "";
   if (localidade && regiao && localidade !== regiao) return `${localidade} - ${regiao}`;
   return localidade || regiao || "Sem localidade";
+}
+
+function getDisplayLocalidade(point) {
+  const localidade = point?.localidade || "";
+  const regiao = point?.regiao_administrativa || "";
+  return isGenericBrasiliaLocalidade(localidade, regiao) ? regiao : localidade || regiao || "Sem localidade";
+}
+
+function getEffectiveLocalidade(point) {
+  const localidade = point?.localidade || "";
+  const regiao = point?.regiao_administrativa || "";
+  return isGenericBrasiliaLocalidade(localidade, regiao) ? "" : localidade;
+}
+
+function isGenericBrasiliaLocalidade(localidade, regiao) {
+  const normalizedLocalidade = normalizeRegion(localidade);
+  const normalizedRegiao = normalizeRegion(regiao);
+  return normalizedLocalidade === "brasilia"
+    && normalizedRegiao
+    && normalizedRegiao !== "brasilia"
+    && normalizedRegiao !== "plano piloto";
 }
 
 function renderSummaries(points) {
@@ -1052,7 +1084,7 @@ function renderRegionLeaders() {
     .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
 
   if (!people.length) {
-    els.regionLeaders.innerHTML = `<div class="emptyState">Clique em uma regiao para ver os cadastros.</div>`;
+    els.regionLeaders.innerHTML = `<div class="emptyState">Clique em uma região para ver os cadastros.</div>`;
     return;
   }
 
@@ -1065,7 +1097,7 @@ function renderRegionLeaders() {
         <button class="summaryRow summaryButton${active}" type="button" data-person-id="${escapeHtml(person.id)}">
           <div>
             <strong>${escapeHtml(person.name)}</strong>
-            <span>${escapeHtml(person.role || "-")} - ${escapeHtml(person.localidade || person.regiao_administrativa || "-")}</span>
+            <span>${escapeHtml(person.role || "-")} - ${escapeHtml(getDisplayLocalidade(person))}</span>
           </div>
           <div class="summaryBar"><i style="width:${isResponsible ? "100" : "35"}%"></i></div>
           ${isResponsible ? `<small>${total} cadastro${total === 1 ? "" : "s"} na rede</small>` : ""}
@@ -1124,7 +1156,7 @@ function renderTable(points) {
           <td>${isTeam ? `<a class="personNameLink" href="/cadastro-detalhe.html?id=${encodeURIComponent(point.id)}">${escapeHtml(point.name)}</a>` : `<strong>${escapeHtml(point.name)}</strong>`}</td>
           <td><span class="rolePill ${point.role === "COORDENADORES" || point.role === "LIDERES" ? "roleLeader" : "rolePerson"}">${escapeHtml(point.role)}</span></td>
           ${isTeam ? `<td>${escapeHtml(point.email || "-")}<small>${escapeHtml(point.phone || "")}</small></td>` : ""}
-          <td>${escapeHtml(point.localidade || "-")}<small>${escapeHtml(point.regiao_administrativa || "")}</small></td>
+          <td>${escapeHtml(getDisplayLocalidade(point))}<small>${escapeHtml(point.regiao_administrativa || "")}</small></td>
           <td>${escapeHtml(getRegisteredByLabel(point))}</td>
           ${isTeam ? `<td>${renderReferralCell(point)}</td>` : ""}
           <td>${point.level ?? "-"}</td>
@@ -1224,8 +1256,8 @@ function renderCreatedSummary(createdUser, leaderProfile, photoUrl = "") {
         ${createdSummaryItem("Nome", createdUser.name)}
         ${createdSummaryItem("Email", createdUser.email)}
         ${createdSummaryItem("Telefone", createdUser.phone)}
-        ${createdSummaryItem("Localidade", createdUser.localidade || "Brasilia")}
-        ${createdSummaryItem("Regiao administrativa", createdUser.regiao_administrativa)}
+        ${createdSummaryItem("Localidade", createdUser.localidade || "Brasília")}
+        ${createdSummaryItem("Região administrativa", createdUser.regiao_administrativa)}
         ${createdSummaryItem("Codigo de cadastro", code)}
       </div>
     </div>
@@ -1592,9 +1624,9 @@ function exportPeopleCsv(points, baseName) {
     ["Tipo", "role"],
     ["Email", "email"],
     ["Telefone", "phone"],
-    ["Localidade", "localidade"],
-    ["Regiao administrativa", "regiao_administrativa"],
-    ["Responsavel raiz", "root_leader_name"],
+    ["Localidade", (point) => getDisplayLocalidade(point)],
+    ["Região administrativa", "regiao_administrativa"],
+    ["Responsável raiz", "root_leader_name"],
     ["Cadastrado por", (point) => getRegisteredByLabel(point)],
     ["Nivel", "level"],
     ["Data do cadastro", (point) => formatDate(point.created_at)],
@@ -1986,9 +2018,12 @@ function getPointPosition(point) {
     };
   }
 
-  return getLocalidadeCoords(point.localidade, point.regiao_administrativa)
-    || getEstimatedLocalidadeCoords(point.localidade, point.regiao_administrativa)
-    || getRegionCoords(point.regiao_administrativa || point.localidade);
+  const localidade = getEffectiveLocalidade(point);
+  const regiao = point.regiao_administrativa || "";
+
+  return getLocalidadeCoords(localidade, regiao)
+    || getEstimatedLocalidadeCoords(localidade, regiao)
+    || getRegionCoords(regiao || localidade);
 }
 
 function getSpreadMapPositions(points) {
@@ -2014,6 +2049,30 @@ function getSpreadMapPositions(points) {
   return positions;
 }
 
+function getSpreadLeafletPositions(points) {
+  const positions = new Map();
+  const groups = groupBy(points, getMapPositionKey);
+  const latRange = DF_BOUNDS.maxLat - DF_BOUNDS.minLat;
+  const lngRange = DF_BOUNDS.maxLng - DF_BOUNDS.minLng;
+
+  for (const group of groups) {
+    const sorted = [...group.items].sort(sortPeopleByName);
+
+    sorted.forEach((point, index) => {
+      const base = getPointPosition(point);
+      if (!base) return;
+      const offset = getVisualMarkerOffset(index, sorted.length);
+
+      positions.set(String(point.id), {
+        latitude: clamp(base.latitude - (offset.y * latRange) / 100, DF_BOUNDS.minLat, DF_BOUNDS.maxLat),
+        longitude: clamp(base.longitude + (offset.x * lngRange) / 100, DF_BOUNDS.minLng, DF_BOUNDS.maxLng),
+      });
+    });
+  }
+
+  return positions;
+}
+
 function getMapPositionCounts(points) {
   const counts = new Map();
   for (const group of groupBy(points, getMapPositionKey)) {
@@ -2032,6 +2091,15 @@ function getSingleMapPosition(point) {
   return {
     x: lngToX(position.longitude),
     y: latToY(position.latitude),
+  };
+}
+
+function getSingleLeafletPosition(point) {
+  const position = getPointPosition(point);
+  if (!position) return null;
+  return {
+    latitude: position.latitude,
+    longitude: position.longitude,
   };
 }
 
@@ -2065,12 +2133,14 @@ function getMapPositionKey(point) {
     return `coords:${position.latitude.toFixed(3)}:${position.longitude.toFixed(3)}`;
   }
 
+  const localidade = getEffectiveLocalidade(point);
+  const regiao = point.regiao_administrativa || "";
   const position = getPointPosition(point);
   if (position) {
-    return `fallback:${normalizeRegion(point.localidade || point.regiao_administrativa)}:${position.latitude.toFixed(3)}:${position.longitude.toFixed(3)}`;
+    return `fallback:${normalizeRegion(localidade || regiao)}:${position.latitude.toFixed(3)}:${position.longitude.toFixed(3)}`;
   }
 
-  return `region:${normalizeRegion(point.regiao_administrativa || point.localidade)}`;
+  return `region:${normalizeRegion(regiao || localidade)}`;
 }
 
 function getVisualMarkerOffset(index, total) {

@@ -65,7 +65,7 @@
           <span class="sideText">Mapa e resumo</span>
         </button>
         <button type="button" class="sideMenuButton" data-view-target="network">
-          <span class="sideText">Cadastros e arvore</span>
+          <span class="sideText">Cadastros e árvore</span>
         </button>
         <div class="sideMenuDivider" aria-hidden="true"></div>
         <label class="sideSearchLabel" for="exportLeaderSearch">Pesquisar nome</label>
@@ -95,7 +95,7 @@
           <div class="panelHeader">
             <div>
               <h2>Mapa do DF</h2>
-              <p>Acompanhe os cadastros por regiao administrativa.</p>
+              <p>Acompanhe os cadastros por região administrativa.</p>
             </div>
           </div>
           <div class="homeMapPreview">
@@ -113,7 +113,7 @@
           <div>
             <span class="homeKicker">Cadastro</span>
             <h2>Cadastrar nova pessoa</h2>
-            <p>Abra o formulario interno para adicionar coordenadores, lideres, cadastrados ou equipe.</p>
+            <p>Abra o formulário interno para adicionar coordenadores, líderes, cadastrados ou equipe.</p>
           </div>
           <button type="button" data-go-view="admin">Abrir cadastro</button>
         </article>
@@ -146,7 +146,7 @@
           <select id="profileReferralRole">
             <option value="CADASTRADOS">Cadastrado</option>
             <option value="COORDENADORES">Coordenador</option>
-            <option value="LIDERES">Lider</option>
+            <option value="LIDERES">Líder</option>
           </select>
         </div>
         <div class="inviteRow">
@@ -186,13 +186,13 @@
           <label for="adminRole">Tipo</label>
           <select id="adminRole" name="role" required>
             <option value="COORDENADORES">Coordenador</option>
-            <option value="LIDERES">Lider</option>
+            <option value="LIDERES">Líder</option>
             <option value="CADASTRADOS">Cadastrado</option>
             <option value="EQUIPE">Equipe</option>
           </select>
         </div>
         <div>
-          <label for="adminRegiao">Regiao administrativa</label>
+          <label for="adminRegiao">Região administrativa</label>
           <select id="adminRegiao" name="regiao_administrativa" required>
             <option value="" selected disabled>Selecione a RA</option>
             <option>Agua Quente</option>
@@ -287,7 +287,7 @@
             <select id="editRole" name="role" required>
               <option value="EQUIPE">Equipe</option>
               <option value="COORDENADORES">Coordenador</option>
-              <option value="LIDERES">Lider</option>
+              <option value="LIDERES">Líder</option>
               <option value="CADASTRADOS">Cadastrado</option>
             </select>
           </div>
@@ -298,7 +298,7 @@
             </select>
           </div>
           <div>
-            <label for="editRegiao">Regiao administrativa</label>
+            <label for="editRegiao">Região administrativa</label>
             <select id="editRegiao" name="regiao_administrativa" required>
               <option value="" selected disabled>Selecione a RA</option>
               <option>Agua Quente</option>
@@ -382,20 +382,20 @@
         <select id="filterRole">
           <option value="">Todos</option>
           <option value="COORDENADORES">Coordenadores</option>
-          <option value="LIDERES">Lideres</option>
+          <option value="LIDERES">Líderes</option>
           <option value="CADASTRADOS">Cadastrados</option>
         </select>
       </div>
 
       <div>
-        <label for="filterLeader">Responsavel</label>
+        <label for="filterLeader">Responsável</label>
         <select id="filterLeader">
           <option value="">Todos</option>
         </select>
       </div>
 
       <div>
-        <label for="filterRegion">Regiao administrativa</label>
+        <label for="filterRegion">Região administrativa</label>
         <select id="filterRegion">
           <option value="">Todas</option>
         </select>
@@ -405,7 +405,7 @@
         <label for="filterLevel">Nivel</label>
         <select id="filterLevel">
           <option value="">Todos</option>
-          <option value="0">0 - Responsavel raiz</option>
+          <option value="0">0 - Responsável raiz</option>
           <option value="1">1 - Diretos</option>
           <option value="2">2 - Segundo nivel</option>
           <option value="3">3+</option>
@@ -420,7 +420,7 @@
 
     <section class="dashboardGrid dashboardView" data-view="map" aria-label="Indicadores">
       <article class="metricCard">
-        <span>Lideres</span>
+        <span>Líderes</span>
         <strong id="metricLeaders">0</strong>
       </article>
       <article class="metricCard">
@@ -428,11 +428,11 @@
         <strong id="metricUsers">0</strong>
       </article>
       <article class="metricCard">
-        <span>Regioes</span>
+        <span>Regiões</span>
         <strong id="metricRegions">0</strong>
       </article>
       <article class="metricCard">
-        <span>Pontos com localizacao</span>
+        <span>Pontos com localização</span>
         <strong id="metricMap">0</strong>
       </article>
     </section>
@@ -441,26 +441,16 @@
       <article class="dashboardPanel mapPanel">
         <div class="panelHeader">
           <div>
-            <h2>Mapa satelite do Distrito Federal</h2>
-            <p id="mapHint">Marcadores carregados conforme permissao do usuario logado.</p>
+            <h2>Mapa satélite do Distrito Federal</h2>
+            <p id="mapHint">Marcadores carregados conforme permissão do usuário logado.</p>
           </div>
           <div class="mapLegend" aria-label="Legenda do mapa">
-            <span><i class="legendDot leaderDot"></i>Lider</span>
+            <span><i class="legendDot leaderDot"></i>Líder</span>
             <span><i class="legendDot personDot"></i>Cadastrado</span>
           </div>
         </div>
 
-        <div id="mapCanvas" class="mapCanvas" aria-label="Mapa visual do DF">
-          <iframe
-            class="satelliteFrame"
-            title="Mapa satelite do Distrito Federal"
-            src="https://www.google.com/maps?q=Distrito%20Federal%2C%20Brasil&t=k&z=10&output=embed"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-          ></iframe>
-          <div id="mapOverlay" class="mapOverlay" aria-hidden="false"></div>
-          <div class="mapLabel">Distrito Federal</div>
-        </div>
+        <div id="mapCanvas" class="mapCanvas leafletSatellite" aria-label="Mapa visual do DF"></div>
 
         <div id="selectedPoint" class="selectedPoint">
           Selecione um marcador para ver detalhes.
@@ -475,10 +465,10 @@
           </div>
         </div>
 
-        <h3 class="summaryTitle">Por regiao</h3>
+        <h3 class="summaryTitle">Por região</h3>
         <div id="regionSummary" class="summaryList"></div>
 
-        <h3 class="summaryTitle">Cadastros da regiao</h3>
+        <h3 class="summaryTitle">Cadastros da região</h3>
         <div id="regionLeaders" class="summaryList"></div>
 
       </aside>
@@ -489,7 +479,7 @@
         <div class="panelHeader">
           <div>
             <h2>Cadastros</h2>
-            <p id="tableHint">Lista filtrada de coordenadores, lideres e cadastrados.</p>
+            <p id="tableHint">Lista filtrada de coordenadores, líderes e cadastrados.</p>
           </div>
         </div>
 
@@ -501,7 +491,7 @@
                 <th>Tipo</th>
                 <th class="adminOnlyColumn">Contato</th>
                 <th>Localidade</th>
-                <th>Responsavel</th>
+                <th>Responsável</th>
                 <th class="adminOnlyColumn">Link</th>
                 <th>Nivel</th>
                 <th>Cadastro</th>
@@ -516,7 +506,7 @@
       <aside class="dashboardPanel networkPanel">
         <div class="panelHeader">
           <div>
-            <h2>Arvore da rede</h2>
+            <h2>Árvore da rede</h2>
             <p id="networkHint">Visualizacao por niveis de indicacao.</p>
           </div>
         </div>
