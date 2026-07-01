@@ -68,19 +68,21 @@
           <span class="sideText">Cadastros e arvore</span>
         </button>
         <div class="sideMenuDivider" aria-hidden="true"></div>
-        <label class="sideSearchLabel" for="exportLeaderSearch">Pesquisar lider</label>
+        <label class="sideSearchLabel" for="exportLeaderSearch">Pesquisar nome</label>
         <input
           id="exportLeaderSearch"
           class="sideSearchInput"
           type="search"
           placeholder="Nome da pessoa"
+          list="exportPeopleOptions"
           autocomplete="off"
         />
+        <datalist id="exportPeopleOptions"></datalist>
+        <div id="exportNameResults" class="sideExportResults" aria-live="polite"></div>
         <div class="sideExportActions" aria-label="Exportar dados">
           <span>Exportar</span>
           <div>
-            <button type="button" id="btnExportLeader">Lider</button>
-            <button type="button" id="btnExportAll">Geral</button>
+            <button type="button" id="btnExportLeader">Resultado</button>
           </div>
         </div>
         <div id="exportStatus" class="sideMenuStatus" hidden></div>

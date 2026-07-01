@@ -363,8 +363,9 @@ const els = {
   deleteEdit: document.getElementById("btnDeleteEdit"),
   menuToggle: document.getElementById("btnToggleMenu"),
   exportLeaderSearch: document.getElementById("exportLeaderSearch"),
+  exportPeopleOptions: document.getElementById("exportPeopleOptions"),
+  exportNameResults: document.getElementById("exportNameResults"),
   exportLeader: document.getElementById("btnExportLeader"),
-  exportAll: document.getElementById("btnExportAll"),
   exportStatus: document.getElementById("exportStatus"),
   sideMessageBadge: document.getElementById("sideMessageBadge"),
   homePendingMessages: document.getElementById("homePendingMessages"),
@@ -408,8 +409,8 @@ document.getElementById("adminRole")?.addEventListener("change", updateAdminLogi
 document.getElementById("editRole")?.addEventListener("change", updateEditLoginFields);
 els.adminPeopleSearch?.addEventListener("input", renderAdminPeopleSearch);
 els.emailVisible?.addEventListener("click", () => emailUsers(filteredPoints));
-els.exportLeader?.addEventListener("click", exportSelectedLeaderNetwork);
-els.exportAll?.addEventListener("click", exportAllPeople);
+els.exportLeaderSearch?.addEventListener("input", renderExportPeopleResults);
+els.exportLeader?.addEventListener("click", exportPeopleByName);
 els.refreshMessages?.addEventListener("click", loadContactMessages);
 els.editForm?.addEventListener("submit", saveEditForm);
 els.closeEdit?.addEventListener("click", closeEditDialog);
@@ -657,6 +658,14 @@ function fillFilters(points) {
   els.region.innerHTML = `<option value="">Todas</option>${regions
     .map((region) => `<option value="${escapeHtml(region)}">${escapeHtml(region)}</option>`)
     .join("")}`;
+
+  if (els.exportPeopleOptions) {
+    const names = [...new Set(points.map((point) => point.name).filter(Boolean))]
+      .sort((a, b) => String(a).localeCompare(String(b)));
+    els.exportPeopleOptions.innerHTML = names
+      .map((name) => `<option value="${escapeHtml(name)}"></option>`)
+      .join("");
+  }
 }
 
 function render() {
@@ -667,6 +676,36 @@ function render() {
   renderTable(filteredPoints);
   renderTree(filteredPoints);
   renderAdminPeopleSearch();
+  renderExportPeopleResults();
+}
+
+function renderExportPeopleResults() {
+  if (!els.exportNameResults) return;
+  const search = normalizeLocalidadeKey(els.exportLeaderSearch?.value || "");
+  if (!search) {
+    els.exportNameResults.innerHTML = "";
+    return;
+  }
+
+  const matches = getPeopleMatchingExportSearch(allPoints).slice(0, 5);
+  if (!matches.length) {
+    els.exportNameResults.innerHTML = `<div class="sideExportEmpty">Nenhuma pessoa encontrada.</div>`;
+    return;
+  }
+
+  els.exportNameResults.innerHTML = matches.map((person) => `
+    <button type="button" data-export-name="${escapeHtml(person.name || "")}">
+      <strong>${escapeHtml(person.name || "-")}</strong>
+      <span>${escapeHtml(person.localidade || person.regiao_administrativa || "")}</span>
+    </button>
+  `).join("");
+
+  els.exportNameResults.querySelectorAll("[data-export-name]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (els.exportLeaderSearch) els.exportLeaderSearch.value = button.dataset.exportName || "";
+      renderExportPeopleResults();
+    });
+  });
 }
 
 function renderAdminPeopleSearch() {
@@ -1473,26 +1512,16 @@ function emailUsers(points) {
   window.location.href = `mailto:?bcc=${encodeURIComponent(emails.join(","))}`;
 }
 
-async function exportSelectedLeaderNetwork() {
+async function exportPeopleByName() {
   const points = await getPeopleForExport();
   if (!points) return;
-  const leader = getSelectedLeaderForExport(points);
-  if (!leader) {
-    notifyExport("Pesquise ou selecione um lider/coordenador antes de exportar a rede.", "err");
+  const matches = getPeopleMatchingExportSearch(points);
+  const search = (els.exportLeaderSearch?.value || "").trim();
+  if (!matches.length) {
+    notifyExport(search ? "Nenhum cadastro disponivel com esse nome." : "Nenhum cadastro disponivel para exportar.", "err");
     return;
   }
-
-  const network = points
-    .filter((point) => String(point.root_leader_id) === String(leader.id) || String(point.id) === String(leader.id))
-    .sort((a, b) => Number(a.level || 0) - Number(b.level || 0) || String(a.name || "").localeCompare(String(b.name || "")));
-
-  exportPeopleCsv(network, `rede-${slugify(leader.name || "lider")}`);
-}
-
-async function exportAllPeople() {
-  const points = await getPeopleForExport();
-  if (!points) return;
-  exportPeopleCsv(points, "lista-geral-cadastros");
+  exportPeopleCsv(matches, search ? `cadastros-${slugify(search)}` : "lista-geral-cadastros");
 }
 
 async function getPeopleForExport() {
@@ -1520,23 +1549,16 @@ async function getPeopleForExport() {
   }
 }
 
-function getSelectedLeaderForExport(points = allPoints) {
-  const directId = selectedLeaderId || els.leader?.value;
-  if (directId) {
-    const directLeader = points.find((point) => String(point.id) === String(directId));
-    if (directLeader) return directLeader;
-  }
+function getPeopleMatchingExportSearch(points = allPoints) {
+  const search = normalizeLocalidadeKey(els.exportLeaderSearch?.value || "");
+  if (!search) return [...points].sort(sortPeopleByName);
+  return points
+    .filter((point) => normalizeLocalidadeKey(point.name).includes(search))
+    .sort(sortPeopleByName);
+}
 
-  const selectedPoint = points.find((point) => String(point.id) === String(selectedPointId));
-  if (selectedPoint && isLeaderRole(selectedPoint.role)) return selectedPoint;
-
-  const search = (els.exportLeaderSearch?.value || els.search?.value || "").trim().toLowerCase();
-  if (!search) return null;
-
-  const leaders = points.filter((point) => isLeaderRole(point.role));
-  return leaders.find((point) => String(point.name || "").toLowerCase() === search)
-    || leaders.find((point) => String(point.name || "").toLowerCase().includes(search))
-    || null;
+function sortPeopleByName(a, b) {
+  return String(a.name || "").localeCompare(String(b.name || ""));
 }
 
 function exportPeopleCsv(points, baseName) {

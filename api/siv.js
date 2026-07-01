@@ -120,7 +120,7 @@ export default async function handler(req, res) {
             null,
             phone,
             passwordHash,
-            bodyObj.photoUrl || bodyObj.photo_url || "/img/LOGO-SIV.png",
+            bodyObj.photoUrl || bodyObj.photo_url || null,
           ]
       );
 

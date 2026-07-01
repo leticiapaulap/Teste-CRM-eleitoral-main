@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "npx vercel dev",
     "test": "node --test",
     "db:migrate": "node scripts/migrate.js",
     "admin:create": "node scripts/create-admin.js"

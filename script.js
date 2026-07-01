@@ -301,7 +301,6 @@ form.addEventListener("submit", async (e) => {
   const whatsapp = normalizeWhatsApp(document.getElementById("whatsapp").value.trim());
   const bairro = document.getElementById("bairro").value.trim();
   const ra = document.getElementById("ra").value;
-  const foto = document.getElementById("foto")?.files?.[0];
   const inviteRole = getInviteRoleFromURL();
   const email = coordinatorEmail?.value?.trim() || "";
   const password = coordinatorPassword?.value || "";
@@ -333,8 +332,6 @@ form.addEventListener("submit", async (e) => {
 
   try {
     btn.disabled = true;
-    btn.textContent = foto ? "Enviando foto..." : "Enviando cadastro...";
-    const photoUrl = foto ? await uploadPhoto(foto) : "/img/LOGO-SIV.png";
     btn.textContent = "Enviando cadastro...";
 
     const body = new URLSearchParams({
@@ -342,7 +339,6 @@ form.addEventListener("submit", async (e) => {
       whatsapp,
       bairro,
       ra,
-      photoUrl,
       ref: veioPorLink ? ref : "",
       email: inviteRole === "COORDENADORES" ? email : "",
       password: inviteRole === "COORDENADORES" ? password : "",

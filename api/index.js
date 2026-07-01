@@ -102,7 +102,7 @@ async function sivRegister(req, res) {
       phone: input.phone || input.telefone || input.whatsapp,
       password: input.password || randomBytes(12).toString("hex"),
       role: publicRole,
-      photoUrl: input.photoUrl || input.photo_url || "/img/LOGO-SIV.png",
+      photoUrl: input.photoUrl || input.photo_url || null,
       localidade: input.localidade || input.bairro,
       regiao_administrativa: input.regiao_administrativa || input.ra,
       referralCode,

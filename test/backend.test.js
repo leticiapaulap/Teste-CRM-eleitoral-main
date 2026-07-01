@@ -45,7 +45,7 @@ test("cadastro aceita foto opcional para coordenadores, lideres e cadastrados", 
     localidade: "Taguatinga",
     regiao_administrativa: "Taguatinga",
     consent_accepted: true,
-  }).photoUrl, "/img/LOGO-SIV.png");
+  }).photoUrl, null);
 
   assert.equal(normalizeRegisterInput({
     name: "Lider Souza",
@@ -56,7 +56,7 @@ test("cadastro aceita foto opcional para coordenadores, lideres e cadastrados", 
     localidade: "Ceilandia",
     regiao_administrativa: "Ceilandia",
     consent_accepted: true,
-  }).photoUrl, "/img/LOGO-SIV.png");
+  }).photoUrl, null);
 
   assert.equal(normalizeRegisterInput({
     name: "Joao Souza",
@@ -67,7 +67,7 @@ test("cadastro aceita foto opcional para coordenadores, lideres e cadastrados", 
     localidade: "Ceilandia",
     regiao_administrativa: "Ceilandia",
     consent_accepted: true,
-  }).photoUrl, "/img/LOGO-SIV.png");
+  }).photoUrl, null);
 });
 
 test("cadastro de admin aceita foto opcional", () => {
@@ -82,7 +82,7 @@ test("cadastro de admin aceita foto opcional", () => {
     consent_accepted: true,
   });
 
-  assert.equal(input.photoUrl, "/img/LOGO-SIV.png");
+  assert.equal(input.photoUrl, null);
 });
 
 test("gera link de indicacao usando APP_URL sem dominio fixo", () => {
