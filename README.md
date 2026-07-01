@@ -63,10 +63,10 @@ npm install
 npm run db:migrate
 ```
 
-Se preferir executar manualmente:
+Se preferir executar manualmente, rode todos os arquivos da pasta `db/migrations` em ordem. Exemplo:
 
 ```bash
-psql "$DATABASE_URL" -f db/migrations/001_init.sql
+for file in db/migrations/*.sql; do psql "$DATABASE_URL" -f "$file"; done
 ```
 
 ## Rodar localmente

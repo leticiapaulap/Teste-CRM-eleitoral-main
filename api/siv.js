@@ -82,7 +82,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "Consentimento obrigatorio." });
     }
 
-    const syntheticEmail = `${phone}.${Date.now()}@cadastro.siv.local`;
     const passwordHash = await bcrypt.hash(randomUUID(), 12);
     const newReferralCode = makeReferralCode();
     const newReferralUrl = makeReferralUrl(getPublicAppUrl(req), newReferralCode);
@@ -118,7 +117,7 @@ export default async function handler(req, res) {
          returning id, name, email, phone, role`,
           [
             name,
-            syntheticEmail,
+            null,
             phone,
             passwordHash,
             bodyObj.photoUrl || bodyObj.photo_url || "/img/LOGO-SIV.png",
@@ -162,7 +161,7 @@ export default async function handler(req, res) {
       const params = new URLSearchParams();
       for (const [k, v] of Object.entries(bodyObj)) params.set(k, String(v));
       params.set("ip", ip);
-      params.set("email", syntheticEmail);
+      if (bodyObj.email) params.set("email", String(bodyObj.email));
       params.set("role", "CADASTRADOS");
       params.set("referral_code", newReferralCode);
 

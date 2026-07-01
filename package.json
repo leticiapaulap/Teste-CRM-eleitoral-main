@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "db:migrate": "psql \"$DATABASE_URL\" -f db/migrations/001_init.sql",
+    "db:migrate": "node scripts/migrate.js",
     "admin:create": "node scripts/create-admin.js"
   },
   "dependencies": {

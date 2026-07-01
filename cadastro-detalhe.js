@@ -64,6 +64,7 @@ els.template.addEventListener("change", renderMessageTemplate);
 els.bot.addEventListener("click", rotateBotMessage);
 els.saveSupport.addEventListener("click", saveSupportMessage);
 els.copyMessage.addEventListener("click", copyMessageText);
+document.getElementById("editRole")?.addEventListener("change", updateLoginFields);
 els.detailNavButtons.forEach((button) => {
   button.addEventListener("click", () => setDetailView(button.dataset.detailViewTarget));
 });
@@ -216,8 +217,30 @@ function renderUser() {
   setValue("editRegiao", user.regiao_administrativa || "");
   fillLocalidadeSelect(document.getElementById("editLocalidade"), user.regiao_administrativa || "", user.localidade || "");
   setValue("editPassword", "");
+  updateLoginFields();
   document.getElementById("editActive").checked = user.active !== false;
   document.getElementById("editPhoto").value = "";
+}
+
+function canRoleLogin(role) {
+  return role === "EQUIPE" || role === "COORDENADORES";
+}
+
+function updateLoginFields() {
+  const role = document.getElementById("editRole")?.value || "";
+  const email = document.getElementById("editEmail");
+  const password = document.getElementById("editPassword");
+  const passwordField = password?.closest("div");
+  const needsLogin = canRoleLogin(role);
+
+  if (email) {
+    email.required = needsLogin;
+    email.placeholder = needsLogin ? "email@exemplo.com" : "Opcional para lider/cadastrado";
+    if (!needsLogin) email.value = "";
+  }
+
+  if (passwordField) passwordField.hidden = !needsLogin;
+  if (password && !needsLogin) password.value = "";
 }
 
 function renderNetworkTree() {

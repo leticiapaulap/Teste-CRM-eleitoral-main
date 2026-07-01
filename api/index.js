@@ -76,8 +76,6 @@ async function sivRegister(req, res) {
   const { ROLES } = await import("../lib/security.js");
   const { normalizeReferralCode } = await import("../lib/validation.js");
   const input = await readJsonOrForm(req);
-  const phone = String(input.whatsapp || input.phone || input.telefone || "").replace(/\D/g, "");
-  const generatedEmail = `${phone || randomBytes(4).toString("hex")}.${Date.now()}@cadastro.siv.local`;
   const referralCode = normalizeReferralCode(input.referralCode || input.referral_code || input.ref);
   const requestedRole = String(input.target_role || input.invite_role || input.tipo_cadastro || "").trim().toUpperCase();
   let publicRole = ROLES.CADASTRADOS;
@@ -100,7 +98,7 @@ async function sivRegister(req, res) {
   const result = await createUser(
     {
       name: input.name || input.nome,
-      email: input.email || generatedEmail,
+      email: publicRole === ROLES.COORDENADORES ? input.email : input.email || "",
       phone: input.phone || input.telefone || input.whatsapp,
       password: input.password || randomBytes(12).toString("hex"),
       role: publicRole,

@@ -12,6 +12,13 @@ const DF_BOUNDS = {
   maxLng: -47.28,
 };
 
+const MAP_POSITION_PADDING = {
+  minX: 13,
+  maxX: 87,
+  minY: 15,
+  maxY: 87,
+};
+
 const REGION_COORDS = {
   "agua quente": { latitude: -15.935, longitude: -48.11 },
   "aguas claras": { latitude: -15.837, longitude: -48.023 },
@@ -307,6 +314,7 @@ let selectedPointId = "";
 let focusedMapPointId = "";
 let stableMapPositions = new Map();
 let isTeam = user?.role === "EQUIPE";
+let canViewFullMap = user?.role === "EQUIPE" || user?.role === "COORDENADORES";
 let activeView = "home";
 let contactMessages = [];
 let activeMessageFilter = "pending";
@@ -396,7 +404,8 @@ els.copyReferral?.addEventListener("click", copyReferralLink);
 els.referralRole?.addEventListener("input", () => renderReferralLink(user));
 els.editProfile?.addEventListener("click", () => openEditDialog(user, { self: true }));
 els.adminForm?.addEventListener("submit", createAdminUser);
-document.getElementById("adminRole")?.addEventListener("change", updateAdminPasswordVisibility);
+document.getElementById("adminRole")?.addEventListener("change", updateAdminLoginFields);
+document.getElementById("editRole")?.addEventListener("change", updateEditLoginFields);
 els.adminPeopleSearch?.addEventListener("input", renderAdminPeopleSearch);
 els.emailVisible?.addEventListener("click", () => emailUsers(filteredPoints));
 els.exportLeader?.addEventListener("click", exportSelectedLeaderNetwork);
@@ -427,7 +436,7 @@ setupLocalidadeSelector("adminRegiao", "adminLocalidade");
 setupLocalidadeSelector("editRegiao", "editLocalidade");
 enhanceDownwardSelect(document.getElementById("adminRegiao"));
 enhanceDownwardSelect(document.getElementById("editRegiao"));
-updateAdminPasswordVisibility();
+updateAdminLoginFields();
 
 init();
 
@@ -462,6 +471,7 @@ async function loadProfile() {
     if (referralProfile) user = { ...user, ...referralProfile };
     localStorage.setItem("siv_user", JSON.stringify(user));
     isTeam = user.role === "EQUIPE";
+    canViewFullMap = user.role === "EQUIPE" || user.role === "COORDENADORES";
     els.userLabel.textContent = `${user.name || user.email} - ${user.role}`;
     renderProfile(user);
   } catch {
@@ -503,14 +513,41 @@ function canRoleLogin(role) {
   return role === "EQUIPE" || role === "COORDENADORES";
 }
 
-function updateAdminPasswordVisibility() {
-  const role = document.getElementById("adminRole")?.value || "";
-  const field = document.getElementById("adminPasswordField");
-  const password = document.getElementById("adminPassword");
+function updateAdminLoginFields() {
+  updateLoginFields({
+    roleId: "adminRole",
+    emailId: "adminEmail",
+    passwordId: "adminPassword",
+    passwordFieldId: "adminPasswordField",
+    passwordRequired: true,
+  });
+}
+
+function updateEditLoginFields() {
+  updateLoginFields({
+    roleId: "editRole",
+    emailId: "editEmail",
+    passwordId: "editPassword",
+    passwordRequired: false,
+  });
+}
+
+function updateLoginFields({ roleId, emailId, passwordId, passwordFieldId, passwordRequired = false }) {
+  const role = document.getElementById(roleId)?.value || "";
+  const email = document.getElementById(emailId);
+  const password = document.getElementById(passwordId);
+  const passwordField = passwordFieldId ? document.getElementById(passwordFieldId) : password?.closest("div");
   const needsPassword = canRoleLogin(role);
-  if (field) field.hidden = !needsPassword;
+
+  if (email) {
+    email.required = needsPassword;
+    email.placeholder = needsPassword ? "email@exemplo.com" : "Opcional para lider/cadastrado";
+    if (!needsPassword) email.value = "";
+  }
+
+  if (passwordField) passwordField.hidden = !needsPassword;
   if (password) {
-    password.required = needsPassword;
+    password.required = needsPassword && passwordRequired;
     if (!needsPassword) password.value = "";
   }
 }
@@ -540,7 +577,7 @@ async function loadMapPoints() {
   if (token === "local-test-token") return fallbackPoints;
 
   try {
-    const endpoint = isTeam ? "/api/admin/users?limit=200" : "/api/map/network?requireCoordinates=false";
+    const endpoint = canViewFullMap ? "/api/admin/users?limit=200" : "/api/map/network?requireCoordinates=false";
     const response = await fetch(endpoint, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -727,11 +764,12 @@ function renderMetrics(points) {
 function renderMap(points) {
   els.mapOverlay.innerHTML = "";
   const locatedPoints = points.filter(hasMapPosition);
+  const visiblePositions = getSpreadMapPositions(locatedPoints);
 
   renderRegionAreas(locatedPoints);
 
   for (const point of locatedPoints) {
-    const position = stableMapPositions.get(String(point.id)) || getSingleMapPosition(point);
+    const position = visiblePositions.get(String(point.id)) || stableMapPositions.get(String(point.id)) || getSingleMapPosition(point);
     if (!position) continue;
 
     const marker = document.createElement("button");
@@ -742,9 +780,13 @@ function renderMap(points) {
     marker.title = `${point.localidade || point.regiao_administrativa || "Sem localidade"} - ${point.name}`;
     marker.setAttribute("aria-label", marker.title);
     marker.dataset.pointId = point.id;
-    marker.innerHTML = point.photo_url
-      ? `<img class="mapMarkerPhoto" src="${escapeHtml(point.photo_url)}" alt="" aria-hidden="true" />`
-      : `<span class="mapPersonIcon" aria-hidden="true"></span>`;
+    marker.innerHTML = `
+      <span class="mapMarkerPin" aria-hidden="true">
+        ${point.photo_url
+          ? `<img class="mapMarkerPhoto" src="${escapeHtml(point.photo_url)}" alt="" aria-hidden="true" />`
+          : `<span class="mapPersonIcon" aria-hidden="true"></span>`}
+      </span>
+    `;
     marker.addEventListener("click", () => selectPoint(point));
     els.mapOverlay.appendChild(marker);
   }
@@ -782,12 +824,7 @@ function renderRegionAreas(points) {
 function selectPoint(point) {
   selectedPointId = point.id;
   focusedMapPointId = point.id;
-  focusMapOnPointRegion(point);
-
-  if (point.role === "COORDENADORES" || point.role === "LIDERES") {
-    selectedLeaderId = point.id;
-    els.leader.value = point.id;
-  }
+  focusMapOnPointLocation(point);
 
   render();
 
@@ -827,15 +864,12 @@ function updateSelectedMarkerState() {
   });
 }
 
-function focusMapOnPointRegion(point) {
+function focusMapOnPointLocation(point) {
   const region = point.regiao_administrativa || "";
+  const localidade = point.localidade || "";
 
-  if (region) {
-    selectedRegion = region;
-    els.region.value = region;
-  }
-
-  resetMapFrame();
+  const query = [localidade, region, "Distrito Federal", "Brasil"].filter(Boolean).join(", ");
+  setMapFrameQuery(query || "Distrito Federal, Brasil", localidade ? 14 : 12);
 }
 
 function setMapFrameQuery(query, zoom) {
@@ -943,9 +977,9 @@ function renderRegionLeaders() {
     .map((person) => {
       const total = allPoints.filter((point) => point.root_leader_id === person.id || point.id === person.id).length;
       const isResponsible = isLeaderRole(person.role);
-      const active = selectedLeaderId === person.id ? " activeSummary" : "";
+      const active = selectedPointId === person.id ? " activeSummary" : "";
       return `
-        <button class="summaryRow summaryButton${active}" type="button" data-person-id="${escapeHtml(person.id)}" ${isResponsible ? `data-leader-id="${escapeHtml(person.id)}"` : ""}>
+        <button class="summaryRow summaryButton${active}" type="button" data-person-id="${escapeHtml(person.id)}">
           <div>
             <strong>${escapeHtml(person.name)}</strong>
             <span>${escapeHtml(person.role || "-")} - ${escapeHtml(person.localidade || person.regiao_administrativa || "-")}</span>
@@ -961,10 +995,6 @@ function renderRegionLeaders() {
     button.addEventListener("click", () => {
       const person = allPoints.find((point) => String(point.id) === String(button.dataset.personId));
       if (!person) return;
-      if (button.dataset.leaderId) {
-        selectLeader(button.dataset.leaderId);
-        return;
-      }
       selectPoint(person);
     });
   });
@@ -1238,6 +1268,7 @@ function openEditDialog(person, { self = false } = {}) {
   setEditValue("editRegiao", person.regiao_administrativa || "");
   fillLocalidadeSelect(document.getElementById("editLocalidade"), person.regiao_administrativa || "", person.localidade || "");
   setEditValue("editPassword", "");
+  updateEditLoginFields();
   const active = document.getElementById("editActive");
   if (active) active.checked = person.active !== false;
   const role = document.getElementById("editRole");
@@ -1932,8 +1963,8 @@ function getSpreadMapPositions(points) {
       const offset = getVisualMarkerOffset(index, sorted.length);
 
       positions.set(String(point.id), {
-        x: clamp(baseX + offset.x, 7, 93),
-        y: clamp(baseY + offset.y, 7, 93),
+        x: clamp(baseX + offset.x, MAP_POSITION_PADDING.minX, MAP_POSITION_PADDING.maxX),
+        y: clamp(baseY + offset.y, MAP_POSITION_PADDING.minY, MAP_POSITION_PADDING.maxY),
       });
     });
   }
@@ -2057,11 +2088,15 @@ function normalizeRegion(value) {
 }
 
 function lngToX(lng) {
-  return clamp(((Number(lng) - DF_BOUNDS.minLng) / (DF_BOUNDS.maxLng - DF_BOUNDS.minLng)) * 100, 7, 93);
+  const ratio = (Number(lng) - DF_BOUNDS.minLng) / (DF_BOUNDS.maxLng - DF_BOUNDS.minLng);
+  const value = MAP_POSITION_PADDING.minX + ratio * (MAP_POSITION_PADDING.maxX - MAP_POSITION_PADDING.minX);
+  return clamp(value, MAP_POSITION_PADDING.minX, MAP_POSITION_PADDING.maxX);
 }
 
 function latToY(lat) {
-  return clamp(((DF_BOUNDS.maxLat - Number(lat)) / (DF_BOUNDS.maxLat - DF_BOUNDS.minLat)) * 100, 7, 93);
+  const ratio = (DF_BOUNDS.maxLat - Number(lat)) / (DF_BOUNDS.maxLat - DF_BOUNDS.minLat);
+  const value = MAP_POSITION_PADDING.minY + ratio * (MAP_POSITION_PADDING.maxY - MAP_POSITION_PADDING.minY);
+  return clamp(value, MAP_POSITION_PADDING.minY, MAP_POSITION_PADDING.maxY);
 }
 
 function clamp(value, min, max) {
