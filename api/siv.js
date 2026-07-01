@@ -166,7 +166,7 @@ export default async function handler(req, res) {
       params.set("referral_code", newReferralCode);
 
       try {
-        const r = await fetch(scriptUrl, { method: "POST", body: params });
+        const r    = await fetch(scriptUrl, { method: "POST", body: params });
         const text = await r.text();
         sheetResult = JSON.parse(text);
       } catch (error) {
