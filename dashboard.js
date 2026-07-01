@@ -347,7 +347,6 @@ const els = {
   selected: document.getElementById("selectedPoint"),
   regionSummary: document.getElementById("regionSummary"),
   regionLeaders: document.getElementById("regionLeaders"),
-  leaderNetwork: document.getElementById("leaderNetwork"),
   table: document.getElementById("peopleTable"),
   tree: document.getElementById("networkTree"),
   metricLeaders: document.getElementById("metricLeaders"),
@@ -867,7 +866,7 @@ function selectPoint(point) {
 
   render();
 
-  const locationLabel = point.localidade || point.regiao_administrativa || "Sem localidade";
+  const locationLabel = point.localidade || "Sem localidade";
   const registeredBy = getRegisteredByLabel(point);
   const rootLeader = point.root_leader_name || findPointName(point.root_leader_id) || "Nao informado";
   const lineage = getLineage(point);
@@ -883,7 +882,7 @@ function selectPoint(point) {
     </div>
     <div class="selectedPointGrid">
       <span><b>Regiao adm.</b>${escapeHtml(point.regiao_administrativa || "Sem regiao")}</span>
-      <span><b>Localidade</b>${escapeHtml(locationLabel)}</span>
+      <span><b>Bairro/localidade</b>${escapeHtml(locationLabel)}</span>
       <span><b>Por quem cadastrou</b>${escapeHtml(registeredBy)}</span>
       <span><b>Responsavel raiz</b>${escapeHtml(rootLeader)}</span>
       <span><b>Cadastro</b>${formatDate(point.created_at)}</span>
@@ -980,17 +979,23 @@ function renderSelectedDescendants(point, descendants) {
       ${descendants.map((item) => `
         <div>
           <strong>${escapeHtml(item.name || "Sem nome")}</strong>
-          <span>${escapeHtml(item.regiao_administrativa || "Sem regiao")} - cadastrado por ${escapeHtml(getRegisteredByLabel(item))}</span>
+          <span>${escapeHtml(formatLocationDetails(item))} - cadastrado por ${escapeHtml(getRegisteredByLabel(item))}</span>
         </div>
       `).join("")}
     </div>
   `;
 }
 
+function formatLocationDetails(point) {
+  const localidade = point?.localidade || "";
+  const regiao = point?.regiao_administrativa || "";
+  if (localidade && regiao && localidade !== regiao) return `${localidade} - ${regiao}`;
+  return localidade || regiao || "Sem localidade";
+}
+
 function renderSummaries(points) {
   renderRegionSummary();
   renderRegionLeaders();
-  renderLeaderNetwork();
 }
 
 function renderRegionSummary() {
@@ -1037,30 +1042,6 @@ function renderRegionLeaders() {
       selectPoint(person);
     });
   });
-}
-
-function renderLeaderNetwork() {
-  const leaderId = selectedLeaderId || els.leader.value;
-  if (!leaderId) {
-    els.leaderNetwork.innerHTML = `<div class="emptyState">Selecione um responsavel para ver a rede dele.</div>`;
-    return;
-  }
-
-  const network = allPoints
-    .filter((point) => point.root_leader_id === leaderId || point.id === leaderId)
-    .sort((a, b) => Number(a.level || 0) - Number(b.level || 0));
-
-  els.leaderNetwork.innerHTML = network
-    .map(
-      (point) => `
-        <div class="networkMiniItem">
-          <strong>${escapeHtml(point.name)}</strong>
-          <span>${escapeHtml(point.role)} - nivel ${point.level ?? "-"}</span>
-          <span>${escapeHtml(point.localidade || point.regiao_administrativa || "")}</span>
-        </div>
-      `
-    )
-    .join("");
 }
 
 function renderSummaryList(container, items, options = {}) {
@@ -1187,7 +1168,7 @@ function renderCreatedSummary(createdUser, leaderProfile, photoUrl = "") {
   if (!els.adminCreatedSummary || !createdUser) return;
   const link = leaderProfile?.referral_url || getPublicReferralUrl({ ...createdUser, ...leaderProfile });
   const code = leaderProfile?.referral_code || createdUser.referral_code || "-";
-  const displayPhoto = photoUrl || createdUser.photo_url || "img/LOGO-SIV.png";
+  const displayPhoto = photoUrl || createdUser.photo_url || "";
 
   els.adminCreatedSummary.hidden = false;
   els.adminCreatedSummary.innerHTML = `
@@ -1199,7 +1180,7 @@ function renderCreatedSummary(createdUser, leaderProfile, photoUrl = "") {
       <span class="rolePill ${createdUser.role === "COORDENADORES" || createdUser.role === "LIDERES" ? "roleLeader" : "rolePerson"}">${escapeHtml(createdUser.role || "-")}</span>
     </div>
     <div class="createdSummaryBody">
-      <img class="createdSummaryPhoto" src="${escapeHtml(displayPhoto)}" alt="Foto de ${escapeHtml(createdUser.name || "cadastro")}" />
+      ${displayPhoto ? `<img class="createdSummaryPhoto" src="${escapeHtml(displayPhoto)}" alt="Foto de ${escapeHtml(createdUser.name || "cadastro")}" />` : ""}
       <div class="createdSummaryGrid">
         ${createdSummaryItem("Nome", createdUser.name)}
         ${createdSummaryItem("Email", createdUser.email)}

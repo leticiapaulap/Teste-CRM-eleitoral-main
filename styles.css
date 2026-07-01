@@ -1453,9 +1453,9 @@ body:not(.isTeam) .adminOnlyColumn{
   height:100%;
   border:0;
   z-index:1;
-  pointer-events:none;
-  opacity:.36;
-  filter:saturate(.72) contrast(.88);
+  pointer-events:auto;
+  opacity:1;
+  filter:none;
 }
 
 .mapOverlay{
@@ -1473,7 +1473,7 @@ body:not(.isTeam) .adminOnlyColumn{
   background:rgba(243,195,22,.12);
   transform:translate(-50%, -50%);
   cursor:pointer;
-  pointer-events:auto;
+  pointer-events:none;
   box-shadow:0 0 0 1px rgba(255,255,255,.25);
 }
 
@@ -1516,6 +1516,7 @@ body:not(.isTeam) .adminOnlyColumn{
   border:1px solid rgba(255,255,255,.18);
   border-radius:999px;
   padding:7px 10px;
+  pointer-events:none;
 }
 
 .mapMarker{
