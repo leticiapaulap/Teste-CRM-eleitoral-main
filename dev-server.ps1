@@ -83,6 +83,7 @@ while ($listener.IsListening) {
 
     $relativePath = [Uri]::UnescapeDataString($req.Url.AbsolutePath.TrimStart("/"))
     if ([string]::IsNullOrWhiteSpace($relativePath)) { $relativePath = "index.html" }
+    if ($relativePath -eq "cadastro") { $relativePath = "index.html" }
 
     $fullPath = [IO.Path]::GetFullPath((Join-Path $root $relativePath))
     if (-not $fullPath.StartsWith($root, [StringComparison]::OrdinalIgnoreCase) -or -not [IO.File]::Exists($fullPath)) {

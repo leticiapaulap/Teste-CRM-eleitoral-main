@@ -91,14 +91,10 @@ async function sivRegister(req, res) {
     if (owner.rows[0]?.role === ROLES.EQUIPE) publicRole = requestedRole;
   }
 
-  if (publicRole === ROLES.COORDENADORES && (!input.email || !input.password)) {
-    throw new ApiError(400, "Email e senha sao obrigatorios para cadastro de coordenador.");
-  }
-
   const result = await createUser(
     {
       name: input.name || input.nome,
-      email: publicRole === ROLES.COORDENADORES ? input.email : input.email || "",
+      email: input.email || "",
       phone: input.phone || input.telefone || input.whatsapp,
       password: input.password || randomBytes(12).toString("hex"),
       role: publicRole,
@@ -133,7 +129,7 @@ async function authLogin(req, res) {
     throw new ApiError(401, "Credenciais invalidas.");
   }
   if (!canLogin(user.role)) {
-    throw new ApiError(403, "Login permitido apenas para equipe e coordenadores.");
+    throw new ApiError(403, "Login permitido apenas para equipe.");
   }
   const token = signToken(user);
   return sendJson(res, 200, { ok: true, token, user: sanitizeUser(user) });
@@ -226,7 +222,7 @@ async function leaderReferralLink(req, res) {
   const { requireAuth, ROLES } = await import("../lib/security.js");
   const { ensureLeaderProfile } = await import("../lib/user-service.js");
   const user = await requireAuth(req, [ROLES.EQUIPE, ROLES.COORDENADORES, ROLES.LIDERES, ROLES.CADASTRADOS]);
-  const profile = await ensureLeaderProfile({ query }, user.id, getPublicAppUrl(req));
+  const profile = await ensureLeaderProfile({ query }, user.id, getPublicAppUrl(req), user.role);
   return sendJson(res, 200, { ok: true, referralCode: profile.referral_code, referralUrl: profile.referral_url });
 }
 
@@ -292,7 +288,7 @@ async function adminUsers(req, res) {
       ...input,
       consent_accepted: input.consent_accepted ?? true,
     };
-    if (![ROLES.EQUIPE, ROLES.COORDENADORES].includes(String(internalInput.role || "").toUpperCase())) {
+    if (String(internalInput.role || "").toUpperCase() !== ROLES.EQUIPE) {
       internalInput.password = randomBytes(12).toString("hex");
     }
     const parentUserId = internalInput.referralCode || internalInput.referral_code || internalInput.ref ? null : user.id;

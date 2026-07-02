@@ -148,12 +148,7 @@ function setupLocalidadeSelector(regiaoId, localidadeId) {
 }
 
 function positionLocationFields() {
-  const whatsapp = document.getElementById("whatsapp");
-  const regiao = document.getElementById("ra");
-  const firstRow = whatsapp?.closest(".row");
-  const regiaoField = regiao?.closest("div");
-  if (!firstRow || !regiaoField || firstRow.contains(regiaoField)) return;
-  firstRow.appendChild(regiaoField);
+  // Mantem Regiao Administrativa e Bairro/localidade juntos, nesta ordem.
 }
 
 function enhanceDownwardSelect(select) {
@@ -282,11 +277,10 @@ function setInviteLinkEverywhere(link) {
 }
 
 function setupCoordinatorAccess() {
-  const isCoordinatorLink = getInviteRoleFromURL() === "COORDENADORES";
   if (!coordinatorAccess) return;
-  coordinatorAccess.style.display = isCoordinatorLink ? "block" : "none";
-  coordinatorEmail?.toggleAttribute("required", isCoordinatorLink);
-  coordinatorPassword?.toggleAttribute("required", isCoordinatorLink);
+  coordinatorAccess.style.display = "none";
+  coordinatorEmail?.removeAttribute("required");
+  coordinatorPassword?.removeAttribute("required");
 }
 
 // init ref
@@ -325,8 +319,6 @@ form.addEventListener("submit", async (e) => {
   const bairro = document.getElementById("bairro").value.trim();
   const ra = document.getElementById("ra").value;
   const inviteRole = getInviteRoleFromURL();
-  const email = coordinatorEmail?.value?.trim() || "";
-  const password = coordinatorPassword?.value || "";
 
   const urlRef = getRefFromURL();
   const veioPorLink = !!urlRef;
@@ -348,8 +340,6 @@ form.addEventListener("submit", async (e) => {
   if (!whatsapp || whatsapp.length < 10) return showError("Informe um WhatsApp válido (com DDD).");
   if (!bairro || bairro.length < 2) return showError("Selecione a localidade.");
   if (!ra) return showError("Selecione a Região Administrativa (RA).");
-  if (inviteRole === "COORDENADORES" && !email) return showError("Informe o email de login do coordenador.");
-  if (inviteRole === "COORDENADORES" && password.length < 8) return showError("Informe uma senha com pelo menos 8 caracteres.");
   if (!aceite_lgpd) return showError("Você precisa aceitar o uso de dados (LGPD).");
   if (!aceite_whatsapp) return showError("Você precisa autorizar o contato por WhatsApp.");
 
@@ -363,8 +353,8 @@ form.addEventListener("submit", async (e) => {
       bairro,
       ra,
       ref: veioPorLink ? ref : "",
-      email: inviteRole === "COORDENADORES" ? email : "",
-      password: inviteRole === "COORDENADORES" ? password : "",
+      email: "",
+      password: "",
       target_role: veioPorLink ? inviteRole : "",
       aceite_lgpd: "true",
       aceite_whatsapp: "true",
@@ -390,7 +380,7 @@ form.addEventListener("submit", async (e) => {
     if (!link) {
       // fallback: cria link com o código da pessoa
       const publicOrigin = location.hostname.includes("localhost") ? PUBLIC_APP_URL : location.origin;
-      link = `${publicOrigin.replace(/\/$/, "")}/?ref=${encodeURIComponent(codigo)}`;
+      link = `${publicOrigin.replace(/\/$/, "")}/cadastro?ref=${encodeURIComponent(codigo)}`;
     }
 
     // ✅ Mostra link em ambos os lugares

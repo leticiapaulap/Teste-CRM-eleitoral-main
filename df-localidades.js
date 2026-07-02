@@ -36,6 +36,8 @@ const DF_LOCALIDADES = {
   "Vicente Pires": ["Vicente Pires", "Rua 3", "Rua 4", "Rua 5", "Rua 6", "Rua 8", "Rua 10", "Rua 12", "Rua 48", "Jockey", "Colônia Agrícola Samambaia", "Colônia Agrícola Vicente Pires"],
 };
 
+DF_LOCALIDADES["SCIA/Estrutural"] = DF_LOCALIDADES["Estrutural (SCIA)"];
 DF_LOCALIDADES["Sol Nascente e Por do Sol"] = DF_LOCALIDADES["Sol Nascente/Pôr do Sol"];
+DF_LOCALIDADES["Sol Nascente e Pôr do Sol"] = DF_LOCALIDADES["Sol Nascente/Pôr do Sol"];
 
 window.DF_LOCALIDADES = DF_LOCALIDADES;

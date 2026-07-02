@@ -7,12 +7,12 @@
   <title>SIV — Cadastro</title>
   <meta name="description" content="SIV - Sistema de Inteligência Valdelino. Cadastro voluntário." />
   <link rel="icon" href="img/LOGO-SIV.png" />
-  <link rel="stylesheet" href="styles.css?v=20260701-7" />
-  <script src="df-localidades.js?v=20260701-7" defer></script>
-  <script type="module" src="script.js?v=20260701-7" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260702-28" />
+  <script src="df-localidades.js?v=20260702-3" defer></script>
+  <script type="module" src="script.js?v=20260702-3" defer></script>
 </head>
 
-<body>
+<body class="publicCadastroBody">
   <main class="wrap">
     <!-- BLOCO MARCA / APRESENTAÇÃO -->
     <section class="brand" aria-label="Apresentação do SIV">
@@ -63,17 +63,17 @@
         </div>
 
         <form id="formSIV">
-          <label for="nome">Nome completo</label>
-          <input id="nome" name="nome" placeholder="Ex.: Maria de Souza" autocomplete="name" required />
+          <div class="publicNameField">
+            <label for="nome">Nome completo</label>
+            <input id="nome" name="nome" placeholder="Ex.: Maria de Souza" autocomplete="name" required />
+          </div>
 
-          <div class="row">
+          <div class="publicFormGrid">
             <div>
               <label for="whatsapp">WhatsApp</label>
               <input id="whatsapp" name="whatsapp" placeholder="(61) 99999-9999" autocomplete="tel" inputmode="numeric" maxlength="15" required />
             </div>
-          </div>
 
-          <div class="row">
             <div>
               <label for="ra">RA (Região Administrativa)</label>
               <select id="ra" name="ra" required>
@@ -86,7 +86,7 @@
                 <option>Candangolândia</option>
                 <option>Ceilândia</option>
                 <option>Cruzeiro</option>
-                <option>Estrutural (SCIA)</option>
+                <option>SCIA/Estrutural</option>
                 <option>Fercal</option>
                 <option>Gama</option>
                 <option>Guará</option>
@@ -108,7 +108,7 @@
                 <option>SIA</option>
                 <option>Sobradinho</option>
                 <option>Sobradinho II</option>
-                <option>Sol Nascente e Pôr do Sol</option>
+                <option>Sol Nascente/Pôr do Sol</option>
                 <option>Sudoeste/Octogonal</option>
                 <option>Taguatinga</option>
                 <option>Varjão</option>
@@ -127,20 +127,6 @@
               <label for="ref">Referência (quem indicou)</label>
               <input id="ref" name="ref" placeholder="AG001 ou SIV000123" readonly />
               <small id="refHint" class="refHint"></small>
-            </div>
-          </div>
-
-          <div id="coordinatorAccess" class="coordinatorAccess" style="display:none;">
-            <h3>Dados de acesso do coordenador</h3>
-            <div class="row">
-              <div>
-                <label for="email">Email para login</label>
-                <input id="email" name="email" type="email" placeholder="email@exemplo.com" autocomplete="email" />
-              </div>
-              <div>
-                <label for="password">Senha para login</label>
-                <input id="password" name="password" type="password" minlength="8" placeholder="Minimo 8 caracteres" autocomplete="new-password" />
-              </div>
             </div>
           </div>
 

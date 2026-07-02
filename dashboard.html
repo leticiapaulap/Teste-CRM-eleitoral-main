@@ -13,15 +13,15 @@
     integrity="sha256-p4NxAoJBhIINfQG2N3gCkCF2bFJOrM2FtkK5bM6r5eI="
     crossorigin=""
   />
-  <link rel="stylesheet" href="styles.css?v=20260701-7" />
+  <link rel="stylesheet" href="styles.css?v=20260702-26" />
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
     defer
   ></script>
-  <script src="df-localidades.js?v=20260701-7" defer></script>
-  <script type="module" src="dashboard.js?v=20260701-7" defer></script>
+  <script src="df-localidades.js?v=20260702-3" defer></script>
+  <script type="module" src="dashboard.js?v=20260702-14" defer></script>
 </head>
 
 <body class="dashboardBody">
@@ -46,25 +46,28 @@
       <aside class="sideMenu" aria-label="Menu do painel">
         <div class="sideMenuHeader">
           <strong class="sideMenuTitle">Menu</strong>
-          <button type="button" id="btnToggleMenu" class="sideMenuToggle" aria-label="Recolher menu lateral">‹</button>
+          <button type="button" id="btnToggleMenu" class="sideMenuToggle" aria-label="Recolher menu lateral" aria-expanded="true">‹</button>
         </div>
-        <button type="button" class="sideMenuButton active" data-view-target="home">
+        <button type="button" class="sideMenuButton active" data-view-target="home" data-short="IN">
           <span class="sideText">Inicial</span>
         </button>
-        <button type="button" class="sideMenuButton" data-view-target="profile">
+        <button type="button" class="sideMenuButton" data-view-target="profile" data-short="IP">
           <span class="sideText">Informacoes pessoais</span>
         </button>
-        <button type="button" class="sideMenuButton teamOnlyNav" data-view-target="admin">
+        <button type="button" class="sideMenuButton teamOnlyNav" data-view-target="admin" data-short="AD">
           <span class="sideText">Administracao da equipe</span>
         </button>
-        <button type="button" class="sideMenuButton teamOnlyNav" data-view-target="messages">
+        <button type="button" class="sideMenuButton teamOnlyNav" data-view-target="messages" data-short="CH">
           <span class="sideText">Mensagens do chat</span>
           <span id="sideMessageBadge" class="sideBadge" hidden>0</span>
         </button>
-        <button type="button" class="sideMenuButton" data-view-target="map">
-          <span class="sideText">Mapa e resumo</span>
+        <button type="button" class="sideMenuButton" data-view-target="map" data-short="MP">
+          <span class="sideText">Mapa</span>
         </button>
-        <button type="button" class="sideMenuButton" data-view-target="network">
+        <button type="button" class="sideMenuButton" data-view-target="summary" data-short="RS">
+          <span class="sideText">Resumo da rede</span>
+        </button>
+        <button type="button" class="sideMenuButton" data-view-target="network" data-short="AR">
           <span class="sideText">Cadastros e árvore</span>
         </button>
         <div class="sideMenuDivider" aria-hidden="true"></div>
@@ -74,10 +77,8 @@
           class="sideSearchInput"
           type="search"
           placeholder="Nome da pessoa"
-          list="exportPeopleOptions"
           autocomplete="off"
         />
-        <datalist id="exportPeopleOptions"></datalist>
         <div id="exportNameResults" class="sideExportResults" aria-live="polite"></div>
         <div class="sideExportActions" aria-label="Exportar dados">
           <span>Exportar</span>
@@ -139,8 +140,10 @@
         <button type="button" id="btnEditProfile" class="btnSecondary">Editar meus dados</button>
       </div>
       <div id="profileDetails" class="profileGrid"></div>
-      <div class="invite adminInvite">
-        <div class="inviteTitle">Seu link de cadastro</div>
+      <div class="invite adminInvite referralHub">
+        <div class="inviteTitle">Links de indicação</div>
+        <div class="referralHubSection">
+          <h3>Meu link de indicação</h3>
         <div class="inviteRoleChooser teamOnlyHome">
           <label for="profileReferralRole">Tipo permitido neste link</label>
           <select id="profileReferralRole">
@@ -152,6 +155,13 @@
         <div class="inviteRow">
           <input id="profileReferralLink" readonly />
           <button type="button" id="btnCopyReferral" class="btnSecondary">Copiar</button>
+        </div>
+        </div>
+        <div class="referralHubSection teamOnlyHome">
+        <h3>Links de indicação das pessoas cadastradas</h3>
+        <div class="refHint">Busque pelo nome para copiar o link de cadastro de outra pessoa.</div>
+        <input id="profileReferralSearch" type="search" placeholder="Nome da pessoa" autocomplete="off" />
+        <div id="profileReferralResults" class="referralSearchResults"></div>
         </div>
       </div>
     </section>
@@ -203,7 +213,7 @@
             <option>Candangolandia</option>
             <option>Ceilandia</option>
             <option>Cruzeiro</option>
-            <option>Estrutural (SCIA)</option>
+            <option>SCIA/Estrutural</option>
             <option>Fercal</option>
             <option>Gama</option>
             <option>Guara</option>
@@ -225,7 +235,7 @@
             <option>SIA</option>
             <option>Sobradinho</option>
             <option>Sobradinho II</option>
-            <option>Sol Nascente e Por do Sol</option>
+            <option>Sol Nascente/Pôr do Sol</option>
             <option>Sudoeste/Octogonal</option>
             <option>Taguatinga</option>
             <option>Varjao</option>
@@ -309,7 +319,7 @@
               <option>Candangolandia</option>
               <option>Ceilandia</option>
               <option>Cruzeiro</option>
-              <option>Estrutural (SCIA)</option>
+              <option>SCIA/Estrutural</option>
               <option>Fercal</option>
               <option>Gama</option>
               <option>Guara</option>
@@ -331,7 +341,7 @@
               <option>SIA</option>
               <option>Sobradinho</option>
               <option>Sobradinho II</option>
-              <option>Sol Nascente e Por do Sol</option>
+              <option>Sol Nascente/Pôr do Sol</option>
               <option>Sudoeste/Octogonal</option>
               <option>Taguatinga</option>
               <option>Varjao</option>
@@ -418,7 +428,7 @@
       </div>
     </section>
 
-    <section class="dashboardGrid dashboardView" data-view="map" aria-label="Indicadores">
+    <section class="dashboardGrid dashboardView" data-view="summary" aria-label="Indicadores">
       <article class="metricCard">
         <span>Líderes</span>
         <strong id="metricLeaders">0</strong>
@@ -437,7 +447,7 @@
       </article>
     </section>
 
-    <section class="dashboardLayout dashboardView" data-view="map" aria-label="Mapa e resumo">
+    <section class="dashboardLayout dashboardView" data-view="map" aria-label="Mapa">
       <article class="dashboardPanel mapPanel">
         <div class="panelHeader">
           <div>
@@ -467,19 +477,26 @@
         </div>
       </article>
 
-      <aside class="dashboardPanel summaryPanel" aria-label="Resumo">
+    </section>
+
+    <section class="dashboardLayout summaryLayout dashboardView" data-view="summary" aria-label="Resumo da rede">
+      <aside class="dashboardPanel summaryPanel" aria-label="Resumo da rede">
         <div class="panelHeader">
           <div>
-            <h2>Resumo</h2>
-            <p>Agrupamentos para filtros e mapa.</p>
+            <h2>Resumo da rede</h2>
+            <p>Indicadores e agrupamentos para acompanhar cadastros por regiao.</p>
           </div>
         </div>
 
-        <h3 class="summaryTitle">Por região</h3>
-        <div id="regionSummary" class="summaryList"></div>
+        <div class="summaryColumn summaryRegionBlock">
+          <h3 class="summaryTitle">Por região</h3>
+          <div id="regionSummary" class="summaryList"></div>
+        </div>
 
-        <h3 class="summaryTitle">Cadastros da região</h3>
-        <div id="regionLeaders" class="summaryList"></div>
+        <div class="summaryColumn summaryLeadersBlock">
+          <h3 class="summaryTitle">Cadastros da região</h3>
+          <div id="regionLeaders" class="summaryList"></div>
+        </div>
 
       </aside>
     </section>

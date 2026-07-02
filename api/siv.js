@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { withTransaction } from "../lib/db.js";
-import { makeReferralUrl } from "../lib/referrals.js";
+import { makeReferralCodeForRole, makeReferralUrl } from "../lib/referrals.js";
 
 function onlyDigits(value = "") {
   let digits = String(value).replace(/\D/g, "");
@@ -16,10 +16,6 @@ function getValue(obj, keys, fallback = "") {
     }
   }
   return fallback;
-}
-
-function makeReferralCode() {
-  return `SIV${randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`;
 }
 
 function getPublicAppUrl(req) {
@@ -85,7 +81,7 @@ export default async function handler(req, res) {
     }
 
     const passwordHash = await bcrypt.hash(randomUUID(), 12);
-    const newReferralCode = makeReferralCode();
+    const newReferralCode = makeReferralCodeForRole("CADASTRADOS");
     const newReferralUrl = makeReferralUrl(getPublicAppUrl(req), newReferralCode);
 
     const saved = await withTransaction(async (client) => {

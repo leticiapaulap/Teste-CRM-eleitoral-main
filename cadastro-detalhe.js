@@ -24,13 +24,16 @@ const els = {
   name: document.getElementById("detailName"),
   contact: document.getElementById("detailContact"),
   location: document.getElementById("detailLocation"),
+  overview: document.getElementById("detailOverview"),
   grid: document.getElementById("detailGrid"),
   tree: document.getElementById("detailNetworkTree"),
   referral: document.getElementById("detailReferralLink"),
+  overviewReferral: document.getElementById("detailOverviewReferralLink"),
   form: document.getElementById("detailEditForm"),
   msg: document.getElementById("detailMsg"),
   copyTop: document.getElementById("btnCopyDetailLink"),
   copyInline: document.getElementById("btnCopyDetailLinkInline"),
+  copyOverview: document.getElementById("btnCopyDetailOverviewLink"),
   email: document.getElementById("btnEmailDetail"),
   delete: document.getElementById("btnDeleteDetail"),
   logout: document.getElementById("btnLogout"),
@@ -48,7 +51,7 @@ let currentUser = null;
 let networkTree = [];
 let supportMessages = [];
 let templateIndex = 0;
-let activeDetailView = "detail-info";
+let activeDetailView = "detail-overview";
 
 els.logout.addEventListener("click", () => {
   localStorage.removeItem("siv_token");
@@ -58,6 +61,7 @@ els.logout.addEventListener("click", () => {
 els.form.addEventListener("submit", saveUser);
 els.copyTop.addEventListener("click", copyReferralLink);
 els.copyInline.addEventListener("click", copyReferralLink);
+els.copyOverview?.addEventListener("click", copyReferralLink);
 els.email.addEventListener("click", emailUser);
 els.delete.addEventListener("click", deleteUser);
 els.template.addEventListener("change", renderMessageTemplate);
@@ -188,7 +192,9 @@ function renderUser() {
   els.contact.textContent = `${user.email || "-"} | ${user.phone || "-"}`;
   els.location.textContent = `${user.localidade || "-"} ${user.regiao_administrativa ? `- ${user.regiao_administrativa}` : ""}`;
   els.referral.value = link;
+  if (els.overviewReferral) els.overviewReferral.value = link;
   renderMessageTemplate();
+  renderOverview(user, link);
 
   els.grid.innerHTML = `
     ${detailItem("Nome", user.name)}
@@ -222,8 +228,80 @@ function renderUser() {
   document.getElementById("editPhoto").value = "";
 }
 
+function renderOverview(user, link) {
+  if (!els.overview) return;
+  const roots = getNetworkRoots();
+  const networkTotal = countTreeNodes(roots);
+  const lastSupport = supportMessages[0];
+  const status = user.active === false ? "Inativo" : "Ativo";
+  const consent = user.consent_accepted ? "Consentimento aceito" : "Sem consentimento";
+
+  els.overview.innerHTML = `
+    ${overviewCard("Perfil", [
+      ["Nome", user.name],
+      ["Tipo", user.role],
+      ["Status", `${status} - ${consent}`],
+    ])}
+    ${overviewCard("Contato", [
+      ["Email", user.email || "Sem email"],
+      ["Telefone", user.phone],
+    ])}
+    ${overviewCard("Localizacao", [
+      ["Regiao adm.", user.regiao_administrativa],
+      ["Bairro/localidade", user.localidade],
+    ])}
+    ${overviewCard("Rede", [
+      ["Nivel", user.level ?? "-"],
+      ["Pessoas abaixo", networkTotal],
+      ["Responsavel raiz", user.root_leader_name || user.root_leader_id],
+    ])}
+    ${overviewCard("Indicacao", [
+      ["Quem indicou", user.parent_user_name || user.parent_user_id || "Cadastro raiz"],
+      ["Codigo usado", user.referral_code_used],
+      ["Codigo do link", user.referral_code],
+    ])}
+    ${overviewCard("Atendimento", [
+      ["Mensagens", supportMessages.length],
+      ["Ultimo registro", lastSupport ? formatDate(lastSupport.created_at) : "Sem mensagens"],
+    ])}
+    ${overviewCard("Datas", [
+      ["Criado em", formatDate(user.created_at)],
+      ["Atualizado em", formatDate(user.updated_at)],
+    ])}
+    ${overviewCard("Link", [
+      ["Cadastro", link || "Sem link disponivel"],
+    ], "wide")}
+  `;
+}
+
+function overviewCard(title, rows, extraClass = "") {
+  return `
+    <article class="detailOverviewCard ${extraClass}">
+      <h3>${escapeHtml(title)}</h3>
+      ${rows.map(([label, value]) => `
+        <div>
+          <span>${escapeHtml(label)}</span>
+          <strong>${escapeHtml(value ?? "-")}</strong>
+        </div>
+      `).join("")}
+    </article>
+  `;
+}
+
+function getNetworkRoots() {
+  return networkTree.length === 1 && String(networkTree[0].user_id) === String(userId)
+    ? networkTree[0].children || []
+    : networkTree;
+}
+
+function countTreeNodes(nodes) {
+  return (Array.isArray(nodes) ? nodes : []).reduce((total, node) => {
+    return total + 1 + countTreeNodes(node.children);
+  }, 0);
+}
+
 function canRoleLogin(role) {
-  return role === "EQUIPE" || role === "COORDENADORES";
+  return role === "EQUIPE";
 }
 
 function updateLoginFields() {
@@ -235,7 +313,7 @@ function updateLoginFields() {
 
   if (email) {
     email.required = needsLogin;
-    email.placeholder = needsLogin ? "email@exemplo.com" : "Opcional para lider/cadastrado";
+    email.placeholder = needsLogin ? "email@exemplo.com" : "Sem email para coordenador, lider e cadastrado";
     if (!needsLogin) email.value = "";
   }
 
@@ -245,9 +323,7 @@ function updateLoginFields() {
 
 function renderNetworkTree() {
   if (!els.tree) return;
-  const roots = networkTree.length === 1 && String(networkTree[0].user_id) === String(userId)
-    ? networkTree[0].children || []
-    : networkTree;
+  const roots = getNetworkRoots();
   if (!roots.length) {
     els.tree.innerHTML = `<div class="emptyState">Nenhum cadastro abaixo deste link ainda.</div>`;
     return;
@@ -288,7 +364,11 @@ async function saveUser(event) {
     active: document.getElementById("editActive").checked ? "true" : "false",
   };
   const password = String(formData.get("password") || "").trim();
-  if (password) payload.password = password;
+  if (!canRoleLogin(payload.role)) {
+    payload.email = "";
+  } else if (password) {
+    payload.password = password;
+  }
 
   try {
     if (photoFile && photoFile.size) {
@@ -450,7 +530,7 @@ function getPublicReferralUrl(user) {
   const currentOrigin = window.location.origin && !window.location.hostname.includes("localhost")
     ? window.location.origin
     : PUBLIC_APP_URL;
-  return `${currentOrigin.replace(/\/$/, "")}/?ref=${encodeURIComponent(code)}`;
+  return `${currentOrigin.replace(/\/$/, "")}/cadastro?ref=${encodeURIComponent(code)}`;
 }
 
 function extractReferralCode(url) {

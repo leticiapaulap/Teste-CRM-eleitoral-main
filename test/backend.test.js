@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { ApiError } from "../lib/http.js";
-import { buildTree, makeReferralCode, makeReferralUrl } from "../lib/referrals.js";
-import { isAdminRole, ROLES } from "../lib/security.js";
+import { buildTree, makeReferralCode, makeReferralCodeForRole, makeReferralUrl } from "../lib/referrals.js";
+import { canLogin, isAdminRole, ROLES } from "../lib/security.js";
 import { toGeoJson } from "../lib/map-service.js";
 import { normalizeRegisterInput } from "../lib/user-service.js";
 import {
@@ -36,33 +36,31 @@ test("valida foto segura quando enviada", () => {
 });
 
 test("cadastro aceita foto opcional para coordenadores, lideres e cadastrados", () => {
-  assert.equal(normalizeRegisterInput({
+  const coordenador = normalizeRegisterInput({
     name: "Maria Souza",
-    email: "maria@example.com",
     phone: "(61) 99999-0000",
-    password: "senha-segura",
     role: "COORDENADORES",
     localidade: "Taguatinga",
     regiao_administrativa: "Taguatinga",
     consent_accepted: true,
-  }).photoUrl, null);
+  });
+  assert.equal(coordenador.email, null);
+  assert.equal(coordenador.photoUrl, null);
 
-  assert.equal(normalizeRegisterInput({
+  const lider = normalizeRegisterInput({
     name: "Lider Souza",
-    email: "lider@example.com",
     phone: "(61) 98888-0000",
-    password: "senha-segura",
     role: "LIDERES",
     localidade: "Ceilandia",
     regiao_administrativa: "Ceilandia",
     consent_accepted: true,
-  }).photoUrl, null);
+  });
+  assert.equal(lider.email, null);
+  assert.equal(lider.photoUrl, null);
 
   assert.equal(normalizeRegisterInput({
     name: "Joao Souza",
-    email: "joao@example.com",
     phone: "(61) 97777-0000",
-    password: "senha-segura",
     role: "CADASTRADOS",
     localidade: "Ceilandia",
     regiao_administrativa: "Ceilandia",
@@ -88,6 +86,8 @@ test("cadastro de admin aceita foto opcional", () => {
 test("gera link de indicacao usando APP_URL sem dominio fixo", () => {
   const code = makeReferralCode();
   assert.match(code, /^SIV[A-F0-9]{8}$/);
+  assert.match(makeReferralCodeForRole(ROLES.COORDENADORES), /^AG\d{8}$/);
+  assert.match(makeReferralCodeForRole(ROLES.LIDERES), /^SIV[A-F0-9]{8}$/);
   assert.equal(makeReferralUrl("https://meudominio.com.br/", "SIV123"), "https://meudominio.com.br/cadastro?ref=SIV123");
 });
 
@@ -107,6 +107,10 @@ test("permissoes administrativas ficam restritas a equipe", () => {
   assert.equal(isAdminRole(ROLES.COORDENADORES), false);
   assert.equal(isAdminRole(ROLES.LIDERES), false);
   assert.equal(isAdminRole(ROLES.CADASTRADOS), false);
+  assert.equal(canLogin(ROLES.EQUIPE), true);
+  assert.equal(canLogin(ROLES.COORDENADORES), false);
+  assert.equal(canLogin(ROLES.LIDERES), false);
+  assert.equal(canLogin(ROLES.CADASTRADOS), false);
 });
 
 test("gera GeoJSON com propriedades necessarias para o mapa", () => {

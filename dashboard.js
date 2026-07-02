@@ -349,6 +349,8 @@ const els = {
   referralLink: document.getElementById("profileReferralLink"),
   referralRole: document.getElementById("profileReferralRole"),
   copyReferral: document.getElementById("btnCopyReferral"),
+  referralSearch: document.getElementById("profileReferralSearch"),
+  referralResults: document.getElementById("profileReferralResults"),
   adminPanel: document.getElementById("adminPanel"),
   messagesPanel: document.getElementById("teamMessagesPanel"),
   messagesList: document.getElementById("contactMessagesList"),
@@ -425,6 +427,7 @@ els.leader.addEventListener("input", () => {
 });
 els.copyReferral?.addEventListener("click", copyReferralLink);
 els.referralRole?.addEventListener("input", () => renderReferralLink(user));
+els.referralSearch?.addEventListener("input", renderReferralSearchResults);
 els.editProfile?.addEventListener("click", () => openEditDialog(user, { self: true }));
 els.adminForm?.addEventListener("submit", createAdminUser);
 document.getElementById("adminRole")?.addEventListener("change", updateAdminLoginFields);
@@ -531,11 +534,13 @@ function configureAccess() {
     item.hidden = !isTeam;
   });
   document.body.classList.toggle("isTeam", isTeam);
+  ensureReferralSearchBlock();
+  renderReferralLink(user);
   if (isTeam) loadContactMessages();
 }
 
 function canRoleLogin(role) {
-  return role === "EQUIPE" || role === "COORDENADORES";
+  return role === "EQUIPE";
 }
 
 function updateAdminLoginFields() {
@@ -566,7 +571,7 @@ function updateLoginFields({ roleId, emailId, passwordId, passwordFieldId, passw
 
   if (email) {
     email.required = needsPassword;
-    email.placeholder = needsPassword ? "email@exemplo.com" : "Opcional para líder/cadastrado";
+    email.placeholder = needsPassword ? "email@exemplo.com" : "Sem email para coordenador, lider e cadastrado";
     if (!needsPassword) email.value = "";
   }
 
@@ -596,6 +601,7 @@ function updateMenuToggle(collapsed) {
   if (!els.menuToggle) return;
   els.menuToggle.textContent = collapsed ? "›" : "‹";
   els.menuToggle.setAttribute("aria-label", collapsed ? "Abrir menu lateral" : "Recolher menu lateral");
+  els.menuToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
 }
 
 function normalizeWhatsApp(input) {
@@ -727,6 +733,7 @@ function render() {
   renderTree(filteredPoints);
   renderAdminPeopleSearch();
   renderExportPeopleResults();
+  renderReferralSearchResults();
 }
 
 function renderExportPeopleResults() {
@@ -754,7 +761,7 @@ function renderExportPeopleResults() {
     button.addEventListener("click", () => {
       if (els.exportLeaderSearch) els.exportLeaderSearch.value = button.dataset.exportName || "";
       const person = allPoints.find((point) => String(point.id) === String(button.dataset.exportPersonId));
-      if (person) selectPoint(person);
+      if (person) openNetworkForPerson(person);
     });
   });
 }
@@ -802,16 +809,89 @@ function renderProfile(profile) {
   `;
 
   if (els.referralLink) {
+    ensureReferralSearchBlock();
     renderReferralLink(profile);
   }
+}
+
+function ensureReferralSearchBlock() {
+  if (!isTeam || document.getElementById("profileReferralSearch")) return;
+  const invite = els.referralLink?.closest(".invite");
+  if (!invite) return;
+  const section = document.createElement("div");
+  section.className = "referralHubSection teamOnlyHome";
+  section.innerHTML = `
+    <h3>Links de indicação das pessoas cadastradas</h3>
+    <div class="refHint">Busque pelo nome para copiar o link de cadastro de outra pessoa.</div>
+    <input id="profileReferralSearch" type="search" placeholder="Nome da pessoa" autocomplete="off" />
+    <div id="profileReferralResults" class="referralSearchResults"></div>
+  `;
+  invite.classList.add("referralHub");
+  invite.appendChild(section);
+  els.referralSearch = document.getElementById("profileReferralSearch");
+  els.referralResults = document.getElementById("profileReferralResults");
+  els.referralSearch?.addEventListener("input", renderReferralSearchResults);
 }
 
 function renderReferralLink(profile) {
   if (!els.referralLink) return;
   const targetRole = profile?.role === "EQUIPE" ? els.referralRole?.value : "";
   const link = getPublicReferralUrl(profile, targetRole);
-  els.referralLink.value = link;
-  els.referralLink.closest(".invite").style.display = link ? "block" : "none";
+  const invite = els.referralLink.closest(".invite");
+  els.referralLink.value = link || "Este usuario ainda nao tem codigo de indicacao salvo.";
+  if (els.copyReferral) els.copyReferral.disabled = !link;
+  if (invite) invite.style.display = "grid";
+}
+
+function renderReferralSearchResults() {
+  if (!els.referralResults) return;
+  if (!isTeam) {
+    els.referralResults.innerHTML = "";
+    return;
+  }
+
+  const search = normalizeLocalidadeKey(els.referralSearch?.value || "");
+  if (!search) {
+    els.referralResults.innerHTML = `<div class="emptyState">Digite um nome para buscar o link.</div>`;
+    return;
+  }
+
+  const matches = allPoints
+    .filter((point) => {
+      const haystack = `${point.name || ""} ${point.phone || ""} ${point.localidade || ""} ${point.regiao_administrativa || ""} ${point.role || ""}`;
+      return normalizeLocalidadeKey(haystack).includes(search);
+    })
+    .sort(sortPeopleByName)
+    .slice(0, 8);
+
+  if (!matches.length) {
+    els.referralResults.innerHTML = `<div class="emptyState">Nenhuma pessoa encontrada.</div>`;
+    return;
+  }
+
+  els.referralResults.innerHTML = matches.map((person) => {
+    const link = getPublicReferralUrl(person);
+    return `
+      <article class="referralResultItem">
+        <div>
+          <strong>${escapeHtml(person.name || "-")}</strong>
+          <span>${escapeHtml(person.role || "-")} - ${escapeHtml(getDisplayLocalidade(person))}</span>
+          <input value="${escapeHtml(link || "Sem link disponivel")}" readonly />
+        </div>
+        <button type="button" class="btnSecondary" data-copy-referral-id="${escapeHtml(person.id)}" ${link ? "" : "disabled"}>Copiar</button>
+      </article>
+    `;
+  }).join("");
+
+  els.referralResults.querySelectorAll("[data-copy-referral-id]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const person = allPoints.find((point) => String(point.id) === String(button.dataset.copyReferralId));
+      const link = person ? getPublicReferralUrl(person) : "";
+      await copyText(link);
+      button.textContent = "Copiado!";
+      setTimeout(() => (button.textContent = "Copiar"), 1200);
+    });
+  });
 }
 
 function applyFilters(points) {
@@ -1147,7 +1227,32 @@ function renderRegionLeaders() {
     button.addEventListener("click", () => {
       const person = allPoints.find((point) => String(point.id) === String(button.dataset.personId));
       if (!person) return;
-      selectPoint(person);
+      openNetworkForPerson(person);
+    });
+  });
+}
+
+function openNetworkForPerson(person) {
+  selectedPointId = person.id;
+  focusedMapPointId = person.id;
+  selectedRegion = "";
+  els.region.value = "";
+  els.role.value = "";
+  els.level.value = "";
+  els.search.value = "";
+
+  const leaderId = person.root_leader_id || (isLeaderRole(person.role) ? person.id : "");
+  const hasLeaderOption = [...els.leader.options].some((option) => String(option.value) === String(leaderId));
+  selectedLeaderId = hasLeaderOption ? leaderId : "";
+  els.leader.value = selectedLeaderId;
+
+  render();
+  setDashboardView("network");
+
+  requestAnimationFrame(() => {
+    document.querySelector('.dashboardView[data-view="network"].lowerLayout')?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
     });
   });
 }
@@ -1226,7 +1331,10 @@ async function createAdminUser(event) {
   const body = Object.fromEntries(formData.entries());
   body.phone = normalizeWhatsApp(body.phone);
   body.consent_accepted = true;
-  if (!canRoleLogin(body.role)) delete body.password;
+  if (!canRoleLogin(body.role)) {
+    delete body.email;
+    delete body.password;
+  }
   const photoFile = formData.get("photo");
   let photoPreviewUrl = "";
   delete body.photo;
@@ -1540,7 +1648,11 @@ async function saveEditForm(event) {
     payload.active = document.getElementById("editActive")?.checked ? "true" : "false";
   }
   const password = String(formData.get("password") || "").trim();
-  if (password) payload.password = password;
+  if (!canRoleLogin(payload.role || user.role)) {
+    payload.email = "";
+  } else if (password) {
+    payload.password = password;
+  }
 
   try {
     if (photoFile && photoFile.size) {
@@ -1732,13 +1844,15 @@ function renderReferralCell(point) {
 }
 
 function getPublicReferralUrl(point, targetRole = "") {
-  const code = point.referral_code || point.referralCode || extractReferralCode(point.referral_url || point.referralUrl);
+  const code = point.referral_code
+    || point.referralCode
+    || extractReferralCode(point.referral_url || point.referralUrl);
   if (!code) return "";
 
   const currentOrigin = window.location.origin && !window.location.hostname.includes("localhost")
     ? window.location.origin
     : PUBLIC_APP_URL;
-  const url = new URL(`${currentOrigin.replace(/\/$/, "")}/`);
+  const url = new URL(`${currentOrigin.replace(/\/$/, "")}/cadastro`);
   url.searchParams.set("ref", code);
   if (point.role === "EQUIPE" && ["COORDENADORES", "LIDERES", "CADASTRADOS"].includes(targetRole)) {
     url.searchParams.set("tipo", targetRole);
@@ -1976,7 +2090,7 @@ function renderTree(points) {
           ([level, members]) => `
             <div class="treeLevel">
               <span>Nivel ${level}</span>
-              ${members.map((member) => `<strong>${escapeHtml(member.name)}</strong>`).join("")}
+              ${members.map((member) => `<strong class="${String(member.id) === String(selectedPointId) ? "selectedTreeMember" : ""}">${escapeHtml(member.name)}</strong>`).join("")}
             </div>
           `
         )
