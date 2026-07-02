@@ -10,7 +10,7 @@ end $$;
 create table if not exists users (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  email text not null,
+  email text,
   phone text not null,
   password_hash text not null,
   role user_role not null default 'CADASTRADOS',

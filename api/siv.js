@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { withTransaction } from "../lib/db.js";
-import { makeInternalEmail, withPublicEmail } from "../lib/email.js";
+import { withPublicEmail } from "../lib/email.js";
 import { makeReferralCodeForRole, makeReferralUrl } from "../lib/referrals.js";
 
 function onlyDigits(value = "") {
@@ -116,7 +116,7 @@ export default async function handler(req, res) {
          returning id, name, email, phone, role`,
           [
             name,
-            makeInternalEmail(phone || name),
+            null,
             phone,
             passwordHash,
             bodyObj.photoUrl || bodyObj.photo_url || null,
