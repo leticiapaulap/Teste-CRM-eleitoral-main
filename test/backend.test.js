@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { ApiError } from "../lib/http.js";
+import { isInternalEmail, makeInternalEmail, publicEmail } from "../lib/email.js";
 import { buildTree, makeReferralCode, makeReferralCodeForRole, makeReferralUrl } from "../lib/referrals.js";
 import { canLogin, isAdminRole, ROLES } from "../lib/security.js";
 import { toGeoJson } from "../lib/map-service.js";
@@ -89,6 +90,12 @@ test("gera link de indicacao usando APP_URL sem dominio fixo", () => {
   assert.match(makeReferralCodeForRole(ROLES.COORDENADORES), /^AG\d{8}$/);
   assert.match(makeReferralCodeForRole(ROLES.LIDERES), /^SIV[A-F0-9]{8}$/);
   assert.equal(makeReferralUrl("https://meudominio.com.br/", "SIV123"), "https://meudominio.com.br/cadastro?ref=SIV123");
+});
+
+test("email tecnico interno nao aparece como email publico", () => {
+  const email = makeInternalEmail("61999990000");
+  assert.equal(isInternalEmail(email), true);
+  assert.equal(publicEmail(email), null);
 });
 
 test("monta arvore de indicacoes por parent_user_id", () => {
